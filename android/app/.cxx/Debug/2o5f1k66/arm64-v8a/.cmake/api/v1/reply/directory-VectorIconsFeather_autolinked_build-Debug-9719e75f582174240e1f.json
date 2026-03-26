@@ -1,0 +1,14 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : [],
+		"files" : [],
+		"nodes" : []
+	},
+	"installers" : [],
+	"paths" : 
+	{
+		"build" : "VectorIconsFeather_autolinked_build",
+		"source" : "/Users/a1989/Desktop/BulkBasket/node_modules/@react-native-vector-icons/feather/android/build/generated/source/codegen/jni"
+	}
+}
