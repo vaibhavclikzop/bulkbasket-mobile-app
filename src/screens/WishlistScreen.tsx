@@ -162,7 +162,12 @@ export default function WishlistScreen({ navigation }: any) {
       setWishlistData((prev) =>
         prev.map((item) =>
           item.id === productId
-            ? { ...item, cartQty: newQty, cart_status: newQty > 0, qty: newQty || item.qty }
+            ? {
+                ...item,
+                cartQty: newQty,
+                cart_status: newQty > 0,
+                qty: newQty || item.qty,
+              }
             : item,
         ),
       );
@@ -187,7 +192,9 @@ export default function WishlistScreen({ navigation }: any) {
       // Update UI to show qty selector
       setWishlistData((prev) =>
         prev.map((i) =>
-          i.id === productId ? { ...i, cartQty: qty, cart_status: true, qty: qty } : i,
+          i.id === productId
+            ? { ...i, cartQty: qty, cart_status: true, qty: qty }
+            : i,
         ),
       );
     } catch (error) {
@@ -206,7 +213,7 @@ export default function WishlistScreen({ navigation }: any) {
 
   const totalPrice = wishlistData.reduce((acc, item) => {
     let currentPrice = item.price || 0;
-    const qtyForLogic = item.cart_status ? item.cartQty : (item.qty || 1);
+    const qtyForLogic = item.cart_status ? item.cartQty : item.qty || 1;
 
     if (item.tiers && item.tiers.length > 0) {
       const sortedTiers = [...item.tiers].sort((a, b) => b.qty - a.qty);
