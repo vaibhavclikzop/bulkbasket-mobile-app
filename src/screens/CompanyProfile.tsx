@@ -16,7 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Styles from "../components/Styles";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
-import { BASE_URL, getCompanyProfileApi, getProfileApi } from "../services/api";
+import { BASE_URL, getCompanyProfileApi } from "../services/api";
 
 const CompanyProfile = ({ navigation }: any) => {
   const [brandName, setBrandName] = useState("");
@@ -173,9 +173,9 @@ const CompanyProfile = ({ navigation }: any) => {
       console.log("Update Profile Response:", response.data);
       getCompanyProfile();
       if (response.data.error === false) {
-        Alert.alert("Profile Updated", "Profile updated successfully");
+        console.log("Profile Updated", response.data);
       } else {
-        Alert.alert("Profile Update Failed", "Profile update failed");
+        console.log("Profile Update Failed", response.data);
       }
     } catch (error) {
       console.log("Update Profile Error:", error);
@@ -259,7 +259,7 @@ const CompanyProfile = ({ navigation }: any) => {
                 {gstVerified && (
                   <View style={styles.verifiedBadge}>
                     <Image
-                      source={require("../assets/Common/stick.png")}
+                      source={require("../assets/Verified.png")}
                       style={{ height: 10, width: 10 }}
                       resizeMode="contain"
                     />
@@ -298,7 +298,7 @@ const CompanyProfile = ({ navigation }: any) => {
               *Must be the number as shown on your food license.
             </Text>
 
-            <TouchableOpacity
+            {/* <TouchableOpacity
               style={styles.saveBtn}
               onPress={gstVerified ? handleUpdateProfile : handleVerifyGst}
               disabled={loading}
@@ -309,6 +309,25 @@ const CompanyProfile = ({ navigation }: any) => {
                 <Text style={styles.saveText}>
                   {gstVerified
                     ? "Update GST Number"
+                    : "Add GST Number To Verify"}
+                </Text>
+              )}
+            </TouchableOpacity> */}
+
+            <TouchableOpacity
+              style={[
+                styles.saveBtn,
+                gstVerified && { backgroundColor: "#A0AEC0" },
+              ]}
+              onPress={handleVerifyGst}
+              disabled={loading || gstVerified}
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text style={styles.saveText}>
+                  {gstVerified
+                    ? "Account Verified"
                     : "Add GST Number To Verify"}
                 </Text>
               )}

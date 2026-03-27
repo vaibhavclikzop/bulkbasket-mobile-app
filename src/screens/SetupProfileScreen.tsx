@@ -9,11 +9,15 @@ import {
   ScrollView,
   Image,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
 import Styles from "../components/Styles";
 import Header from "../components/Header";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { BASE_URL } from "../services/api";
+import axios from "axios";
 
 const OPTIONS = [
   {
@@ -60,52 +64,52 @@ const SetupProfileScreen = ({ navigation }: any) => {
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
-    // if (!brandName) {
-    //   Alert.alert("Error", "Please fill all required fields");
-    //   return;
-    // }
+    if (!brandName) {
+      Alert.alert("Error", "Please fill all required fields");
+      return;
+    }
 
-    // if (gstin && gstin.length !== 15) {
-    //   Alert.alert("Invalid GST", "GST number must be 15 characters");
-    //   return;
-    // }
-    // console.log("asdjsdkjasdklj", gstin);
+    if (gstin && gstin.length !== 15) {
+      Alert.alert("Invalid GST", "GST number must be 15 characters");
+      return;
+    }
+    console.log("asdjsdkjasdklj", gstin);
 
-    // try {
-    //   setLoading(true);
+    try {
+      setLoading(true);
 
-    //   const token = await AsyncStorage.getItem("userToken");
+      const token = await AsyncStorage.getItem("userToken");
 
-    //   const response = await axios.post(
-    //     `${BASE_URL}/check-gst`,
-    //     {
-    //       gst_no: gstin,
-    //     },
-    //     {
-    //       headers: {
-    //         Authorization: `Bearer ${token}`,
-    //         Accept: "application/json",
-    //       },
-    //     },
-    //   );
-    //  const gstLegalName = response.data?.data?.data?.lgnm;
+      const response = await axios.post(
+        `${BASE_URL}/check-gst`,
+        {
+          gst_no: gstin,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        },
+      );
+      const gstLegalName = response.data?.data?.data?.lgnm;
 
-    //   if (gstLegalName) {
-    //     setLegalName(gstLegalName);
-    //   }
+      if (gstLegalName) {
+        setLegalName(gstLegalName);
+      }
 
-    //   console.log("GST API Response:", response.data);
+      console.log("GST API Response:", response.data);
 
-    //   navigation.navigate("DeliveryLocation");
-    // } catch (error: any) {
-    //   console.log("GST API Error:", error.response?.data || error.message);
+      navigation.navigate("DeliveryLocation");
+    } catch (error: any) {
+      console.log("GST API Error:", error.response?.data || error.message);
 
-    //   Alert.alert("GST Verification Failed", error || "Something went wrong");
-    // } finally {
-    //   setLoading(false);
-    // }
+      Alert.alert("GST Verification Failed", error || "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
 
-    navigation.navigate("DeliveryLocation");
+    // navigation.navigate("DeliveryLocation");
   };
 
   const renderItem = ({ item }: any) => {

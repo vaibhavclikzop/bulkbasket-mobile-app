@@ -81,7 +81,7 @@ interface Product {
   cart?: {
     qty: number;
   };
-  isOrganic?: boolean;
+  product_type?: string;
   product_sub_sub_category?: number | string;
   // bestRate: number;
 }
@@ -655,7 +655,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                 renderItem={({ item }) => (
                   <View style={styles.card}>
                     {/* Organic Ribbon - Only show if product is organic */}
-                    {item.isOrganic && (
+                    {item.product_type === "Organic" && (
                       <LinearGradient
                         colors={["#487D44", "#12FF00"]}
                         start={{ x: 0, y: 0 }}
@@ -1356,7 +1356,7 @@ const styles = StyleSheet.create({
     top: 15,
     left: -35,
     width: 120,
-    paddingVertical: 4,
+    paddingVertical: 3,
     transform: [{ rotate: "-45deg" }],
     justifyContent: "center",
     alignItems: "center",
@@ -1365,11 +1365,11 @@ const styles = StyleSheet.create({
   },
   organicRibbonText: {
     color: "#fff",
-    fontSize: 10,
-    fontWeight: "600",
+    fontSize: 8,
+    // fontWeight: "600",
     textAlign: "center",
-    fontFamily: "DMSans-Bold",
-    textTransform: "uppercase",
+    fontFamily: "DMSans-SemiBold",
+    // textTransform: "uppercase",
   },
   badgeCart: {
     position: "absolute",

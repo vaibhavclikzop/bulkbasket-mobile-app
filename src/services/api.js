@@ -26,7 +26,6 @@ api.interceptors.request.use(
 );
 
 // ---------------- PROFILE API ----------------
-
 export const getProfileApi = async () => {
   try {
     const response = await api.get("/get-profile");
@@ -37,7 +36,6 @@ export const getProfileApi = async () => {
 };
 
 // ---------------- COMPANY PROFILE API ----------------
-
 export const getCompanyProfileApi = async () => {
   try {
     const response = await api.get("/get-company");
@@ -48,7 +46,6 @@ export const getCompanyProfileApi = async () => {
 };
 
 // ---------------- UPDATE COMPANY PROFILE API ----------------
-
 export const updateCompanyProfileApi = async (data) => {
   try {
     const token = await AsyncStorage.getItem("userToken");
@@ -76,7 +73,6 @@ export const updateCompanyProfileApi = async (data) => {
 };
 
 // ---------------- UPDATE PROFILE API ----------------
-
 export const updateProfileApi = async (data) => {
   try {
     const response = await api.post("/update-profile", data);
@@ -86,8 +82,7 @@ export const updateProfileApi = async (data) => {
   }
 };
 
-// ---------------- GET PRODUCTS API ----------------
-
+// ---------------- GET PRODUCTS API ---------------- //
 export const getProductsApi = async (
   catId,
   subcat_id = null,
@@ -96,11 +91,9 @@ export const getProductsApi = async (
   try {
     let url = `/get-products/${catId}`;
 
-    // if subcategory selected
     if (subcat_id) {
       url += `/${subcat_id}`;
 
-      // if multiple subsub categories selected
       if (subsubcats.length > 0) {
         url += `/${subsubcats.join(",")}`;
       }
@@ -286,7 +279,6 @@ export const getWishlistApi = async () => {
     const response = await api.get("/get-wishlist");
 
     console.log("Get Wishlist API Response:", response.data);
-
     return response.data;
   } catch (error) {
     console.log(

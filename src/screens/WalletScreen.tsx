@@ -73,9 +73,14 @@ export default function WalletScreen({ navigation }: any) {
             <Text numberOfLines={1} style={styles.transactionTitleText}>
               {item.particular}
             </Text>
-
             <Text numberOfLines={1} style={styles.transactionSub}>
               {item.invoice_no}
+            </Text>
+            <Text
+              numberOfLines={1}
+              style={[styles.transactionSub, { color: "#000" }]}
+            >
+              {item.pay_date?.split(" ")[0]}
             </Text>
           </View>
         </View>

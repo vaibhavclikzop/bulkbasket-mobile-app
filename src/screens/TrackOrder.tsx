@@ -11,13 +11,14 @@ import Feather from "@react-native-vector-icons/feather";
 import { SafeAreaView } from "react-native-safe-area-context";
 const TrackOrder = ({ navigation }: any) => {
   const [isOpen, setIsOpen] = useState(true);
-  const rightIcon = require("../assets/Common/righticon.png");
-  const currentIcon = require("../assets/Common/CurrentPlaceHolder.png");
-  const pendingIcon = require("../assets/Common/BalckPlaceHolder.png");
-  const Step = ({ title, location, time, icon, isLast }: any) => (
+  const Tick = require("../assets/TrackOrder/tick.png");
+  const CurrentPlaceHolder = require("../assets/TrackOrder/reviewing.png");
+  const pendingIcon = require("../assets/TrackOrder/pending.png");
+  const Step = ({ title, location, time, icon, isLast, image }: any) => (
     <View style={styles.stepRow}>
       <View style={styles.stepLeft}>
-        <Image source={icon} style={styles.stepIcon} />
+        {/* <Image source={icon} style={styles.stepIcon} /> */}
+        <Image source={icon || image || pendingIcon} style={styles.stepIcon} />
         {!isLast && <View style={styles.line} />}
       </View>
 
@@ -30,7 +31,7 @@ const TrackOrder = ({ navigation }: any) => {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView edges={["top"]} style={styles.safeArea}>
       <View style={styles.container}>
         {/* Back Button */}
         <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -86,35 +87,35 @@ const TrackOrder = ({ navigation }: any) => {
               time="16 Jan 2025, 5:00 PM"
               title="Order challan has been generated"
               location="Chandigarh"
-              icon={rightIcon}
+              image={Tick}
             />
 
             <Step
               time="16 Jan 2025, 5:15 PM"
               title="Material in processing"
               location="Chandigarh"
-              icon={currentIcon}
+              image={CurrentPlaceHolder}
             />
 
             <Step
               time="17 Jan 2025"
               title="Packed"
               location="Himachal Pradesh"
-              icon={pendingIcon}
+              image={pendingIcon}
             />
 
             <Step
               time="17 Jan 2025"
               title="Dispatched"
               location="Himachal Pradesh"
-              icon={pendingIcon}
+              image={pendingIcon}
             />
 
             <Step
               time="17 Jan 2025"
               title="Delivered"
               location="Himachal Pradesh"
-              icon={pendingIcon}
+              image={pendingIcon}
               isLast
             />
           </View>

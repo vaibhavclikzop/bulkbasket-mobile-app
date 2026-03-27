@@ -19,11 +19,11 @@ import {
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import Carousel from "react-native-reanimated-carousel";
 import ProductCard from "../components/ProductCard";
-import { HomeStackParamList } from "../navigation/HomeStack";
+// import { HomeStackParamList } from "../navigation/HomeStack";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
-import Geolocation from "react-native-geolocation-service";
+import Geolocation from "@react-native-community/geolocation";
 import {
   BASE_URL,
   getProfileApi,
@@ -258,60 +258,164 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
+  // const fetchAddresses = async () => {
+  //   try {
+  //     const res = await getAddressApi();
+  //     const list: any[] = res?.data || [];
+  //     const def = list.find((a: any) => a.default_status === 1);
+  //     if (def) {
+  //       setDefaultAddress(def);
+  //     } else {
+  //       // No default address — attempt geolocation
+  //       const request = async () => {
+  //         Geolocation.getCurrentPosition(
+  //           async (pos) => {
+  //             const { latitude, longitude } = pos.coords;
+  //             try {
+  //               const GOOGLE_API_KEY =
+  //                 "AIzaSyBV3qwiKVCy9lq9l67nSOPGB-1Z9G5qLpo";
+  //               const response = await axios.get(
+  //                 `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_API_KEY}`,
+  //               );
+  //               console.log("Current location data:", response.data);
+
+  //               if (
+  //                 response.data &&
+  //                 response.data.results &&
+  //                 response.data.results.length > 0
+  //               ) {
+  //                 const fullAddress =
+  //                   response.data.results[0].formatted_address;
+  //                 const addressParts = fullAddress.split(", ");
+  //                 const shortAddress = addressParts.slice(0, 3).join(", ");
+  //                 setCurrentLocation(shortAddress);
+  //               } else {
+  //                 setCurrentLocation(
+  //                   `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
+  //                 );
+  //               }
+  //             } catch (err: any) {
+  //               console.log("Geocoding error:", err.message);
+  //               setCurrentLocation(
+  //                 `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
+  //               );
+  //             }
+  //           },
+  //           (err) => console.log("Geolocation error:", err.message),
+  //           { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+  //         );
+  //       };
+  //       if (Platform.OS === "android") {
+  //         const granted = await PermissionsAndroid.request(
+  //           PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+  //         );
+
+  //         if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+  //           request();
+  //         } else {
+  //           console.log("Permission denied");
+  //           setCurrentLocation("Permission denied");
+  //           Alert.alert(
+  //             "Permission Required",
+  //             "Please enable location permission",
+  //           );
+  //         }
+  //       } else {
+  //         const auth = await Geolocation.requestAuthorization("whenInUse");
+
+  //         if (auth === "granted") {
+  //           request();
+  //         } else {
+  //           console.log("Permission denied");
+  //           setCurrentLocation("Permission denied");
+  //         }
+  //       }
+  //     }
+  //   } catch (error) {
+  //     console.log("Fetch Address Error", error);
+  //   }
+  // };
+
+  // Returns "19 Mar" style date, N days from today
+
+  const getCurrentLocation = (): Promise<void> => {
+    return new Promise((resolve) => {
+      Geolocation.getCurrentPosition(
+        async (pos) => {
+          const { latitude, longitude } = pos.coords;
+          try {
+            const GOOGLE_API_KEY = "AIzaSyBV3qwiKVCy9lq9l67nSOPGB-1Z9G5qLpo";
+            const response = await axios.get(
+              `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_API_KEY}`,
+            );
+
+            if (response.data?.results?.length > 0) {
+              const fullAddress = response.data.results[0].formatted_address;
+              const shortAddress = fullAddress
+                .split(", ")
+                .slice(0, 3)
+                .join(", ");
+              setCurrentLocation(shortAddress);
+            } else {
+              setCurrentLocation(
+                `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
+              );
+            }
+          } catch (err: any) {
+            console.log("Geocoding error:", err.message);
+            setCurrentLocation(
+              `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
+            );
+          }
+          resolve();
+        },
+        (err) => {
+          console.log("Geolocation error:", err.message);
+          setCurrentLocation("Location unavailable");
+          resolve(); // ✅ don't hang forever on error
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+      );
+    });
+  };
+
   const fetchAddresses = async () => {
     try {
       const res = await getAddressApi();
       const list: any[] = res?.data || [];
       const def = list.find((a: any) => a.default_status === 1);
-      if (def) {
-        setDefaultAddress(def);
-      } else {
-        // No default address — attempt geolocation
-        const request = async () => {
-          Geolocation.getCurrentPosition(
-            async (pos) => {
-              const { latitude, longitude } = pos.coords;
-              try {
-                const GOOGLE_API_KEY =
-                  "AIzaSyBV3qwiKVCy9lq9l67nSOPGB-1Z9G5qLpo";
-                const response = await axios.get(
-                  `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_API_KEY}`,
-                );
 
-                if (
-                  response.data &&
-                  response.data.results &&
-                  response.data.results.length > 0
-                ) {
-                  const fullAddress =
-                    response.data.results[0].formatted_address;
-                  const addressParts = fullAddress.split(", ");
-                  const shortAddress = addressParts.slice(0, 3).join(", ");
-                  setCurrentLocation(shortAddress);
-                } else {
-                  setCurrentLocation(
-                    `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
-                  );
-                }
-              } catch (err: any) {
-                console.log("Geocoding error:", err.message);
-                setCurrentLocation(
-                  `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
-                );
-              }
-            },
-            (err) => console.log("Geolocation error:", err.message),
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
-          );
-        };
-        if (Platform.OS === "android") {
-          const granted = await PermissionsAndroid.request(
-            PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-          );
-          if (granted === PermissionsAndroid.RESULTS.GRANTED) request();
+      if (def) {
+        // ✅ Step 1: Has default address — just set it, skip geolocation
+        setDefaultAddress(def);
+        return; // 👈 early return, no need to go further
+      }
+
+      // ✅ Step 2: No default address (includes empty list []) — request permission
+      if (Platform.OS === "android") {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        );
+
+        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+          await getCurrentLocation();
         } else {
-          Geolocation.requestAuthorization("whenInUse");
-          request();
+          console.log("Permission denied");
+          setCurrentLocation("Permission denied");
+          Alert.alert(
+            "Permission Required",
+            "Please enable location permission",
+          );
+        }
+      } else {
+        // iOS
+        const auth = await Geolocation.requestAuthorization("whenInUse");
+
+        if (auth === "granted") {
+          await getCurrentLocation(); // 👈 same extracted function
+        } else {
+          console.log("Permission denied");
+          setCurrentLocation("Permission denied");
         }
       }
     } catch (error) {
@@ -319,7 +423,6 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
-  // Returns "19 Mar" style date, N days from today
   const getDeliveryDate = (daysAhead: number = 2) => {
     const MONTHS = [
       "Jan",
@@ -392,8 +495,6 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
     useCallback(() => {
       const checkTokenAndFetch = async () => {
         const token = await AsyncStorage.getItem("userToken");
-        console.log("asdkjhaskhdjashd", token);
-
         if (!token) {
           // navigation.navigate("Signup");
           return;
@@ -947,7 +1048,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
                   price={item.base_price}
                   oldPrice={item.mrp}
                   discount={item.discount}
-                  isOrganic={false}
+                  isOrganic={item.is_organic || false}
                   onAddPress={() => handleAddToCart(item.id, 1)}
                   onPress={() =>
                     navigation.navigate("ProductDetail", {

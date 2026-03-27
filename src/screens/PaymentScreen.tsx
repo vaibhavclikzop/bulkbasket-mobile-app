@@ -62,27 +62,27 @@ const PaymentScreen = ({ navigation, route }: any) => {
   }, []);
 
   const handleOrder = async () => {
-    try {
-      const payload = {
-        delivery_date,
-        address: address_id,
-        state,
-        district,
-        city,
-        pincode,
-        pay_mode: "wallet",
-        remarks: delivery_instruction,
-      };
+    // try {
+    //   const payload = {
+    //     delivery_date,
+    //     address: address_id,
+    //     state,
+    //     district,
+    //     city,
+    //     pincode,
+    //     pay_mode: "wallet",
+    //     remarks: delivery_instruction,
+    //   };
 
-      const res = await saveOrderApi(payload);
+    //   const res = await saveOrderApi(payload);
 
-      console.log("Order Success:", res);
-      Alert.alert("Success", "Order placed successfully");
-      navigation.navigate("OrderConfirmScreen");
-    } catch (error: any) {
-      console.log("Order Failed:", error);
-      Alert.alert("Error", error.message);
-    }
+    //   console.log("Order Success:", res);
+    //   Alert.alert("Success", "Order placed successfully");
+    navigation.navigate("OrderConfirmScreen");
+    // } catch (error: any) {
+    //   console.log("Order Failed:", error);
+    //   Alert.alert("Error", error.message);
+    // }
   };
 
   const PaymentOption = ({ id, title, subtitle, icon, disabled }: any) => (
@@ -206,7 +206,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
             <Text style={styles.promoText}>Apply promos before you order</Text>
             <Image
               source={require("../assets/Common/ArrowRight.png")}
-              style={{ height: 14, width: 14 }}
+              style={{ height: 10, width: 10 }}
               resizeMode="contain"
             />
           </TouchableOpacity>

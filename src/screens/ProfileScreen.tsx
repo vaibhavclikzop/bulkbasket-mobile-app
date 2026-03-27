@@ -7,10 +7,12 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
+import { useFocusEffect } from "@react-navigation/native";
 import { BASE_URL, getProfileApi } from "../services/api";
 import {
   launchImageLibrary,
@@ -67,6 +69,7 @@ export default function ProfileScreen({ navigation }: any) {
   const [image, setImage] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
+  const [imageLoading, setImageLoading] = useState(true);
 
   const openGallery = (): void => {
     const options: ImageLibraryOptions = {
@@ -127,9 +130,9 @@ export default function ProfileScreen({ navigation }: any) {
       console.log("Update Profile Response:", response.data);
       getProfile();
       if (response.data.error === false) {
-        Alert.alert("Profile Updated", "Profile updated successfully");
+        // Alert.alert("Profile Updated", "Profile updated successfully");
       } else {
-        Alert.alert("Profile Update Failed", "Profile update failed");
+        // Alert.alert("Profile Update Failed", "Profile update failed");
       }
     } catch (error) {
       console.log("Update Profile Error:", error);
@@ -149,7 +152,7 @@ export default function ProfileScreen({ navigation }: any) {
       if (data.image) {
         setImage(data.image);
       }
-      setName(data.name);
+      setName(data.customer_name);
     } catch (error: any) {
       console.log("Get Profile Error:", error.response?.data || error.message);
     } finally {
@@ -157,9 +160,11 @@ export default function ProfileScreen({ navigation }: any) {
     }
   };
 
-  useEffect(() => {
-    getProfile();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      getProfile();
+    }, []),
+  );
 
   const handleLogOut = async () => {
     try {
@@ -187,6 +192,11 @@ export default function ProfileScreen({ navigation }: any) {
               onPress={openGallery}
               style={styles.avatarWrapper}
             >
+              {imageLoading && (
+                <View style={styles.loaderContainer}>
+                  <ActivityIndicator size="small" color="#487D44" />
+                </View>
+              )}
               <Image
                 source={
                   image
@@ -196,6 +206,8 @@ export default function ProfileScreen({ navigation }: any) {
                       }
                 }
                 style={styles.avatar}
+                onLoadStart={() => setImageLoading(true)}
+                onLoadEnd={() => setImageLoading(false)}
               />
 
               <View style={styles.verifiedBadge}>
@@ -401,5 +413,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginLeft: 8,
     fontFamily: "DMSans-SemiBold",
+  },
+  loaderContainer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 10,
   },
 });

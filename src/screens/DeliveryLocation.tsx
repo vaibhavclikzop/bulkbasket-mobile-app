@@ -15,7 +15,7 @@ import {
   KeyboardAvoidingView,
 } from "react-native";
 import MapView, { PROVIDER_GOOGLE } from "react-native-maps";
-import Geolocation from "react-native-geolocation-service";
+import Geolocation from "@react-native-community/geolocation";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Styles from "../components/Styles";
 import { saveAddressApi, getStatesApi, getDistrictsApi } from "../services/api";
@@ -55,24 +55,26 @@ const DeliveryLocationScreen = ({ navigation, route }: any) => {
   const fetchStates = async () => {
     try {
       const res = await getStatesApi();
+      console.log("Fetch States Response:", res?.data);
       if (res?.data) {
         setStatesList(res.data);
       }
     } catch (e) {
-      console.log(e);
+      console.log("Fetch States Error:", e);
     }
   };
 
   const fetchDistricts = async (stateId: string) => {
     try {
+      console.log("Fetching Districts for stateId:", stateId);
       const res = await getDistrictsApi(stateId);
-      console.log("District Response", res.data);
+      console.log("District Response for stateId " + stateId + ":", res.data);
 
       if (res?.data) {
         setDistrictsList(res.data);
       }
     } catch (e) {
-      console.log(e);
+      console.log("Fetch Districts Error:", e);
     }
   };
 
@@ -120,62 +122,58 @@ const DeliveryLocationScreen = ({ navigation, route }: any) => {
     }
   }, [route.params?.addressData]);
 
-  const requestLocationPermission = async () => {
-    if (Platform.OS === "ios") {
-      Geolocation.requestAuthorization("whenInUse");
-      return true;
-    }
-
-    try {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-      );
-      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-        return true;
-      } else {
-        Alert.alert("Permission Denied", "Location permission is required.");
-        return false;
-      }
-    } catch (err) {
-      console.warn(err);
-      return false;
-    }
-  };
-
   const getCurrentLocation = async () => {
-    const hasPermission = await requestLocationPermission();
-    if (!hasPermission) return;
+    const request = () => {
+      Geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
 
-    Geolocation.getCurrentPosition(
-      (position) => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
+          setRegion({
+            ...region,
+            latitude: lat,
+            longitude: lng,
+          });
 
-        setRegion({
-          ...region,
-          latitude: lat,
-          longitude: lng,
-        });
+          setMarker({
+            latitude: lat,
+            longitude: lng,
+          });
 
-        setMarker({
-          latitude: lat,
-          longitude: lng,
-        });
+          if (mapRef.current) {
+            mapRef.current.animateToRegion({
+              latitude: lat,
+              longitude: lng,
+              latitudeDelta: 0.01,
+              longitudeDelta: 0.01,
+            });
+          }
 
-        mapRef.current?.animateToRegion({
-          latitude: lat,
-          longitude: lng,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        });
+          getAddress(lat, lng);
+        },
+        (error) => {
+          console.log("Geolocation error:", error.message);
+          Alert.alert("Error", error.message);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+      );
+    };
 
-        getAddress(lat, lng);
-      },
-      (error) => {
-        // Optional
-      },
-      { enableHighAccuracy: true },
-    );
+    if (Platform.OS === "android") {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        );
+        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+          setTimeout(request, 1000);
+        }
+      } catch (err) {
+        console.warn("Permission Request Error:", err);
+      }
+    } else {
+      Geolocation.requestAuthorization();
+      request();
+    }
   };
 
   const mapAddress = async () => {
@@ -228,28 +226,55 @@ const DeliveryLocationScreen = ({ navigation, route }: any) => {
 
   const getAddress = async (lat: number, lng: number) => {
     try {
+      console.log("Reverse Geocoding for:", lat, lng);
       const res = await fetch(
         `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${API_KEY}`,
       );
 
       const json = await res.json();
+      console.log("Geocoding Status:", json.status);
 
       if (json.status === "OK" && json.results && json.results.length > 0) {
         const result = json.results[0];
+        console.log("Geocoding Result:", result.formatted_address);
 
-        setAddress(result.formatted_address);
+        setAddress(result.formatted_address || "");
+
+        let detectedState = "";
+        let detectedDistrict = "";
+        let detectedPincode = "";
 
         result.address_components.forEach((item: any) => {
-          if (item.types.includes("locality")) setDistrict(item.long_name);
-
+          if (item.types.includes("locality"))
+            detectedDistrict = item.long_name;
           if (item.types.includes("administrative_area_level_1"))
-            setState(item.long_name);
-
-          if (item.types.includes("postal_code")) setPincode(item.long_name);
+            detectedState = item.long_name;
+          if (item.types.includes("postal_code"))
+            detectedPincode = item.long_name;
         });
+
+        console.log("Detected State:", detectedState);
+        console.log("Detected District:", detectedDistrict);
+        console.log("Detected Pincode:", detectedPincode);
+
+        if (detectedDistrict) setDistrict(detectedDistrict);
+        if (detectedPincode) setPincode(detectedPincode);
+        if (detectedState) {
+          setState(detectedState);
+          // Find state ID to fetch districts
+          const stateObj = statesList.find(
+            (s: any) =>
+              (s.title || s.name || s.state_name || s.state)?.toLowerCase() ===
+              detectedState.toLowerCase(),
+          );
+          console.log("Matched State Object:", stateObj);
+          if (stateObj && stateObj.id) {
+            fetchDistricts(stateObj.id.toString());
+          }
+        }
       }
     } catch (error) {
-      console.log(error);
+      console.log("Get Address Error", error);
     }
   };
 
@@ -392,11 +417,21 @@ const DeliveryLocationScreen = ({ navigation, route }: any) => {
 
             {/* Form */}
             <View style={styles.form}>
+              {/* <TextInput
+                placeholder="Address"
+                style={styles.input}
+                value={address}
+                onChangeText={setAddress}
+              /> */}
               <TextInput
                 placeholder="Address"
                 style={styles.input}
                 value={address}
                 onChangeText={setAddress}
+                textAlign="left"
+                textAlignVertical="center"
+                multiline={true}
+                numberOfLines={2}
               />
 
               {/* State Dropdown Trigger */}
@@ -473,7 +508,9 @@ const DeliveryLocationScreen = ({ navigation, route }: any) => {
                             item?.state;
                           setState(selectedStateName);
                           setDistrict(""); // reset district when state changes
-                          fetchDistricts(selectedStateName);
+                          if (item?.id) {
+                            fetchDistricts(item.id.toString());
+                          }
                           setShowStateModal(false);
                         }}
                       >

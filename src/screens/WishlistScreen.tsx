@@ -29,6 +29,7 @@ export default function WishlistScreen({ navigation }: any) {
   const [updatingQtyId, setUpdatingQtyId] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [searchText, setSearchText] = useState("");
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchWishlist();
@@ -58,6 +59,7 @@ export default function WishlistScreen({ navigation }: any) {
         discount: item.discount,
         image: item.image,
         name: item.name,
+        is_organic: item.product_type?.toLowerCase() === "organic",
       }));
 
       setWishlistData(transformedData);
@@ -85,10 +87,10 @@ export default function WishlistScreen({ navigation }: any) {
 
       if (newStatus) {
         await addToWishlistApi(productId);
-        Alert.alert("Success", "Added to wishlist");
+        // Alert.alert("Success", "Added to wishlist");
       } else {
         await updateWishlistQtyApi(productId, 0);
-        Alert.alert("Success", "Removed from wishlist");
+        // Alert.alert("Success", "Removed from wishlist");
         fetchWishlist();
       }
     } catch (error) {
@@ -252,7 +254,7 @@ export default function WishlistScreen({ navigation }: any) {
               price={item.price || item.mrp}
               oldPrice={item.mrp}
               discount={item.discount}
-              isOrganic={item.isOrganic || false}
+              isOrganic={item.product_type?.toLowerCase() === "organic"}
               bestRate={item.bestRate || "Best rate available"}
               tiers={item.price_tiers || []}
               cart_status={false} // Wishlist items are not in cart

@@ -16,6 +16,8 @@ import {
   searchProductsApi,
   addToCartApi,
   updateCartQuantityApi,
+  addToWishlistApi,
+  updateWishlistQtyApi,
 } from "../services/api";
 import { debounce } from "lodash";
 import ProductCard from "./ProductCard";
@@ -25,7 +27,6 @@ const recent = ["Spices", "Haldi", "Garam Masala", "Seeds", "Chilli Powder"];
 
 const SearchScreen = ({ navigation }: any) => {
   const { width } = useWindowDimensions();
-  // 16px left pad + 16px right pad + 8px gap between cards
   const cardWidth = (width - 32 - 8) / 2;
 
   const [query, setQuery] = useState("");
@@ -61,6 +62,35 @@ const SearchScreen = ({ navigation }: any) => {
   const onChangeText = (text: string) => {
     setQuery(text);
     debouncedSearch(text);
+  };
+
+  const toggleWishlist = async (product: any) => {
+    try {
+      const newStatus = !product.wishlist_status;
+
+      // Optimistic UI update
+      setResults((prev) =>
+        prev.map((p) =>
+          p.id === product.id ? { ...p, wishlist_status: newStatus } : p,
+        ),
+      );
+
+      if (newStatus) {
+        await addToWishlistApi(product.id);
+      } else {
+        await updateWishlistQtyApi(product.id, 0);
+      }
+    } catch (error) {
+      console.log("Wishlist Toggle Error:", error);
+      // Revert on error
+      setResults((prev) =>
+        prev.map((p) =>
+          p.id === product.id
+            ? { ...p, wishlist_status: product.wishlist_status }
+            : p,
+        ),
+      );
+    }
   };
 
   /* ─── Cart helpers ─── */
@@ -115,12 +145,10 @@ const SearchScreen = ({ navigation }: any) => {
     debouncedUpdateCartApi(productId, finalQty);
   };
 
-  /* ─── Render ─── */
   return (
     <>
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
       <SafeAreaView style={styles.container}>
-        {/* HEADER */}
         <View style={styles.searchHeader}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Image
@@ -205,6 +233,8 @@ const SearchScreen = ({ navigation }: any) => {
                   cartQty={item.cart?.qty}
                   onUpdateQty={(newQty) => updateQty(item.id, newQty)}
                   updatingQty={updatingQtyId === item.id}
+                  wishlist_status={item.wishlist_status} // ✅ ADD THIS
+                  onWishlistPress={() => toggleWishlist(item)}
                   onTierAddPress={(tierQty: number) => {
                     if (item.cart_status) {
                       updateQty(item.id, tierQty);
@@ -309,6 +339,7 @@ const styles = StyleSheet.create({
     width: 15,
     height: 15,
     marginRight: 10,
+    borderRadius: 20,
   },
   suggestionText: {
     fontSize: 14,

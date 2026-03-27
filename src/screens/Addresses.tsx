@@ -22,6 +22,7 @@ const Addresses = ({ navigation, route }: any) => {
   const delivery_date = route?.params?.delivery_date;
   const delivery_instruction = route?.params?.delivery_instruction;
   const isCheckoutFlow = !!delivery_date;
+
   const [selected, setSelected] = useState<number | string>(1);
   const [addressList, setAddressList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -89,7 +90,6 @@ const Addresses = ({ navigation, route }: any) => {
               setLoading(true);
               const res = await deleteAddressApi(id);
               // console.log("Delete Address", res);
-
               if (res) {
                 Alert.alert("Success", "Address deleted successfully");
                 fetchAddresses();
@@ -110,10 +110,7 @@ const Addresses = ({ navigation, route }: any) => {
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <View style={styles.container}>
-        {/* Header */}
         <Header title="Addresses" backgroundColor="#fff" />
-
-        {/* Add Address Button */}
         <TouchableOpacity
           style={styles.addBtn}
           onPress={() => {

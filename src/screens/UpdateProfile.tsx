@@ -31,6 +31,7 @@ const UpdateProfile = ({ navigation }: any) => {
   const [address, setAddress] = useState("");
   const [number, setNumber] = useState("");
   const [initialLoading, setInitialLoading] = useState(true);
+  const [imageLoading, setImageLoading] = useState(true);
 
   const getProfile = async () => {
     try {
@@ -73,17 +74,30 @@ const UpdateProfile = ({ navigation }: any) => {
     };
 
     launchImageLibrary(options, (response: ImagePickerResponse) => {
+      console.log(
+        "[ImagePicker] Raw response:",
+        JSON.stringify(response, null, 2),
+      );
       if (response.didCancel) {
-        console.log("User cancelled image picker");
+        console.log("[ImagePicker] User cancelled");
       } else if (response.errorCode) {
-        console.log("ImagePicker Error: ", response.errorMessage);
+        console.log(
+          "[ImagePicker] Error:",
+          response.errorCode,
+          response.errorMessage,
+        );
       } else {
         const asset = response.assets?.[0];
-
         if (asset) {
-          console.log("Selected Image:", asset);
+          console.log("[ImagePicker] Asset selected:");
+          console.log("  uri    :", asset.uri);
+          console.log("  type   :", asset.type);
+          console.log("  name   :", asset.fileName);
+          console.log("  size   :", asset.fileSize, "bytes");
           setImage(asset);
           handleUpdateProfile(asset);
+        } else {
+          console.log("[ImagePicker] No asset found in response");
         }
       }
     });
@@ -94,6 +108,11 @@ const UpdateProfile = ({ navigation }: any) => {
       setLoading(true);
 
       const token = await AsyncStorage.getItem("userToken");
+      console.log(
+        "[Upload] Token:",
+        token ? `${token.slice(0, 20)}...` : "NULL ❌",
+      );
+
       const formData = new FormData();
 
       if (email) formData.append("email", email);
@@ -102,13 +121,23 @@ const UpdateProfile = ({ navigation }: any) => {
 
       const imageToUpload =
         selectedImage && selectedImage.uri ? selectedImage : image;
+
       if (imageToUpload && imageToUpload.uri) {
-        formData.append("image", {
+        const imagePayload = {
           uri: imageToUpload.uri,
           type: imageToUpload.type || "image/jpeg",
           name: imageToUpload.fileName || "profile.jpg",
-        } as any);
+        };
+        console.log("[Upload] Appending image to FormData:", imagePayload);
+        formData.append("image", imagePayload as any);
+      } else {
+        console.log(
+          "[Upload] ⚠️ No image to upload. imageToUpload =",
+          imageToUpload,
+        );
       }
+
+      console.log("[Upload] Sending POST to:", `${BASE_URL}/update-profile`);
 
       const response = await axios.post(
         `${BASE_URL}/update-profile`,
@@ -122,16 +151,31 @@ const UpdateProfile = ({ navigation }: any) => {
         },
       );
 
-      console.log("Update Profile Response:", response.data);
-      getProfile();
+      console.log("[Upload] ✅ Response status:", response.status);
+      console.log(
+        "[Upload] ✅ Response data:",
+        JSON.stringify(response.data, null, 2),
+      );
+
       if (response.data.error === false) {
-        Alert.alert("Profile Updated", "Profile updated successfully");
-        getProfile();
+        if (selectedImage) {
+          Alert.alert("Success", "Profile photo updated.");
+        } else {
+          await getProfile();
+          Alert.alert("Profile Updated", "Profile updated successfully");
+        }
       } else {
-        Alert.alert("Profile Update Failed", "Profile update failed");
+        console.log("[Upload] ❌ Server returned error:", response.data);
+        Alert.alert(
+          "Profile Update Failed",
+          JSON.stringify(response.data?.message || response.data),
+        );
       }
-    } catch (error) {
-      console.log("Update Profile Error:", error);
+    } catch (error: any) {
+      console.log("[Upload] ❌ Exception caught:");
+      console.log("  message :", error.message);
+      console.log("  status  :", error.response?.status);
+      console.log("  data    :", JSON.stringify(error.response?.data, null, 2));
     } finally {
       setLoading(false);
     }
@@ -174,15 +218,22 @@ const UpdateProfile = ({ navigation }: any) => {
               onPress={openGallery}
               style={styles.avatarWrapper}
             >
+              {imageLoading && (
+                <View style={styles.loaderContainer}>
+                  <ActivityIndicator size="small" color="#487D44" />
+                </View>
+              )}
               <Image
                 source={
                   image
-                    ? { uri: image.uri || image }
+                    ? { uri: typeof image === "string" ? image : image.uri }
                     : {
                         uri: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5",
                       }
                 }
                 style={styles.avatar}
+                onLoadStart={() => setImageLoading(true)}
+                onLoadEnd={() => setImageLoading(false)}
               />
 
               <View style={styles.editIcon}>
@@ -205,10 +256,11 @@ const UpdateProfile = ({ navigation }: any) => {
                 <TextInput
                   style={styles.input}
                   placeholder="gourmet@bistro.in"
-                  // editable={false}
                   placeholderTextColor="#64748B"
                   value={email}
                   onChangeText={setEmail}
+                  textAlign="left"
+                  textAlignVertical="center"
                 />
               </View>
 
@@ -344,6 +396,7 @@ const styles = StyleSheet.create({
   avatarWrapper: {
     position: "relative",
     marginBottom: 10,
+    borderRadius: 20,
   },
 
   avatar: {
