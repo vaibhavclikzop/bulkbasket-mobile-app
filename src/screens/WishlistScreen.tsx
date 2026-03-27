@@ -197,6 +197,7 @@ export default function WishlistScreen({ navigation }: any) {
             : i,
         ),
       );
+      fetchWishlist();
     } catch (error) {
       console.log("Add to Cart Error:", error);
       Alert.alert("Error", "Could not add to cart. Please try again.");

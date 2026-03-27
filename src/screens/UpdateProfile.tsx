@@ -154,7 +154,7 @@ const UpdateProfile = ({ navigation }: any) => {
       console.log("[Upload] ✅ Response status:", response.status);
       console.log(
         "[Upload] ✅ Response data:",
-        JSON.stringify(response.data, null, 2),
+        JSON.stringify(response, null, 2),
       );
 
       if (response.data.error === false) {
@@ -496,7 +496,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     fontFamily: "DMSans-Regular",
-    // backgroundColor: "#FFF",s
+    // backgroundColor: "#FFF",
   },
 
   verifiedBadge: {
@@ -542,7 +542,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.3)",
+    // backgroundColor: "rgba(0,0,0,0.3)",
     justifyContent: "center",
     alignItems: "center",
     zIndex: 999,

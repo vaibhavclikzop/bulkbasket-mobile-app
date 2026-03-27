@@ -492,7 +492,9 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
 
             <TouchableOpacity
               style={styles.iconCircle}
-              onPress={() => navigation.navigate("Cart", { screen: "CartMain" })}
+              onPress={() =>
+                navigation.navigate("Cart", { screen: "CartMain" })
+              }
             >
               <Image
                 source={require("../assets/Common/cart.png")}
@@ -611,12 +613,27 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                           borderColor: "#487D44",
                         },
                       ]}
+                      // onPress={() => {
+                      //   const subSubCatId = Number(item?.id);
+                      //   if (selectedSubSubCats.includes(subSubCatId)) {
+                      //     setSelectedSubSubCats([]);
+                      //   } else {
+                      //     setSelectedSubSubCats([subSubCatId]);
+                      //   }
+                      // }}
                       onPress={() => {
                         const subSubCatId = Number(item?.id);
                         if (selectedSubSubCats.includes(subSubCatId)) {
-                          setSelectedSubSubCats([]);
+                          // ✅ Remove this one from selection
+                          setSelectedSubSubCats((prev) =>
+                            prev.filter((id) => id !== subSubCatId),
+                          );
                         } else {
-                          setSelectedSubSubCats([subSubCatId]);
+                          // ✅ Add this one to existing selection
+                          setSelectedSubSubCats((prev) => [
+                            ...prev,
+                            subSubCatId,
+                          ]);
                         }
                       }}
                     >

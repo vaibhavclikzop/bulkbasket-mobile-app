@@ -125,7 +125,7 @@ const EstimateScreen = ({ navigation }: Props) => {
   /* ================= UI ================= */
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView edges={["top"]} style={styles.safeArea}>
       {/* Header */}
       <Header title="Estimates" />
 

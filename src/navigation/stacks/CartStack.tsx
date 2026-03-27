@@ -8,6 +8,7 @@ import OrderConfirmScreen from "../../screens/OrderConfirmScreen";
 import OrderSummery from "../../screens/OrderSummery";
 import CheckoutAddressScreen from "../../screens/CheckoutAddressScreen";
 import TrackOrder from "../../screens/TrackOrder";
+import AddressAddUpd from "../../screens/AddressAddUpd";
 
 export type CartStackParamList = {
   CartMain: undefined;
@@ -19,6 +20,7 @@ export type CartStackParamList = {
   OrderConfirmScreen: undefined;
   OrderSummery: undefined;
   TrackOrder: undefined;
+  AddressAddUpd: { addressData?: any } | undefined;
 };
 
 const Stack = createNativeStackNavigator<CartStackParamList>();
@@ -36,6 +38,7 @@ const CartStack = () => {
       <Stack.Screen name="OrderConfirmScreen" component={OrderConfirmScreen} />
       <Stack.Screen name="OrderSummery" component={OrderSummery} />
       <Stack.Screen name="TrackOrder" component={TrackOrder} />
+      <Stack.Screen name="AddressAddUpd" component={AddressAddUpd} />
     </Stack.Navigator>
   );
 };
