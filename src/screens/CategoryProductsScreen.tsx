@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { debounce } from "lodash";
 import {
   View,
@@ -120,6 +120,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
   const [refreshing, setRefreshing] = useState(false);
   const [cartLoading, setCartLoading] = useState(true);
   const [cartItems, setCartItems] = useState<any[]>([]);
+  const productListRef = useRef<FlatList>(null);
 
   const fetchCart = async () => {
     try {
@@ -365,9 +366,15 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
   const filteredProducts = (categories[selectedIndex]?.products || []).filter(
     (p) => {
       if (selectedSubSubCats.length === 0) return true;
-      return selectedSubSubCats.includes(Number(p.product_sub_sub_category));
+      return selectedSubSubCats.map(String).includes(String(p.product_sub_sub_category));
     },
   );
+
+  useEffect(() => {
+    if (productListRef.current) {
+      productListRef.current.scrollToOffset({ offset: 0, animated: true });
+    }
+  }, [selectedIndex, selectedSubSubCats]);
 
   const onRefresh = useCallback(async () => {
     try {
@@ -603,20 +610,11 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                       ]}
                       onPress={() => {
                         const subSubCatId = Number(item?.id);
-                        console.log("Clicked Sub-SubCategory ID:", subSubCatId);
-                        console.log("Sub-SubCategory Name:", item?.name);
-
-                        let updated = [];
-
                         if (selectedSubSubCats.includes(subSubCatId)) {
-                          updated = selectedSubSubCats.filter(
-                            (id) => id !== subSubCatId,
-                          );
+                          setSelectedSubSubCats([]);
                         } else {
-                          updated = [...selectedSubSubCats, subSubCatId];
+                          setSelectedSubSubCats([subSubCatId]);
                         }
-
-                        setSelectedSubSubCats(updated);
                       }}
                     >
                       <Text
@@ -634,6 +632,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                 }
               />
               <FlatList
+                ref={productListRef}
                 data={filteredProducts}
                 keyExtractor={(item) => item.id.toString()}
                 refreshControl={
@@ -695,33 +694,35 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                         ]}
                       >
                         {Platform.OS === "ios" ? (
-                          <View
-                            style={{
-                              backgroundColor: "#FAAF20",
-                              position: "absolute",
-                              top: 0,
-                              right: 0,
-                              paddingLeft: 10,
-                              paddingRight: 12,
-                              height: 24,
-                              justifyContent: "center",
-                              alignItems: "center",
-                              // borderTopRightRadius: 20,
-                              borderBottomLeftRadius: 8,
-                              zIndex: 10,
-                            }}
-                          >
-                            <Text
-                              numberOfLines={1}
+                          Number(item.discount) > 0 ? (
+                            <View
                               style={{
-                                fontSize: 8,
-                                fontWeight: "600",
-                                fontFamily: "DMSans-Medium",
+                                backgroundColor: "#FAAF20",
+                                position: "absolute",
+                                top: 0,
+                                right: 0,
+                                paddingLeft: 10,
+                                paddingRight: 12,
+                                height: 24,
+                                justifyContent: "center",
+                                alignItems: "center",
+                                // borderTopRightRadius: 20,
+                                borderBottomLeftRadius: 8,
+                                zIndex: 10,
                               }}
                             >
-                              {item.discount}% OFF
-                            </Text>
-                          </View>
+                              <Text
+                                numberOfLines={1}
+                                style={{
+                                  fontSize: 8,
+                                  fontWeight: "600",
+                                  fontFamily: "DMSans-Medium",
+                                }}
+                              >
+                                {item.discount}% OFF
+                              </Text>
+                            </View>
+                          ) : null
                         ) : Number(item.discount) > 0 ? (
                           <LinearGradient
                             colors={["#FFDC61", "#FAAF20"]}
@@ -803,7 +804,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                               },
                             ]}
                           >
-                            {item.tiers.map((tier, index) => {
+                            {item.tiers.map((tier: Tier, index: number) => {
                               const isLast =
                                 index === (item.tiers?.length ?? 0) - 1;
                               return (
