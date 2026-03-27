@@ -827,7 +827,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
         </TouchableOpacity>
 
         <TouchableOpacity
-          onPress={() => navigation.navigate("Cart")}
+          onPress={() => navigation.navigate("Cart", { screen: "CartMain" })}
           style={styles.cartWrapper}
         >
           <Image

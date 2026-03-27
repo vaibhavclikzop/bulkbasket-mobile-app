@@ -198,13 +198,22 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
         rightComponent={
           <View style={{ flexDirection: "row" }}>
             <TouchableOpacity
-              onPress={() => navigation.navigate("Cart")}
+              onPress={() => navigation.navigate("Cart", { screen: "CartMain" })}
               style={styles.iconCircle}
             >
               <Image
                 source={require("../assets/Common/cart.png")}
                 style={{ height: 18, width: 18, tintColor: "#3A7D44" }}
               />
+              {(cartLoading || cartItems.length > 0) && (
+                <View style={styles.badgeCart}>
+                  {cartLoading ? (
+                    <ActivityIndicator size="small" color="#3A7D44" />
+                  ) : (
+                    <Text style={styles.badgeText}>{cartItems.length}</Text>
+                  )}
+                </View>
+              )}
             </TouchableOpacity>
 
             {/* <TouchableOpacity style={styles.iconCircle}>
@@ -428,7 +437,7 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
                 {/* Buy Now */}
                 <TouchableOpacity
                   style={styles.buyNowBtn}
-                  onPress={() => navigation.navigate("Cart")}
+                  onPress={() => navigation.navigate("Cart", { screen: "CartMain" })}
                 >
                   <Text style={styles.buyNowText}>Buy Now</Text>
                 </TouchableOpacity>
@@ -862,5 +871,22 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: "#E6E7EE80",
     marginVertical: 1,
+  },
+  badgeCart: {
+    position: "absolute",
+    right: -5,
+    top: -5,
+    backgroundColor: "#F59E0B",
+    borderRadius: 50,
+    width: 18, // ✅ FIX: fixed width
+    height: 18, // ✅ FIX: fixed height
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  badgeText: {
+    color: "#000",
+    fontSize: 8,
+    fontWeight: "bold",
   },
 });

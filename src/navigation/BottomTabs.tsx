@@ -19,6 +19,28 @@ export type BottomTabParamList = {
 
 const Tab = createBottomTabNavigator<BottomTabParamList>();
 
+const resetTabOnPress = (
+  navigation: any,
+  tabName: string,
+  screenName: string,
+) => ({
+  tabPress: (e: any) => {
+    e.preventDefault();
+    navigation.reset({
+      index: 0,
+      routes: [
+        {
+          name: tabName,
+          state: {
+            index: 0,
+            routes: [{ name: screenName }],
+          },
+        },
+      ],
+    });
+  },
+});
+
 const BottomTabs = () => {
   const insets = useSafeAreaInsets();
 
@@ -81,11 +103,41 @@ const BottomTabs = () => {
         ),
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Wishlist" component={WishlistScreen} />
-      <Tab.Screen name="Wallet" component={WalletScreen} />
-      <Tab.Screen name="Cart" component={CartScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        listeners={({ navigation }) =>
+          resetTabOnPress(navigation, "Home", "HomeMain")
+        }
+      />
+      <Tab.Screen
+        name="Wishlist"
+        component={WishlistScreen}
+        listeners={({ navigation }) =>
+          resetTabOnPress(navigation, "Wishlist", "WishlistMain")
+        }
+      />
+      <Tab.Screen
+        name="Wallet"
+        component={WalletScreen}
+        listeners={({ navigation }) =>
+          resetTabOnPress(navigation, "Wallet", "WalletMain")
+        }
+      />
+      <Tab.Screen
+        name="Cart"
+        component={CartScreen}
+        listeners={({ navigation }) =>
+          resetTabOnPress(navigation, "Cart", "CartMain")
+        }
+      />
+      <Tab.Screen
+        name="Profile"
+        component={ProfileScreen}
+        listeners={({ navigation }) =>
+          resetTabOnPress(navigation, "Profile", "ProfileMain")
+        }
+      />
     </Tab.Navigator>
   );
 };

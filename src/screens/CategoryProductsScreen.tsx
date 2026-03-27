@@ -260,6 +260,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
           ),
         })),
       );
+      fetchCart();
       // Alert.alert("Success", "Successfully added to cart");
     } catch (error) {
       console.log(error);
@@ -366,7 +367,9 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
   const filteredProducts = (categories[selectedIndex]?.products || []).filter(
     (p) => {
       if (selectedSubSubCats.length === 0) return true;
-      return selectedSubSubCats.map(String).includes(String(p.product_sub_sub_category));
+      return selectedSubSubCats
+        .map(String)
+        .includes(String(p.product_sub_sub_category));
     },
   );
 
@@ -489,7 +492,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
 
             <TouchableOpacity
               style={styles.iconCircle}
-              onPress={() => navigation.navigate("Cart")}
+              onPress={() => navigation.navigate("Cart", { screen: "CartMain" })}
             >
               <Image
                 source={require("../assets/Common/cart.png")}
@@ -1145,7 +1148,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 15,
     marginBottom: 15,
-    // width: 260,
     margin: 10,
     overflow: "hidden",
   },
@@ -1199,7 +1201,6 @@ const styles = StyleSheet.create({
   bestRate: {
     fontSize: 9,
     color: "#487D44",
-    // marginTop: 2,
     fontFamily: "DMSans-Regular",
   },
 
@@ -1251,7 +1252,10 @@ const styles = StyleSheet.create({
     zIndex: 5,
     maxWidth: "100%",
   },
-  discountText: { fontSize: 8, fontFamily: "DMSans-Medium" },
+  discountText: {
+    fontSize: 8,
+    fontFamily: "DMSans-Medium",
+  },
 
   ribbon: {
     position: "absolute",
@@ -1298,8 +1302,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#487D44",
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 7,
-    paddingVertical: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
     borderRadius: 8,
   },
 
