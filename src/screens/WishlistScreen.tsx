@@ -311,7 +311,11 @@ export default function WishlistScreen({ navigation }: any) {
                 })
               }
               onTierAddPress={(tierQty: number) => {
-                handleAddToCart(item, tierQty);
+                if (item.cart_status) {
+                  handleUpdateCartQty(item.product_id || item.id, tierQty);
+                } else {
+                  handleAddToCart(item, tierQty);
+                }
               }}
               containerStyle={styles.productCard}
             />
