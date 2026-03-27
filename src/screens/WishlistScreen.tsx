@@ -17,10 +17,11 @@ import {
   addToWishlistApi,
   updateWishlistQtyApi,
   addToCartApi,
+  updateCartQuantityApi,
 } from "../services/api";
 import { useFocusEffect } from "@react-navigation/native";
 import { debounce } from "lodash";
-import ProductCard from "../components/ProductCard"; // Import ProductCard
+import ProductCard from "../components/ProductCard";
 
 export default function WishlistScreen({ navigation }: any) {
   const [wishlistData, setWishlistData] = useState<any[]>([]);
@@ -45,22 +46,25 @@ export default function WishlistScreen({ navigation }: any) {
       setLoading(true);
       const res = await getWishlistApi();
 
-      // Transform data to match ProductCard expected structure
-      const transformedData = res.data.map((item: any) => ({
-        ...item,
-        id: item.product_id || item.id,
-        product_id: item.product_id || item.id,
-        wishlist_status: true,
-        cart_status: false, // Wishlist items aren't in cart by default
-        cart: { qty: item.qty || 1 },
-        price: item.mrp, // Use MRP as base price
-        mrp: item.mrp,
-        price_tiers: item.price_tiers || [], // Include tiers if available
-        discount: item.discount,
-        image: item.image,
-        name: item.name,
-        is_organic: item.product_type?.toLowerCase() === "organic",
-      }));
+      const transformedData = res.data.map((item: any) => {
+        const productId = item.product_id || item.id;
+        return {
+          ...item,
+          id: productId,
+          product_id: productId,
+          wishlist_status: true,
+          cart_status: item.cart_qty > 0,
+          cartQty: item.cart_qty || 0,
+          qty: item.qty || 1, // Wishlist intended quantity
+          price: item.base_price || item.mrp || 0,
+          oldPrice: item.mrp || 0,
+          discount: item.discount || 0,
+          tiers: item.tiers || [],
+          image: item.image,
+          name: item.name,
+          is_organic: item.product_type?.toLowerCase() === "organic",
+        };
+      });
 
       setWishlistData(transformedData);
       setLoading(false);
@@ -151,17 +155,41 @@ export default function WishlistScreen({ navigation }: any) {
     }
   };
 
-  const handleAddToCart = async (item: any) => {
+  const handleUpdateCartQty = async (productId: number, newQty: number) => {
     try {
-      setCartLoadingId(item.product_id || item.id);
-      const quantity = item.qty || 1;
-      const res = await addToCartApi(item.product_id || item.id, quantity);
-      console.log("Add to Cart:", res);
-      // Alert.alert("Success", `${item.name} added to cart (qty: ${quantity})`);
+      setUpdatingQtyId(productId);
+      // Optimistic UI update
+      setWishlistData((prev) =>
+        prev.map((item) =>
+          item.id === productId
+            ? { ...item, cartQty: newQty, cart_status: newQty > 0, qty: newQty || item.qty }
+            : item,
+        ),
+      );
 
-      // Optionally remove from wishlist after adding to cart
-      // await updateWishlistQtyApi(item.product_id || item.id, 0);
-      // fetchWishlist();
+      const res = await updateCartQuantityApi(productId, newQty);
+      console.log("Update Cart Qty:", res);
+    } catch (error) {
+      console.log("Update Cart Qty Error:", error);
+      fetchWishlist(); // Revert on error
+    } finally {
+      setUpdatingQtyId(null);
+    }
+  };
+
+  const handleAddToCart = async (item: any, qty: number = 1) => {
+    try {
+      const productId = item.product_id || item.id;
+      setCartLoadingId(productId);
+      const res = await addToCartApi(productId, qty);
+      console.log("Add to Cart:", res);
+
+      // Update UI to show qty selector
+      setWishlistData((prev) =>
+        prev.map((i) =>
+          i.id === productId ? { ...i, cartQty: qty, cart_status: true, qty: qty } : i,
+        ),
+      );
     } catch (error) {
       console.log("Add to Cart Error:", error);
       Alert.alert("Error", "Could not add to cart. Please try again.");
@@ -177,9 +205,20 @@ export default function WishlistScreen({ navigation }: any) {
   );
 
   const totalPrice = wishlistData.reduce((acc, item) => {
-    const price = item.price || item.mrp;
-    const qty = item.qty || 1;
-    return acc + price * qty;
+    let currentPrice = item.price || 0;
+    const qtyForLogic = item.cart_status ? item.cartQty : (item.qty || 1);
+
+    if (item.tiers && item.tiers.length > 0) {
+      const sortedTiers = [...item.tiers].sort((a, b) => b.qty - a.qty);
+      for (const tier of sortedTiers) {
+        if (qtyForLogic >= tier.qty) {
+          currentPrice = tier.price;
+          break;
+        }
+      }
+    }
+
+    return acc + Number(currentPrice) * qtyForLogic;
   }, 0);
 
   return (
@@ -251,16 +290,16 @@ export default function WishlistScreen({ navigation }: any) {
               }
               title={item.name}
               packSize={item.packSize || ""}
-              price={item.price || item.mrp}
-              oldPrice={item.mrp}
+              price={item.price}
+              oldPrice={item.oldPrice}
               discount={item.discount}
-              isOrganic={item.product_type?.toLowerCase() === "organic"}
+              isOrganic={item.is_organic}
               bestRate={item.bestRate || "Best rate available"}
-              tiers={item.price_tiers || []}
-              cart_status={false} // Wishlist items are not in cart
-              cartQty={item.qty || 1}
+              tiers={item.tiers || []}
+              cart_status={item.cart_status}
+              cartQty={item.cartQty}
               onUpdateQty={(newQty) =>
-                updateQty(item.product_id || item.id, newQty)
+                handleUpdateCartQty(item.product_id || item.id, newQty)
               }
               updatingQty={updatingQtyId === (item.product_id || item.id)}
               wishlist_status={item.wishlist_status}
@@ -272,7 +311,7 @@ export default function WishlistScreen({ navigation }: any) {
                 })
               }
               onTierAddPress={(tierQty: number) => {
-                updateQty(item.product_id || item.id, tierQty);
+                handleAddToCart(item, tierQty);
               }}
               containerStyle={styles.productCard}
             />
