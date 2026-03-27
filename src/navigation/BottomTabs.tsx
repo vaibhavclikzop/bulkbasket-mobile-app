@@ -37,6 +37,7 @@ const BottomTabs = () => {
 
         tabBarActiveTintColor: "#487D44",
         tabBarInactiveTintColor: "#999",
+        unmountOnBlur: true,
 
         tabBarStyle: {
           height: 60 + insets.bottom,
