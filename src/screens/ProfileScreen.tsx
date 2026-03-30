@@ -192,11 +192,11 @@ export default function ProfileScreen({ navigation }: any) {
               onPress={openGallery}
               style={styles.avatarWrapper}
             >
-              {imageLoading && (
+              {/* {imageLoading && (
                 <View style={styles.loaderContainer}>
                   <ActivityIndicator size="small" color="#487D44" />
                 </View>
-              )}
+              )} */}
               <Image
                 source={
                   image
@@ -206,8 +206,8 @@ export default function ProfileScreen({ navigation }: any) {
                       }
                 }
                 style={styles.avatar}
-                onLoadStart={() => setImageLoading(true)}
-                onLoadEnd={() => setImageLoading(false)}
+                // onLoadStart={() => setImageLoading(true)}
+                // onLoadEnd={() => setImageLoading(false)}
               />
 
               <View style={styles.verifiedBadge}>

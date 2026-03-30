@@ -219,7 +219,7 @@ const SearchScreen = ({ navigation }: any) => {
                   packSize={""}
                   price={item.base_price}
                   oldPrice={item.mrp}
-                  discount={item.discount}
+                  discount={Number(item.discount).toFixed(0)}
                   isOrganic={false}
                   onAddPress={() => handleAddToCart(item.id, 1)}
                   onPress={() =>

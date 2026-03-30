@@ -259,8 +259,9 @@ const UpdateProfile = ({ navigation }: any) => {
                   placeholderTextColor="#64748B"
                   value={email}
                   onChangeText={setEmail}
-                  textAlign="left"
+                  // textAlign="left"
                   textAlignVertical="center"
+                  numberOfLines={1}
                 />
               </View>
 

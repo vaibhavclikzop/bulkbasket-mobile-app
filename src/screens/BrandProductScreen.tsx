@@ -100,8 +100,8 @@ interface Category {
 
 const BrandProductScreen = ({ navigation, route }: any) => {
   const isFocused = useIsFocused();
-  const [qty, setQty] = useState(0);
-  const [likedProducts, setLikedProducts] = useState({});
+  // const [qty, setQty] = useState(0);
+  // const [likedProducts, setLikedProducts] = useState({});
   const { brandId, brandName } = route.params;
   const [selectedBrandId, setSelectedBrandId] = useState(brandId);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -322,7 +322,6 @@ const BrandProductScreen = ({ navigation, route }: any) => {
     try {
       const newStatus = !product.wishlist_status;
 
-      // Update UI optimistically
       setCategories((prev) =>
         prev.map((cat) => ({
           ...cat,
@@ -1129,9 +1128,9 @@ const BrandProductScreen = ({ navigation, route }: any) => {
                           packSize={item?.packSize}
                           price={item?.price}
                           oldPrice={item?.oldPrice}
-                          discount={item?.discount}
+                          discount={Number(item.discount).toFixed(0)}
                           isOrganic={item?.isOrganic}
-                          bestRate={item?.bestRate || ""}
+                          // bestRate={item?.bestRate || ""}
                           onAddPress={() => console.log("Added")}
                         />
                       )}

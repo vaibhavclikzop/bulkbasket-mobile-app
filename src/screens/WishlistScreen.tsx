@@ -300,7 +300,7 @@ export default function WishlistScreen({ navigation }: any) {
               packSize={item.packSize || ""}
               price={item.price}
               oldPrice={item.oldPrice}
-              discount={item.discount}
+              discount={Number(item.discount).toFixed(0)}
               isOrganic={item.is_organic}
               bestRate={item.bestRate || "Best rate available"}
               tiers={item.tiers || []}
@@ -383,7 +383,7 @@ const styles = StyleSheet.create({
   },
 
   productCard: {
-    width: "48%",
+    width: "47%",
     marginHorizontal: 4,
   },
 

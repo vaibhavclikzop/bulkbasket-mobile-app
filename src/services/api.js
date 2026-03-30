@@ -386,9 +386,7 @@ export const updateDefaultAddressApi = async (address_id) => {
 export const getStatesApi = async () => {
   try {
     const response = await api.get("/get-states");
-
     console.log("Get States API Response:", response.data);
-
     return response.data;
   } catch (error) {
     console.log("Get States API Error:", error.response?.data || error.message);
@@ -401,9 +399,7 @@ export const getStatesApi = async () => {
 export const getDistrictsApi = async (stateId) => {
   try {
     const response = await api.get(`/get-district/${stateId}`);
-
     console.log("Get Districts API Response:", response.data);
-
     return response.data;
   } catch (error) {
     console.log(
@@ -437,9 +433,7 @@ export const getProductDetailsApi = async (product_id) => {
 export const getBrandsApi = async () => {
   try {
     const response = await api.get("/get-brands");
-
     console.log("Get Brands API Response:", response.data);
-
     return response.data;
   } catch (error) {
     console.log("Get Brands API Error:", error.response?.data || error.message);

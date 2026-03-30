@@ -13,11 +13,11 @@ import {
 import LinearGradient from "react-native-linear-gradient";
 
 export interface ProductCardProps {
-  image: ImageSourcePropType;
-  title: string;
-  packSize: string;
-  price: string;
-  bestRate: string;
+  image?: ImageSourcePropType | string;
+  title?: string;
+  packSize?: string;
+  price?: string;
+  bestRate?: string;
   oldPrice?: string;
   discount?: string;
   isOrganic?: boolean;
@@ -95,53 +95,62 @@ const ProductCard: React.FC<ProductCardProps> = ({
           </LinearGradient>
         </View>
 
-        {Platform.OS === "ios" ? (
-          <View
-            style={[
-              {
-                backgroundColor: "#FAAF20",
-                position: "absolute",
-                top: 0,
-                right: 0,
-                paddingLeft: 10,
-                paddingRight: 12,
-                height: 24,
-                justifyContent: "center",
-                alignItems: "center",
-                borderTopRightRadius: 20,
-                borderBottomLeftRadius: 8,
-                zIndex: 10,
-              },
-            ]}
-          >
-            <Text
-              numberOfLines={1}
-              style={{
-                fontSize: 8,
-                fontWeight: "600",
-                fontFamily: "DMSans-Medium",
-                includeFontPadding: false,
-                // marginTop: 3,
-              }}
+        {Number(discount) > 0 &&
+          (Platform.OS === "ios" ? (
+            <View
+              style={[
+                {
+                  backgroundColor: "#FAAF20",
+                  position: "absolute",
+                  top: 0,
+                  right: 0,
+                  paddingLeft: 10,
+                  paddingRight: 12,
+                  height: 24,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  borderTopRightRadius: 20,
+                  borderBottomLeftRadius: 8,
+                  zIndex: 10,
+                },
+              ]}
             >
-              {discount}% OFF
-            </Text>
-          </View>
-        ) : (
-          <LinearGradient
-            colors={["#FFDC61", "#FAAF20"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.discountBadge}
-          >
-            <Text style={styles.discountText}>{discount}% OFF</Text>
-          </LinearGradient>
-        )}
+              <Text
+                numberOfLines={1}
+                style={{
+                  fontSize: 8,
+                  fontWeight: "600",
+                  fontFamily: "DMSans-Medium",
+                  includeFontPadding: false,
+                  // marginTop: 3,
+                }}
+              >
+                {discount}% OFF
+              </Text>
+            </View>
+          ) : (
+            <LinearGradient
+              colors={["#FFDC61", "#FAAF20"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.discountBadge}
+            >
+              <Text style={styles.discountText}>{discount}% OFF</Text>
+            </LinearGradient>
+          ))}
 
         {/* Image Section */}
         <View style={styles.imageContainer}>
-          <Image
+          {/* <Image
             source={image ? image : require("../assets/icons/sicon5.png")}
+            style={styles.image}
+          /> */}
+          <Image
+            source={
+              typeof image === "string"
+                ? { uri: image }
+                : image || require("../assets/icons/sicon5.png")
+            }
             style={styles.image}
           />
           {onWishlistPress && (
@@ -290,7 +299,7 @@ const styles = StyleSheet.create({
   cardContainer: {
     width: 175,
     height: 280,
-    margin: 10,
+    marginHorizontal: 10,
     backgroundColor: "#f3f4f6",
     borderRadius: 20,
     elevation: 3,
@@ -358,7 +367,7 @@ const styles = StyleSheet.create({
   },
 
   slabPrice: {
-    fontSize: 10,
+    fontSize: 12,
     fontFamily: "DMSans-Regular",
   },
 
@@ -377,7 +386,7 @@ const styles = StyleSheet.create({
   },
 
   addSmall: {
-    fontSize: 10,
+    fontSize: 12,
     color: "green",
     fontWeight: "600",
     fontFamily: "DMSans-Medium",

@@ -178,16 +178,39 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
   const [dealOfDayProduct, setDealOfDayProduct] = React.useState<any[]>([]);
   const [cartItems, setCartItems] = useState<any[]>([]);
   const [cartLoading, setCartLoading] = useState(true);
-  const scrollLeftRef = React.useRef<ScrollView>(null);
-  const scrollRightRef = React.useRef<ScrollView>(null);
+
+  const flatListLeftRef = React.useRef<FlatList>(null);
+  const flatListRightRef = React.useRef<FlatList>(null);
   const leftOffsetRef = React.useRef(0);
   const rightOffsetRef = React.useRef(0);
-  const ITEM_WIDTH = 85;
+
+  useEffect(() => {
+    if (!brandData.length) return;
+    const interval = setInterval(() => {
+      leftOffsetRef.current += 0.5;
+      flatListLeftRef.current?.scrollToOffset({
+        offset: leftOffsetRef.current,
+        animated: false,
+      });
+    }, 16);
+    return () => clearInterval(interval);
+  }, [brandData]);
+
+  useEffect(() => {
+    if (!brandData1.length) return;
+    const interval = setInterval(() => {
+      rightOffsetRef.current += 0.5;
+      flatListRightRef.current?.scrollToOffset({
+        offset: rightOffsetRef.current,
+        animated: false,
+      });
+    }, 16);
+    return () => clearInterval(interval);
+  }, [brandData1]);
 
   const fetchCart = async () => {
     try {
       setCartLoading(true);
-
       const data = await getCartApi();
       setCartItems(data.data || []);
     } catch (error) {
@@ -196,46 +219,6 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
       setCartLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (!brandData.length) return;
-
-    const totalWidth = brandData.length * ITEM_WIDTH;
-
-    const interval = setInterval(() => {
-      leftOffsetRef.current += 0.5;
-      if (leftOffsetRef.current >= totalWidth) {
-        leftOffsetRef.current = 0;
-      }
-      scrollLeftRef.current?.scrollTo({
-        x: leftOffsetRef.current,
-        animated: false,
-      });
-    }, 16);
-
-    return () => clearInterval(interval);
-  }, [brandData]);
-
-  useEffect(() => {
-    if (!brandData1.length) return; // ✅ FIX
-
-    const totalWidth = brandData1.length * ITEM_WIDTH;
-
-    rightOffsetRef.current = totalWidth;
-
-    const interval = setInterval(() => {
-      rightOffsetRef.current -= 0.5;
-      if (rightOffsetRef.current <= 0) {
-        rightOffsetRef.current = totalWidth;
-      }
-      scrollRightRef.current?.scrollTo({
-        x: rightOffsetRef.current,
-        animated: false,
-      });
-    }, 16);
-
-    return () => clearInterval(interval);
-  }, [brandData1]); // ✅ FIX
 
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
@@ -386,12 +369,10 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
       const def = list.find((a: any) => a.default_status === 1);
 
       if (def) {
-        // ✅ Step 1: Has default address — just set it, skip geolocation
         setDefaultAddress(def);
-        return; // 👈 early return, no need to go further
+        return;
       }
 
-      // ✅ Step 2: No default address (includes empty list []) — request permission
       if (Platform.OS === "android") {
         const granted = await PermissionsAndroid.request(
           PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
@@ -408,11 +389,10 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
           );
         }
       } else {
-        // iOS
-        const auth = await Geolocation.requestAuthorization("whenInUse");
+        const auth: any = await Geolocation.requestAuthorization("whenInUse");
 
         if (auth === "granted") {
-          await getCurrentLocation(); // 👈 same extracted function
+          await getCurrentLocation();
         } else {
           console.log("Permission denied");
           setCurrentLocation("Permission denied");
@@ -481,7 +461,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
       // setBrandData1(brandsList1);
       setBrandData(brandsList);
       setBrandData1(brandsList1);
-      setVisibleBrandCount(6);
+      setVisibleBrandCount(15);
       setDealOfDayData(response.data.data.dealOfDay);
       setGroupedProducts(response.data.data.products || []);
     } catch (error: any) {
@@ -520,7 +500,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
     setLoadingMore(true);
 
     setTimeout(() => {
-      setVisibleBrandCount((prev) => prev + 10);
+      setVisibleBrandCount((prev) => prev + 15);
       setLoadingMore(false);
     }, 500);
   };
@@ -857,18 +837,6 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
       ) : (
         <ScrollView
           showsVerticalScrollIndicator={false}
-          scrollEventThrottle={400}
-          // onScroll={({ nativeEvent }) => {
-          //   const { layoutMeasurement, contentOffset, contentSize } =
-          //     nativeEvent;
-          //   const isCloseToBottom =
-          //     layoutMeasurement.height + contentOffset.y >=
-          //     contentSize.height - 150; // trigger 150px early
-
-          //   if (isCloseToBottom) {
-          //     loadMoreBrands();
-          //   }
-          // }}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -944,9 +912,16 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
               paddingHorizontal: 14,
             }}
             renderItem={({ item }) => (
-              <View style={{ width: itemSize }}>
+              <View
+                style={{
+                  width: itemSize,
+                  backgroundColor: "#F4F4F4",
+                  padding: 4,
+                  borderRadius: 10,
+                }}
+              >
                 <TouchableOpacity
-                  style={styles.card}
+                  style={[styles.card, {}]}
                   onPress={() =>
                     navigation.navigate("CategoryProduct", {
                       catname: item.name,
@@ -954,14 +929,22 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
                     })
                   }
                 >
-                  <Image
-                    source={{ uri: item.image }}
+                  <View
                     style={{
-                      width: itemSize * 0.95,
-                      height: itemSize * 0.95,
-                      resizeMode: "contain",
+                      padding: 0,
+                      backgroundColor: "#ffff",
+                      borderRadius: 10,
                     }}
-                  />
+                  >
+                    <Image
+                      source={{ uri: item.image }}
+                      style={{
+                        width: itemSize * 0.85,
+                        height: itemSize * 0.85,
+                        resizeMode: "contain",
+                      }}
+                    />
+                  </View>
                 </TouchableOpacity>
 
                 <Text style={styles.title} numberOfLines={2}>
@@ -1014,7 +997,12 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
               )}
             />
           </View>
-          <Text style={[styles.dealTitle, { paddingHorizontal: 16 }]}>
+          <Text
+            style={[
+              styles.dealTitle,
+              { paddingHorizontal: 16, marginBottom: 10 },
+            ]}
+          >
             Deal Of The Day
           </Text>
 
@@ -1035,6 +1023,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
               data={dealOfDayProduct}
               horizontal
               showsHorizontalScrollIndicator={false}
+              style={{ paddingBottom: 5 }}
               keyExtractor={(item) => item.id.toString()}
               renderItem={({ item }) => (
                 <ProductCard
@@ -1047,7 +1036,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
                   packSize={""}
                   price={item.base_price}
                   oldPrice={item.mrp}
-                  discount={item.discount}
+                  discount={Number(item.discount).toFixed(0)}
                   isOrganic={item.is_organic || false}
                   onAddPress={() => handleAddToCart(item.id, 1)}
                   onPress={() =>
@@ -1078,7 +1067,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
           {/* Grouped Products Sliders */}
           {groupedProducts.map((section: any, index: number) => (
             <View key={index}>
-              <View style={styles.headerRow}>
+              <View style={[styles.headerRow, { marginBottom: 10 }]}>
                 <Text style={styles.dealTitle}>
                   {capitalizeWords(section.sub_category)}
                 </Text>
@@ -1093,6 +1082,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
                 data={section.products}
                 horizontal
                 showsHorizontalScrollIndicator={false}
+                style={{ paddingBottom: 10 }}
                 keyExtractor={(item) => item.id.toString()}
                 renderItem={({ item }) => (
                   <ProductCard
@@ -1155,9 +1145,9 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
                   />
                 )}
               /> */}
-              {/* Left scrolling row */}
-              <ScrollView
-                ref={scrollLeftRef}
+              {/* Top horizontal brand list */}
+              <FlatList
+                ref={flatListLeftRef}
                 horizontal
                 scrollEnabled={false}
                 showsHorizontalScrollIndicator={false}
@@ -1165,68 +1155,60 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
                   paddingHorizontal: 10,
                   marginBottom: 2,
                 }}
-              >
-                {/* Duplicate data for seamless infinite loop */}
-                {[
-                  ...brandData.slice(0, visibleBrandCount),
-                  ...brandData.slice(0, visibleBrandCount),
-                ].map((item, index) => (
+                data={brandData.slice(0, visibleBrandCount)}
+                keyExtractor={(item, index) => `left-${item.id}-${index}`}
+                renderItem={({ item, index }) => (
                   <TouchableOpacity
-                    key={`left-${item.id}-${index}`}
                     style={styles.brandHorizontalCard}
-                    onPress={() =>
-                      navigation.navigate("BrandProduct", {
-                        brandId: item.id,
-                        brandName: item.name || "Brand",
-                      })
-                    }
+                    // onPress={() =>
+                    //   navigation.navigate("BrandProduct", {
+                    //     brandId: item.id,
+                    //     brandName: item.name || "Brand",
+                    //   })
+                    // }
                   >
                     <Image
                       source={{ uri: item.image }}
                       style={styles.brandHorizontalImage}
                     />
                   </TouchableOpacity>
-                ))}
-              </ScrollView>
+                )}
+                onEndReached={loadMoreBrands}
+                onEndReachedThreshold={0.5}
+              />
 
-              {/* Right scrolling row (reverse direction) */}
-              <ScrollView
-                ref={scrollRightRef}
+              {/* Bottom horizontal brand list */}
+              <FlatList
+                ref={flatListRightRef}
                 horizontal
+                inverted
                 scrollEnabled={false}
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={{
                   paddingHorizontal: 10,
                   marginVertical: 10,
                 }}
-              >
-                {[
-                  ...brandData1.slice(0, visibleBrandCount),
-                  ...brandData1.slice(0, visibleBrandCount),
-                ].map((item, index) => {
-                  // console.log("Brand Item:", item); // full object
-                  // console.log("Brand Image:", item.image); // only image
-
-                  return (
-                    <TouchableOpacity
-                      key={`left-${item.id}-${index}`}
-                      style={styles.brandHorizontalCard}
-                      onPress={() =>
-                        navigation.navigate("BrandProduct", {
-                          brandId: item.id,
-                          brandName: item.name || "Brand",
-                        })
-                      }
-                    >
-                      <Image
-                        source={{ uri: item.image }}
-                        style={{ width: 65, height: 65 }}
-                      />
-                      {/* <Text>{item.name}</Text> */}
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
+                data={brandData1.slice(0, visibleBrandCount)}
+                keyExtractor={(item, index) => `right-${item.id}-${index}`}
+                renderItem={({ item, index }) => (
+                  <TouchableOpacity
+                    style={styles.brandHorizontalCard}
+                    // onPress={() =>
+                    //   navigation.navigate("BrandProduct", {
+                    //     brandId: item.id,
+                    //     brandName: item.name || "Brand",
+                    //   })
+                    // }
+                  >
+                    <Image
+                      source={{ uri: item.image }}
+                      style={styles.brandHorizontalImage}
+                    />
+                  </TouchableOpacity>
+                )}
+                onEndReached={loadMoreBrands}
+                onEndReachedThreshold={0.5}
+              />
               {loadingMore && (
                 <View style={{ paddingVertical: 10, alignItems: "center" }}>
                   <ActivityIndicator size="small" color="#487D44" />
@@ -1370,6 +1352,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     // backgroundColor: "#F8F9FD",
+    backgroundColor: "#fff",
   },
 
   headerRow: {
@@ -1517,14 +1500,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   card: {
-    backgroundColor: "#fff",
-    borderColor: "#E5E5E5",
-    borderWidth: 1,
-    borderRadius: 20,
+    // backgroundColor: "",
+    // borderColor: "red",
+    // borderWidth: 1,
+    borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
     aspectRatio: 1,
-    overflow: "hidden",
+    // overflow: "hidden",
+    padding: 10,
   },
 
   title: {
@@ -1575,10 +1559,11 @@ const styles = StyleSheet.create({
   },
 
   brandSection: {
-    padding: 10,
+    // padding: 10,
     borderTopLeftRadius: 10,
     borderTopRightRadius: 10,
     backgroundColor: "rgb(232,241,230)",
+    paddingVertical: 10,
   },
 
   brandTitle: {

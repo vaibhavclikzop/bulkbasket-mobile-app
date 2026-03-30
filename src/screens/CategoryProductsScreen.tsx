@@ -10,7 +10,6 @@ import {
   StatusBar,
   ActivityIndicator,
   Modal,
-  Alert,
   TextInput,
   Platform,
   RefreshControl,
