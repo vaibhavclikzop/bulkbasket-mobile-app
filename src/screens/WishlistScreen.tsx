@@ -158,7 +158,6 @@ export default function WishlistScreen({ navigation }: any) {
   const handleUpdateCartQty = async (productId: number, newQty: number) => {
     try {
       setUpdatingQtyId(productId);
-      // Optimistic UI update
       setWishlistData((prev) =>
         prev.map((item) =>
           item.id === productId
@@ -176,7 +175,7 @@ export default function WishlistScreen({ navigation }: any) {
       console.log("Update Cart Qty:", res);
     } catch (error) {
       console.log("Update Cart Qty Error:", error);
-      fetchWishlist(); // Revert on error
+      fetchWishlist();
     } finally {
       setUpdatingQtyId(null);
     }
@@ -189,7 +188,6 @@ export default function WishlistScreen({ navigation }: any) {
       const res = await addToCartApi(productId, qty);
       console.log("Add to Cart:", res);
 
-      // Update UI to show qty selector
       setWishlistData((prev) =>
         prev.map((i) =>
           i.id === productId
@@ -302,7 +300,7 @@ export default function WishlistScreen({ navigation }: any) {
               oldPrice={item.oldPrice}
               discount={Number(item.discount).toFixed(0)}
               isOrganic={item.is_organic}
-              bestRate={item.bestRate || "Best rate available"}
+              // bestRate={item.bestRate || "Best rate available"}
               tiers={item.tiers || []}
               cart_status={item.cart_status}
               cartQty={item.cartQty}

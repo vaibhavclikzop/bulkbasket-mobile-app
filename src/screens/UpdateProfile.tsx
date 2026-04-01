@@ -352,7 +352,7 @@ const UpdateProfile = ({ navigation }: any) => {
             </View>
 
             <Text style={styles.note}>
-              *Must be the number as shown on your food license.
+              * Must be the number as shown on your food license.
             </Text>
 
             <TouchableOpacity

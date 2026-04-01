@@ -15,7 +15,7 @@ import { RootStackParamList } from "../navigation/AppNavigator";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Styles from "../components/Styles";
 import axios from "axios";
-import { BASE_URL, getCompanyProfileApi, getProfileApi } from "../services/api";
+import { BASE_URL, getCompanyProfileApi } from "../services/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type Props = NativeStackScreenProps<RootStackParamList, "OTP">;

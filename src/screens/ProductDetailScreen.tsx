@@ -10,9 +10,12 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
+  ImageSourcePropType,
+  RefreshControl,
 } from "react-native";
 import { debounce } from "lodash";
-import Swiper from "react-native-swiper";
+import Carousel from "react-native-reanimated-carousel";
+import { useWindowDimensions } from "react-native";
 import ProductCard from "../components/ProductCard";
 import Header from "../components/Header";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -67,6 +70,30 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
   const [updatingQty, setUpdatingQty] = useState(false);
   const [cartItems, setCartItems] = useState<any[]>([]);
   const [cartLoading, setCartLoading] = useState(true);
+  const { width } = useWindowDimensions();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = async () => {
+    if (!productId) return;
+    try {
+      setRefreshing(true);
+      await Promise.all([getProductDetailsApi(productId), fetchCart()]);
+    } catch (error) {
+      console.log("Refresh error:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const images: ImageSourcePropType[] = productDetail?.images?.length
+    ? productDetail.images
+    : [
+        require("../assets/home/banner1.png"),
+        require("../assets/home/banner2.png"),
+        require("../assets/home/banner3.png"),
+      ];
+
+  const [activeIndex, setActiveIndex] = useState(0);
 
   const productId = route?.params?.productId;
 
@@ -198,7 +225,9 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
         rightComponent={
           <View style={{ flexDirection: "row" }}>
             <TouchableOpacity
-              onPress={() => navigation.navigate("Cart", { screen: "CartMain" })}
+              onPress={() =>
+                navigation.navigate("Cart", { screen: "CartMain" })
+              }
               style={styles.iconCircle}
             >
               <Image
@@ -235,7 +264,15 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
       ) : (
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 40 }}
+          contentContainerStyle={{ paddingBottom: 30 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={["#487D44"]}
+              tintColor="#487D44"
+            />
+          }
         >
           {/*  PRODUCT IMAGE */}
           <View style={styles.imageSection}>
@@ -248,33 +285,66 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
                 ]}
               />
             ) : (
-              <Swiper
-                autoplay
-                autoplayTimeout={3}
-                showsPagination={true}
-                dotStyle={styles.dot}
-                activeDotStyle={styles.activeDot}
-                paginationStyle={styles.paginationContainer}
-                height={250}
-              >
-                <Image
-                  source={require("../assets/images/product-image.png")}
-                  style={styles.productImage}
-                  resizeMode="contain"
+              // <Swiper
+              //   autoplay
+              //   autoplayTimeout={3}
+              //   showsPagination={true}
+              //   dotStyle={styles.dot}
+              //   activeDotStyle={styles.activeDot}
+              //   paginationStyle={styles.paginationContainer}
+              //   height={250}
+              // >
+              //   <Image
+              //     source={require("../assets/images/product-image.png")}
+              //     style={styles.productImage}
+              //     resizeMode="contain"
+              //   />
+
+              //   <Image
+              //     source={require("../assets/images/product-image.png")}
+              //     style={styles.productImage}
+              //     resizeMode="contain"
+              //   />
+
+              //   <Image
+              //     source={require("../assets/images/product-image.png")}
+              //     style={styles.productImage}
+              //     resizeMode="contain"
+              //   />
+              // </Swiper>
+              <View>
+                <Carousel
+                  width={width}
+                  height={250}
+                  data={images}
+                  autoPlay
+                  autoPlayInterval={3000}
+                  scrollAnimationDuration={800}
+                  onSnapToItem={(index) => setActiveIndex(index)}
+                  renderItem={({ item }) => (
+                    <Image
+                      source={typeof item === "string" ? { uri: item } : item}
+                      style={styles.productImage}
+                      resizeMode="contain"
+                    />
+                  )}
                 />
 
-                <Image
-                  source={require("../assets/images/product-image.png")}
-                  style={styles.productImage}
-                  resizeMode="contain"
-                />
-
-                <Image
-                  source={require("../assets/images/product-image.png")}
-                  style={styles.productImage}
-                  resizeMode="contain"
-                />
-              </Swiper>
+                {/* ✅ Pagination Dots */}
+                {images.length > 1 && (
+                  <View style={styles.paginationContainer}>
+                    {images.map((_, index) => (
+                      <View
+                        key={index}
+                        style={[
+                          styles.dot,
+                          activeIndex === index && styles.activeDot,
+                        ]}
+                      />
+                    ))}
+                  </View>
+                )}
+              </View>
             )}
 
             {/* Wishlist Icon */}
@@ -437,7 +507,9 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
                 {/* Buy Now */}
                 <TouchableOpacity
                   style={styles.buyNowBtn}
-                  onPress={() => navigation.navigate("Cart", { screen: "CartMain" })}
+                  onPress={() =>
+                    navigation.navigate("Cart", { screen: "CartMain" })
+                  }
                 >
                   <Text style={styles.buyNowText}>Buy Now</Text>
                 </TouchableOpacity>
@@ -490,7 +562,6 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
               </View>
             </View> */}
           </View>
-
           <View style={styles.headerRow}>
             <Text style={styles.dealTitle}>Suggested Products</Text>
           </View>
@@ -500,17 +571,19 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
             showsHorizontalScrollIndicator={false}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
-              <ProductCard
-                image={item.image}
-                title={item.title}
-                packSize={item.packSize}
-                price={item.price}
-                oldPrice={item.oldPrice}
-                discount={item.discount}
-                isOrganic={item.isOrganic}
-                bestRate="₹81/pack Best rate"
-                onAddPress={() => console.log("Added")}
-              />
+              <View style={{ marginBottom: 15 }}>
+                <ProductCard
+                  image={item.image}
+                  title={item.title}
+                  packSize={item.packSize}
+                  price={item.price}
+                  oldPrice={item.oldPrice}
+                  discount={item.discount}
+                  isOrganic={item.isOrganic}
+                  bestRate="₹81/pack Best rate"
+                  onAddPress={() => console.log("Added")}
+                />
+              </View>
             )}
           />
         </ScrollView>
@@ -887,6 +960,6 @@ const styles = StyleSheet.create({
   badgeText: {
     color: "#000",
     fontSize: 8,
-    fontWeight: "bold",
+    fontFamily: "DMSans-Regular",
   },
 });

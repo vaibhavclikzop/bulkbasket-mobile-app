@@ -22,18 +22,22 @@ const ContactSupportScreen = ({ navigation }: any) => {
     {
       id: "Outlet",
       title: "Outlet and account related issues",
+      desc: "You can get in touch with us through below platforms. Our Team will reach out to you as soon as it would be possible",
     },
     {
       id: "Current",
       title: "Current order related issues",
+      desc: "You can get in touch with us through below platforms. Our Team will reach out to you as soon as it would be possible",
     },
     {
       id: "Delivered",
       title: "Delivered order related issues",
+      desc: "You can get in touch with us through below platforms. Our Team will reach out to you as soon as it would be possible",
     },
     {
       id: "Payment",
       title: "Payment and refund issues",
+      desc: "You can get in touch with us through below platforms. Our Team will reach out to you as soon as it would be possible",
     },
   ];
 
@@ -202,14 +206,12 @@ const styles = StyleSheet.create({
 
   container: {
     flex: 1,
-    // padding: 16,
   },
 
   sectionTitle: {
     fontSize: 18,
     fontFamily: "DMSans-Medium",
-    marginTop: 10,
-    marginBottom: 10,
+    marginVertical: 10,
   },
 
   supportDesc: {

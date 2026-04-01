@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   TextInput,
   RefreshControl,
+  Platform,
 } from "react-native";
 import Styles from "../components/Styles";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -36,7 +37,7 @@ const CartScreen: React.FC = ({ navigation }: any) => {
   const onRefresh = useCallback(async () => {
     try {
       setRefreshing(true);
-      await Promise.all([fetchCart(), getProfile()]);
+      await Promise.all([fetchCart()]);
     } catch (error) {
       console.log("Refresh error:", error);
     } finally {
@@ -44,17 +45,6 @@ const CartScreen: React.FC = ({ navigation }: any) => {
     }
   }, []);
 
-  // const getProfile = async () => {
-  //   try {
-  //     const response = await getProfileApi();
-  //     const data = response?.data;
-  //     console.log("djhfgjsdfgjs", data?.gst);
-
-  //     setHasGST(!!data?.gst);
-  //   } catch (error: any) {
-  //     console.log("Get Profile Error:", error.response?.data || error.message);
-  //   }
-  // };
   const getCompanyProfile = async () => {
     try {
       const response = await getCompanyProfileApi();
@@ -486,7 +476,10 @@ const CartScreen: React.FC = ({ navigation }: any) => {
                       [
                         {
                           text: "Go to Setup",
-                          onPress: () => navigation.navigate("UpdateProfile"),
+                          onPress: () =>
+                            navigation.navigate("Profile", {
+                              screen: "CompanyProfile",
+                            }),
                         },
                         { text: "Cancel", style: "cancel" },
                       ],
@@ -609,6 +602,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#E8F3E8",
     borderRadius: 8,
     paddingHorizontal: 4,
+    paddingVertical: Platform.OS === "ios" ? 3 : 0,
   },
 
   qtyBtn: {
@@ -662,7 +656,6 @@ const styles = StyleSheet.create({
     fontFamily: "DMSans-Medium",
   },
 
-  // New styles for enhanced tier display
   variantBox: {
     backgroundColor: "#F4F4F4",
     borderColor: "#E6E7EE",
@@ -677,13 +670,13 @@ const styles = StyleSheet.create({
   },
 
   slabPrice: {
-    fontSize: 11,
+    fontSize: 12,
     fontFamily: "DMSans-Regular",
     color: "#000000",
   },
 
   addSmall: {
-    fontSize: 10,
+    fontSize: 12,
     color: "#487D44",
     fontWeight: "600",
     fontFamily: "DMSans-Medium",

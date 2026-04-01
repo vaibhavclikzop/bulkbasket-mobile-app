@@ -1,9 +1,9 @@
-import React from 'react';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import WalletScreen from '../../screens/WalletScreen';
-import TransactionHistory from '../../screens/TransactionHistory';
-import AddMoney from '../../screens/AddMoney';
-import WithdrawMoney from '../../screens/WithdrawMoney';
+import React from "react";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import WalletScreen from "../../screens/WalletScreen";
+import TransactionHistory from "../../screens/TransactionHistory";
+import AddMoney from "../../screens/AddMoney";
+import WithdrawMoney from "../../screens/WithdrawMoney";
 
 export type WalletStackParamList = {
   WalletMain: undefined;

@@ -396,9 +396,9 @@ export const getStatesApi = async () => {
 
 // ---------------- GET DISTRICTS API ----------------
 
-export const getDistrictsApi = async (stateId) => {
+export const getDistrictsApi = async (state) => {
   try {
-    const response = await api.get(`/get-district/${stateId}`);
+    const response = await api.get(`/get-district/${state}`);
     console.log("Get Districts API Response:", response.data);
     return response.data;
   } catch (error) {
@@ -446,24 +446,20 @@ export const getBrandsApi = async () => {
 export const saveOrderApi = async (data) => {
   try {
     const formData = new FormData();
-
     formData.append("delivery_date", data.delivery_date);
-    formData.append("address", data.address); // address id
+    formData.append("address", data.address);
     formData.append("state", data.state);
     formData.append("district", data.district);
     formData.append("city", data.city);
     formData.append("pincode", data.pincode);
     formData.append("pay_mode", data.pay_mode);
     formData.append("remarks", data.remarks || "");
-
     const response = await api.post("/save-order", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
     });
-
     console.log("Save Order API Response:", response.data);
-
     return response.data;
   } catch (error) {
     console.log("Save Order API Error:", error.response?.data || error.message);
@@ -472,13 +468,10 @@ export const saveOrderApi = async (data) => {
 };
 
 // ---------------- GET WALLET LEDGER API ----------------
-
 export const getWalletLedgerApi = async () => {
   try {
     const response = await api.get("/get-wallet-ledger");
-
     console.log("Get Wallet Ledger API Response:", response.data);
-
     return response.data;
   } catch (error) {
     console.log(
@@ -490,13 +483,10 @@ export const getWalletLedgerApi = async () => {
 };
 
 // ---------------- GET ORDER API ----------------
-
 export const getOrderApi = async () => {
   try {
     const response = await api.get("/get-order");
-
     console.log("Get Order API Response:", response.data);
-
     return response.data;
   } catch (error) {
     console.log("Get Order API Error:", error.response?.data || error.message);
@@ -507,9 +497,7 @@ export const getOrderApi = async () => {
 export const getEstimateApi = async () => {
   try {
     const response = await api.get("/get-estimate");
-
     console.log("Get Estimate API Response:", response.data);
-
     return response.data;
   } catch (error) {
     console.log(
@@ -523,9 +511,7 @@ export const getEstimateApi = async () => {
 export const getEstimateDetailsApi = async (estimate_id) => {
   try {
     const response = await api.get(`/get-estimate-details/${estimate_id}`);
-
     console.log("Get Estimate Details API Response:", response.data);
-
     return response.data;
   } catch (error) {
     console.log(
@@ -541,9 +527,7 @@ export const getEstimateDetailsApi = async (estimate_id) => {
 export const searchProductsApi = async (query) => {
   try {
     const response = await api.get(`/search-products/${query}`);
-
     console.log("Search Products API Response:", response.data);
-
     return response.data;
   } catch (error) {
     console.log(
@@ -559,9 +543,7 @@ export const searchProductsApi = async (query) => {
 export const getOrderDetailsApi = async (order_id) => {
   try {
     const response = await api.get(`/get-order-details/${order_id}`);
-
     console.log("Get Order Details API Response:", response.data);
-
     return response.data;
   } catch (error) {
     console.log(
@@ -573,13 +555,10 @@ export const getOrderDetailsApi = async (order_id) => {
 };
 
 // ---------------- GET DEAL PRODUCTS API ----------------
-
 export const getDealProductsApi = async () => {
   try {
     const response = await api.get("/get-products-deal");
-
     console.log("Get Deal Products API Response:", response.data);
-
     return response.data;
   } catch (error) {
     console.log(

@@ -73,10 +73,10 @@ const CompanyProfile = ({ navigation }: any) => {
   }
 
   const handleVerifyGst = async () => {
-    if (!brandName) {
-      Alert.alert("Error", "Please fill all required fields");
-      return;
-    }
+    // if (!brandName) {
+    //   Alert.alert("Error", "Please fill all required fields");
+    //   return;
+    // }
 
     if (gstin && gstin.length !== 15) {
       Alert.alert("Invalid GST", "GST number must be 15 characters");
@@ -102,6 +102,7 @@ const CompanyProfile = ({ navigation }: any) => {
           },
         },
       );
+
       const gstLegalName = response.data?.data?.data?.lgnm;
       const addr = response.data?.data?.data?.pradr?.addr;
 
@@ -121,10 +122,10 @@ const CompanyProfile = ({ navigation }: any) => {
         setGstVerified(true);
       }
       console.log("GST API Response:", response.data);
-      console.log("GST API Response Data:", response.data.data.data.lgnm);
+      // console.log("GST API Response Data:", response.data.data.data.lgnm);
     } catch (error: any) {
       console.log("GST API Error:", error.response?.data || error.message);
-      Alert.alert("Error", error.response?.data || error.message);
+      Alert.alert("Error", error.message);
     } finally {
       setLoading(false);
     }
@@ -217,7 +218,7 @@ const CompanyProfile = ({ navigation }: any) => {
         >
           {/* Form */}
           <View style={styles.form}>
-            <Text style={styles.menuText}>{brandName}</Text>
+            <Text style={styles.menuText}>{legalName}</Text>
 
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Brand Name</Text>
@@ -227,7 +228,6 @@ const CompanyProfile = ({ navigation }: any) => {
                 placeholderTextColor="#64748B"
                 value={brandName}
                 onChangeText={setBrandName}
-                editable={false}
               />
             </View>
 
@@ -271,7 +271,6 @@ const CompanyProfile = ({ navigation }: any) => {
 
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Address</Text>
-
               <View
                 style={{
                   borderWidth: 1,
@@ -295,24 +294,8 @@ const CompanyProfile = ({ navigation }: any) => {
             </View>
 
             <Text style={styles.note}>
-              *Must be the number as shown on your food license.
+              * Must be the number as shown on your food license.
             </Text>
-
-            {/* <TouchableOpacity
-              style={styles.saveBtn}
-              onPress={gstVerified ? handleUpdateProfile : handleVerifyGst}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" size="small" />
-              ) : (
-                <Text style={styles.saveText}>
-                  {gstVerified
-                    ? "Update GST Number"
-                    : "Add GST Number To Verify"}
-                </Text>
-              )}
-            </TouchableOpacity> */}
 
             <TouchableOpacity
               style={[
@@ -371,6 +354,10 @@ const styles = StyleSheet.create({
     fontFamily: "DMSans-Bold",
     color: "green",
     alignSelf: "center",
+    width: "80%",
+    textAlign: "center",
+    marginVertical: 10,
+    textDecorationLine: "underline",
   },
 
   form: {
@@ -410,8 +397,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF",
   },
 
-  /* Verified Input */
-
   verifiedInput: {
     flexDirection: "row",
     alignItems: "center",
@@ -428,7 +413,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     fontFamily: "DMSans-Regular",
-    // backgroundColor: "#FFF",s
   },
 
   verifiedBadge: {

@@ -7,6 +7,7 @@ import {
   FlatList,
   Image,
   Alert,
+  TouchableWithoutFeedback,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Styles from "../components/Styles";
@@ -108,215 +109,227 @@ const Addresses = ({ navigation, route }: any) => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top"]}>
-      <View style={styles.container}>
-        <Header title="Addresses" backgroundColor="#fff" />
-        <TouchableOpacity
-          style={styles.addBtn}
-          onPress={() => {
-            if (activeMenuId !== null) {
-              setActiveMenuId(null);
-            }
-            navigation.navigate("AddressAddUpd");
-          }}
-        >
-          <Image
-            source={require("../assets/Common/plus.png")}
-            style={[Styles.headerImage, { marginTop: 2, tintColor: "#fff" }]}
-          />
-          <Text style={styles.addText}>Add New Address</Text>
-        </TouchableOpacity>
+    <TouchableWithoutFeedback
+      onPress={() => {
+        if (activeMenuId !== null) {
+          setActiveMenuId(null);
+        }
+      }}
+      accessible={false}
+    >
+      <SafeAreaView style={styles.safeArea} edges={["top"]}>
+        <View style={styles.container}>
+          <Header title="Addresses" backgroundColor="#fff" />
+          <TouchableOpacity
+            style={styles.addBtn}
+            onPress={() => {
+              if (activeMenuId !== null) {
+                setActiveMenuId(null);
+              }
+              navigation.navigate("AddressAddUpd");
+            }}
+          >
+            <Image
+              source={require("../assets/Common/plus.png")}
+              style={[Styles.headerImage, { marginTop: 2, tintColor: "#fff" }]}
+            />
+            <Text style={styles.addText}>Add New Address</Text>
+          </TouchableOpacity>
 
-        {/* Address List */}
-        {loading ? (
-          <View style={{ marginTop: 20, alignItems: "center" }}>
-            <Text style={[styles.NoAddressText, { color: "#000" }]}>
-              Loading Addresses...
-            </Text>
-          </View>
-        ) : addressList.length === 0 ? (
-          <View style={styles.Emptycontainer}>
-            <Text style={styles.NoAddressText}>No addresses found.</Text>
-          </View>
-        ) : (
-          <FlatList
-            data={addressList}
-            keyExtractor={(item: any) => item.id.toString()}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 20 }}
-            onScrollBeginDrag={() => setActiveMenuId(null)}
-            renderItem={({ item }: { item: any }) => {
-              const active = selected === item.id;
+          {/* Address List */}
+          {loading ? (
+            <View style={{ marginTop: 20, alignItems: "center" }}>
+              <Text style={[styles.NoAddressText, { color: "#000" }]}>
+                Loading Addresses...
+              </Text>
+            </View>
+          ) : addressList.length === 0 ? (
+            <View style={styles.Emptycontainer}>
+              <Text style={styles.NoAddressText}>No addresses found.</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={addressList}
+              keyExtractor={(item: any) => item.id.toString()}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: 20 }}
+              onScrollBeginDrag={() => setActiveMenuId(null)}
+              renderItem={({ item }: { item: any }) => {
+                const active = selected === item.id;
 
-              const addressTextLines = [item.address, item.state]
-                .filter(Boolean)
-                .join(", ");
+                const addressTextLines = [item.address, item.state]
+                  .filter(Boolean)
+                  .join(", ");
 
-              return (
-                <TouchableOpacity
-                  style={[
-                    styles.card,
-                    active && styles.activeCard,
-                    activeMenuId === item.id && { zIndex: 1000, elevation: 10 },
-                  ]}
-                  onPress={() => {
-                    console.log("Pressed Address:", item);
-                    handleSetDefault(item.id);
-                  }}
-                >
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      justifyContent: "space-between",
+                return (
+                  <TouchableOpacity
+                    style={[
+                      styles.card,
+                      active && styles.activeCard,
+                      activeMenuId === item.id && {
+                        zIndex: 1000,
+                        elevation: 10,
+                      },
+                    ]}
+                    onPress={() => {
+                      console.log("Pressed Address:", item);
+                      handleSetDefault(item.id);
                     }}
                   >
-                    {/* Left Content */}
-                    <View style={{ flex: 1, paddingRight: 10 }}>
-                      <View style={styles.titleRow}>
-                        <Image
-                          source={require("../assets/Common/SLocation.png")}
-                          style={[Styles.headerImage, { marginRight: 6 }]}
-                          resizeMode="contain"
-                        />
-
-                        <Text style={styles.city}>
-                          {item.city || "Address"}
-                        </Text>
-                      </View>
-
-                      <Text style={styles.address}>{addressTextLines}</Text>
-
-                      <TouchableOpacity
-                        onPress={() => {
-                          if (activeMenuId !== null) {
-                            setActiveMenuId(null);
-                            return;
-                          }
-                          navigation.navigate("AddressAddUpd", {
-                            addressData: item,
-                          });
-                        }}
-                      >
-                        <Text style={styles.mapLink}>View on Map</Text>
-                      </TouchableOpacity>
-                    </View>
-
-                    {/* Right Side */}
                     <View
                       style={{
-                        alignItems: "flex-end",
+                        flexDirection: "row",
                         justifyContent: "space-between",
                       }}
                     >
-                      {/* Radio */}
-
-                      <TouchableOpacity
-                        style={[
-                          styles.radioOuter,
-                          active && styles.radioOuterActive,
-                        ]}
-                        onPress={() => {
-                          if (activeMenuId !== null) {
-                            setActiveMenuId(null);
-                            return;
-                          }
-                          handleSetDefault(item.id);
-                        }}
-                        activeOpacity={0.7}
-                      >
-                        {active && <View style={styles.radioInner} />}
-                      </TouchableOpacity>
-
-                      {/* Menu */}
-                      <View style={{ position: "relative" }}>
-                        <TouchableOpacity onPress={() => toggleMenu(item.id)}>
+                      {/* Left Content */}
+                      <View style={{ flex: 1, paddingRight: 10 }}>
+                        <View style={styles.titleRow}>
                           <Image
-                            source={require("../assets/Common/dots.png")}
-                            style={[Styles.headerImage]}
+                            source={require("../assets/Common/SLocation.png")}
+                            style={[Styles.headerImage, { marginRight: 6 }]}
                             resizeMode="contain"
                           />
+
+                          <Text style={styles.city}>
+                            {item.city || "Address"}
+                          </Text>
+                        </View>
+
+                        <Text style={styles.address}>{addressTextLines}</Text>
+
+                        <TouchableOpacity
+                          onPress={() => {
+                            if (activeMenuId !== null) {
+                              setActiveMenuId(null);
+                              return;
+                            }
+                            navigation.navigate("AddressAddUpd", {
+                              addressData: item,
+                            });
+                          }}
+                        >
+                          <Text style={styles.mapLink}>View on Map</Text>
+                        </TouchableOpacity>
+                      </View>
+
+                      {/* Right Side */}
+                      <View
+                        style={{
+                          alignItems: "flex-end",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        {/* Radio */}
+
+                        <TouchableOpacity
+                          style={[
+                            styles.radioOuter,
+                            active && styles.radioOuterActive,
+                          ]}
+                          onPress={() => {
+                            if (activeMenuId !== null) {
+                              setActiveMenuId(null);
+                              return;
+                            }
+                            handleSetDefault(item.id);
+                          }}
+                          activeOpacity={0.7}
+                        >
+                          {active && <View style={styles.radioInner} />}
                         </TouchableOpacity>
 
-                        {/* Dropdown Menu */}
-                        {activeMenuId === item.id && (
-                          <View style={styles.dropdownMenu}>
-                            <TouchableOpacity
-                              style={styles.dropdownItem}
-                              onPress={() => {
-                                toggleMenu(item.id);
-                                navigation.navigate("AddressAddUpd", {
-                                  addressData: item,
-                                });
-                              }}
-                            >
-                              <Image
-                                source={require("../assets/Common/edit.png")}
-                                style={{ height: 16, width: 16 }}
-                                resizeMode="contain"
-                              />
-
-                              <Text style={styles.dropdownText}>Edit</Text>
-                            </TouchableOpacity>
-                            <View
-                              style={{ height: 1, backgroundColor: "#ccc" }}
+                        {/* Menu */}
+                        <View style={{ position: "relative" }}>
+                          <TouchableOpacity onPress={() => toggleMenu(item.id)}>
+                            <Image
+                              source={require("../assets/Common/dots.png")}
+                              style={[Styles.headerImage]}
+                              resizeMode="contain"
                             />
-                            <TouchableOpacity
-                              style={styles.dropdownItem}
-                              onPress={() => handleDelete(item.id)}
-                            >
-                              <Image
-                                source={require("../assets/Common/trash.png")}
-                                style={{
-                                  height: 16,
-                                  width: 16,
-                                  tintColor: "#DC2626",
+                          </TouchableOpacity>
+
+                          {/* Dropdown Menu */}
+                          {activeMenuId === item.id && (
+                            <View style={styles.dropdownMenu}>
+                              <TouchableOpacity
+                                style={styles.dropdownItem}
+                                onPress={() => {
+                                  toggleMenu(item.id);
+                                  navigation.navigate("AddressAddUpd", {
+                                    addressData: item,
+                                  });
                                 }}
-                                resizeMode="contain"
-                              />
-                              <Text
-                                style={[
-                                  styles.dropdownText,
-                                  { color: "#DC2626" },
-                                ]}
                               >
-                                Delete
-                              </Text>
-                            </TouchableOpacity>
-                          </View>
-                        )}
+                                <Image
+                                  source={require("../assets/Common/edit.png")}
+                                  style={{ height: 16, width: 16 }}
+                                  resizeMode="contain"
+                                />
+
+                                <Text style={styles.dropdownText}>Edit</Text>
+                              </TouchableOpacity>
+                              <View
+                                style={{ height: 1, backgroundColor: "#ccc" }}
+                              />
+                              <TouchableOpacity
+                                style={styles.dropdownItem}
+                                onPress={() => handleDelete(item.id)}
+                              >
+                                <Image
+                                  source={require("../assets/Common/trash.png")}
+                                  style={{
+                                    height: 16,
+                                    width: 16,
+                                    tintColor: "#DC2626",
+                                  }}
+                                  resizeMode="contain"
+                                />
+                                <Text
+                                  style={[
+                                    styles.dropdownText,
+                                    { color: "#DC2626" },
+                                  ]}
+                                >
+                                  Delete
+                                </Text>
+                              </TouchableOpacity>
+                            </View>
+                          )}
+                        </View>
                       </View>
                     </View>
-                  </View>
-                </TouchableOpacity>
-              );
-            }}
-          />
-        )}
-      </View>
+                  </TouchableOpacity>
+                );
+              }}
+            />
+          )}
+        </View>
 
-      {/* Proceed to Payment — only shown when arriving from CheckoutScreen */}
-      {isCheckoutFlow && (
-        <TouchableOpacity
-          style={styles.proceedBtn}
-          onPress={() => {
-            const activeAddress = addressList.find(
-              (a: any) => a.id === selected,
-            );
-            navigation.navigate("PaymentScreen", {
-              delivery_date,
-              delivery_instruction,
-              address_id: activeAddress?.id,
-              state: activeAddress?.state,
-              district: activeAddress?.district,
-              city: activeAddress?.city,
-              pincode: activeAddress?.pincode,
-            });
-          }}
-        >
-          <Text style={styles.proceedText}>Proceed to Checkout</Text>
-        </TouchableOpacity>
-      )}
-    </SafeAreaView>
+        {/* Proceed to Payment — only shown when arriving from CheckoutScreen */}
+        {isCheckoutFlow && (
+          <TouchableOpacity
+            style={styles.proceedBtn}
+            onPress={() => {
+              const activeAddress = addressList.find(
+                (a: any) => a.id === selected,
+              );
+              navigation.navigate("PaymentScreen", {
+                delivery_date,
+                delivery_instruction,
+                address_id: activeAddress?.id,
+                state: activeAddress?.state,
+                district: activeAddress?.district,
+                city: activeAddress?.city,
+                pincode: activeAddress?.pincode,
+              });
+            }}
+          >
+            <Text style={styles.proceedText}>Proceed to Checkout</Text>
+          </TouchableOpacity>
+        )}
+      </SafeAreaView>
+    </TouchableWithoutFeedback>
   );
 };
 

@@ -54,6 +54,8 @@ const AddressAddUpd = ({ navigation, route }: any) => {
   }, []);
 
   const fetchStates = async () => {
+    console.log("asdkljaskldjflkjldksfjklfdjlsd");
+
     try {
       const res = await getStatesApi();
       console.log("Fetch States Response:", res?.data);
@@ -65,14 +67,17 @@ const AddressAddUpd = ({ navigation, route }: any) => {
     }
   };
 
-  const fetchDistricts = async (stateId: string) => {
+  const fetchDistricts = async (stateName: string) => {
+    console.log("asdkljaskldjflkjldksfjklfdjlsd");
+
     try {
-      console.log("Fetching Districts for stateId:", stateId);
-      const res = await getDistrictsApi(stateId);
-      console.log("District Response for stateId " + stateId + ":", res.data);
+      console.log("Fetching Districts for state:", stateName);
+      const res = await getDistrictsApi(stateName);
+      console.log("District Response for state " + stateName + ":", res.data);
 
       if (res?.data) {
         setDistrictsList(res.data);
+        console.log("Districts List:", res.data);
       }
     } catch (e) {
       console.log("Fetch Districts Error:", e);
@@ -262,16 +267,15 @@ const AddressAddUpd = ({ navigation, route }: any) => {
         if (detectedPincode) setPincode(detectedPincode);
         if (detectedState) {
           setState(detectedState);
-          // Find state ID to fetch districts
+          // Find matched state name to fetch districts
           const stateObj = statesList.find(
             (s: any) =>
               (s.title || s.name || s.state_name || s.state)?.toLowerCase() ===
               detectedState.toLowerCase(),
           );
           console.log("Matched State Object:", stateObj);
-          if (stateObj && stateObj.id) {
-            fetchDistricts(stateObj.id.toString());
-          }
+          const matchedName = stateObj ? (stateObj.title || stateObj.name || stateObj.state_name || stateObj.state) : detectedState;
+          fetchDistricts(matchedName);
         }
       }
     } catch (error) {
@@ -446,7 +450,12 @@ const AddressAddUpd = ({ navigation, route }: any) => {
                 style={[styles.input, { justifyContent: "center" }]}
                 onPress={() => setShowStateModal(true)}
               >
-                <Text style={{ color: state ? "#000" : "#9CA3AF" }}>
+                <Text
+                  style={{
+                    color: state ? "#000" : "#9CA3AF",
+                    fontFamily: "DMSans-Regular",
+                  }}
+                >
                   {state || "State"}
                 </Text>
               </TouchableOpacity>
@@ -459,10 +468,16 @@ const AddressAddUpd = ({ navigation, route }: any) => {
                     Alert.alert("Error", "Please select a state first");
                     return;
                   }
+                  console.log("Districts Data on Button Press:", districtsList);
                   setShowDistrictModal(true);
                 }}
               >
-                <Text style={{ color: district ? "#000" : "#9CA3AF" }}>
+                <Text
+                  style={{
+                    color: district ? "#000" : "#9CA3AF",
+                    fontFamily: "DMSans-Regular",
+                  }}
+                >
                   {district || "District"}
                 </Text>
               </TouchableOpacity>
@@ -515,8 +530,8 @@ const AddressAddUpd = ({ navigation, route }: any) => {
                             item?.state;
                           setState(selectedStateName);
                           setDistrict(""); // reset district when state changes
-                          if (item?.id) {
-                            fetchDistricts(item.id.toString());
+                          if (selectedStateName) {
+                            fetchDistricts(selectedStateName);
                           }
                           setShowStateModal(false);
                         }}
@@ -651,6 +666,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderWidth: 1,
     borderColor: "#E5E7EB",
+    fontFamily: "DMSans-Regular",
   },
 
   saveBtn: {

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { debounce } from "lodash";
 import {
   View,
@@ -16,7 +16,7 @@ import {
   Modal,
   Alert,
 } from "react-native";
-import { NativeStackScreenProps } from "@react-navigation/native-stack";
+// import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import Carousel from "react-native-reanimated-carousel";
 import ProductCard from "../components/ProductCard";
 // import { HomeStackParamList } from "../navigation/HomeStack";
@@ -36,22 +36,6 @@ import {
   getCartApi,
 } from "../services/api";
 import { useFocusEffect } from "@react-navigation/native";
-import Animated, {
-  useSharedValue,
-  useAnimatedScrollHandler,
-  useAnimatedStyle,
-  withRepeat,
-  withTiming,
-  withSequence,
-  cancelAnimation,
-  Easing,
-} from "react-native-reanimated";
-
-const banners = [
-  require("../assets/home/banner1.png"),
-  require("../assets/home/banner2.png"),
-  require("../assets/home/banner3.png"),
-];
 
 const dealBanners = [
   require("../assets/home/new-deal.png"),
@@ -104,51 +88,7 @@ const brands = [
   { id: "6", image: require("../assets/brand/brand6.png") },
 ];
 
-const BrandItem = ({ image, onPress }: { image: any; onPress: () => void }) => {
-  return (
-    <TouchableOpacity style={styles.brandCard} onPress={onPress}>
-      <Image source={image} style={styles.brandImage} />
-    </TouchableOpacity>
-  );
-};
-
-// const backeryItems = [
-//   {
-//     id: "1",
-//     image: require("../assets/product/product1-.png"),
-//     title: "Morde - Dark Compound (CO D15), 500 gm",
-//     packSize: "Pack of 10",
-//     price: "640",
-//     oldPrice: "₹660",
-//     discount: "33% OFF",
-//     isOrganic: true,
-//     bestRate: "₹200/pack Best rate",
-//   },
-//   {
-//     id: "2",
-//     image: require("../assets/product/product3-.png"),
-//     title: "Cello Tape - Transparent W: 1 Inch, L: 55 m",
-//     packSize: "Pack of 20",
-//     price: "820",
-//     oldPrice: "₹900",
-//     discount: "10% OFF",
-//     isOrganic: false,
-//     bestRate: "₹200/pack Best rate",
-//   },
-//   {
-//     id: "3",
-//     image: require("../assets/product/product3-.png"),
-//     title: "Morde - Dark Compound (CO D15), 500 gm",
-//     packSize: "Pack of 20",
-//     price: "820",
-//     oldPrice: "₹900",
-//     discount: "10% OFF",
-//     isOrganic: false,
-//     bestRate: "₹200/pack Best rate",
-//   },
-// ];
-
-type Props = NativeStackScreenProps<HomeStackParamList, "HomeMain">;
+// type Props = NativeStackScreenProps<HomeStackParamList, "HomeMain">;
 
 const HomeScreen: React.FC<Props> = ({ navigation }) => {
   const { width } = useWindowDimensions();
@@ -161,7 +101,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
   const [categoryData, setCategoryData] = React.useState<any[]>([]);
   const [brandData, setBrandData] = React.useState<any[]>([]);
   const [brandData1, setBrandData1] = React.useState<any[]>([]);
-  const [allBrands, setAllBrands] = React.useState<any[]>([]);
+  // const [allBrands, setAllBrands] = React.useState<any[]>([]);
   const [visibleBrandCount, setVisibleBrandCount] = useState(10);
 
   const [dealOfDayData, setDealOfDayData] = React.useState<any[]>([]);
@@ -193,6 +133,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
         animated: false,
       });
     }, 16);
+
     return () => clearInterval(interval);
   }, [brandData]);
 
@@ -241,86 +182,6 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
-  // const fetchAddresses = async () => {
-  //   try {
-  //     const res = await getAddressApi();
-  //     const list: any[] = res?.data || [];
-  //     const def = list.find((a: any) => a.default_status === 1);
-  //     if (def) {
-  //       setDefaultAddress(def);
-  //     } else {
-  //       // No default address — attempt geolocation
-  //       const request = async () => {
-  //         Geolocation.getCurrentPosition(
-  //           async (pos) => {
-  //             const { latitude, longitude } = pos.coords;
-  //             try {
-  //               const GOOGLE_API_KEY =
-  //                 "AIzaSyBV3qwiKVCy9lq9l67nSOPGB-1Z9G5qLpo";
-  //               const response = await axios.get(
-  //                 `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_API_KEY}`,
-  //               );
-  //               console.log("Current location data:", response.data);
-
-  //               if (
-  //                 response.data &&
-  //                 response.data.results &&
-  //                 response.data.results.length > 0
-  //               ) {
-  //                 const fullAddress =
-  //                   response.data.results[0].formatted_address;
-  //                 const addressParts = fullAddress.split(", ");
-  //                 const shortAddress = addressParts.slice(0, 3).join(", ");
-  //                 setCurrentLocation(shortAddress);
-  //               } else {
-  //                 setCurrentLocation(
-  //                   `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
-  //                 );
-  //               }
-  //             } catch (err: any) {
-  //               console.log("Geocoding error:", err.message);
-  //               setCurrentLocation(
-  //                 `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
-  //               );
-  //             }
-  //           },
-  //           (err) => console.log("Geolocation error:", err.message),
-  //           { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
-  //         );
-  //       };
-  //       if (Platform.OS === "android") {
-  //         const granted = await PermissionsAndroid.request(
-  //           PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-  //         );
-
-  //         if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-  //           request();
-  //         } else {
-  //           console.log("Permission denied");
-  //           setCurrentLocation("Permission denied");
-  //           Alert.alert(
-  //             "Permission Required",
-  //             "Please enable location permission",
-  //           );
-  //         }
-  //       } else {
-  //         const auth = await Geolocation.requestAuthorization("whenInUse");
-
-  //         if (auth === "granted") {
-  //           request();
-  //         } else {
-  //           console.log("Permission denied");
-  //           setCurrentLocation("Permission denied");
-  //         }
-  //       }
-  //     }
-  //   } catch (error) {
-  //     console.log("Fetch Address Error", error);
-  //   }
-  // };
-
-  // Returns "19 Mar" style date, N days from today
-
   const getCurrentLocation = (): Promise<void> => {
     return new Promise((resolve) => {
       Geolocation.getCurrentPosition(
@@ -355,7 +216,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
         (err) => {
           console.log("Geolocation error:", err.message);
           setCurrentLocation("Location unavailable");
-          resolve(); // ✅ don't hang forever on error
+          resolve();
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
       );
@@ -389,14 +250,15 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
           );
         }
       } else {
-        const auth: any = await Geolocation.requestAuthorization("whenInUse");
-
-        if (auth === "granted") {
-          await getCurrentLocation();
-        } else {
-          console.log("Permission denied");
-          setCurrentLocation("Permission denied");
-        }
+        Geolocation.requestAuthorization(
+          () => {
+            getCurrentLocation();
+          },
+          (error: any) => {
+            console.log("Permission denied", error);
+            setCurrentLocation("Permission denied");
+          },
+        );
       }
     } catch (error) {
       console.log("Fetch Address Error", error);
@@ -443,6 +305,8 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
       setLoading(true);
 
       const token = await AsyncStorage.getItem("userToken");
+      console.log("token", token);
+
       const response = await axios.get(`${BASE_URL}/home-page`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -476,7 +340,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
       const checkTokenAndFetch = async () => {
         const token = await AsyncStorage.getItem("userToken");
         if (!token) {
-          // navigation.navigate("Signup");
+          navigation.navigate("Signup");
           return;
         }
         getProfile();
@@ -504,26 +368,6 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
       setLoadingMore(false);
     }, 500);
   };
-
-  // const loadMoreBrands = () => {
-  //   console.log(
-  //     "loadMoreBrands. visibleCount:",
-  //     visibleBrandCount,
-  //     "allBrands:",
-  //     allBrands.length,
-  //   );
-  //   if (loadingMore || visibleBrandCount >= allBrands.length) return;
-
-  //   setLoadingMore(true);
-  //   setTimeout(() => {
-  //     setVisibleBrandCount((prevCount) => {
-  //       const nextCount = prevCount + 6;
-  //       setBrandData(allBrands.slice(0, nextCount));
-  //       return nextCount;
-  //     });
-  //     setLoadingMore(false);
-  //   }, 1000);
-  // };
 
   const handleAddToCart = async (productId: number, quantity: number = 1) => {
     try {
@@ -869,14 +713,13 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
                 <View style={{ paddingHorizontal: 10 }}>
                   <Image
                     source={{ uri: item.image }}
-                    // source={item}
                     style={{
                       width: width - 60,
                       height: 160,
                       borderRadius: 18,
                       alignSelf: "center",
                     }}
-                    resizeMode="cover"
+                    resizeMode={Platform.OS === "ios" ? "none" : "stretch"}
                   />
                 </View>
               )}
@@ -901,58 +744,62 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
           <Text style={styles.categoryTitle}>Shop by category</Text>
 
           {/* Categories Grid */}
-          <FlatList
-            data={categoryData}
-            numColumns={numColumns}
-            keyExtractor={(item) => item.id}
-            showsVerticalScrollIndicator={false}
-            columnWrapperStyle={{
-              justifyContent: "space-between",
-              marginBottom: spacing,
+          <View
+            style={{
+              flexDirection: "row",
+              flexWrap: "wrap",
               paddingHorizontal: 14,
             }}
-            renderItem={({ item }) => (
-              <View
-                style={{
-                  width: itemSize,
-                  backgroundColor: "#F4F4F4",
-                  padding: 4,
-                  borderRadius: 10,
-                }}
-              >
-                <TouchableOpacity
-                  style={[styles.card, {}]}
-                  onPress={() =>
-                    navigation.navigate("CategoryProduct", {
-                      catname: item.name,
-                      categoryId: item.id,
-                    })
-                  }
+          >
+            {categoryData.map((item, index) => {
+              const gap =
+                (width - 28 - itemSize * numColumns) / (numColumns - 1);
+              return (
+                <View
+                  key={item.id}
+                  style={{
+                    width: itemSize,
+                    backgroundColor: "#F4F4F4",
+                    padding: 4,
+                    borderRadius: 10,
+                    marginBottom: spacing,
+                    marginRight: (index + 1) % numColumns === 0 ? 0 : gap,
+                  }}
                 >
-                  <View
-                    style={{
-                      padding: 0,
-                      backgroundColor: "#ffff",
-                      borderRadius: 10,
-                    }}
+                  <TouchableOpacity
+                    style={[styles.card, {}]}
+                    onPress={() =>
+                      navigation.navigate("CategoryProduct", {
+                        catname: item.name,
+                        categoryId: item.id,
+                      })
+                    }
                   >
-                    <Image
-                      source={{ uri: item.image }}
+                    <View
                       style={{
-                        width: itemSize * 0.85,
-                        height: itemSize * 0.85,
-                        resizeMode: "contain",
+                        padding: 0,
+                        backgroundColor: "#ffff",
+                        borderRadius: 10,
                       }}
-                    />
-                  </View>
-                </TouchableOpacity>
+                    >
+                      <Image
+                        source={{ uri: item.image }}
+                        style={{
+                          width: itemSize * 0.85,
+                          height: itemSize * 0.85,
+                          resizeMode: "contain",
+                        }}
+                      />
+                    </View>
+                  </TouchableOpacity>
 
-                <Text style={styles.title} numberOfLines={2}>
-                  {item.name}
-                </Text>
-              </View>
-            )}
-          />
+                  <Text style={styles.title} numberOfLines={2}>
+                    {item.name}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
 
           <View
             style={{
@@ -1025,6 +872,10 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
               showsHorizontalScrollIndicator={false}
               style={{ paddingBottom: 5 }}
               keyExtractor={(item) => item.id.toString()}
+              initialNumToRender={4}
+              maxToRenderPerBatch={4}
+              windowSize={5}
+              removeClippedSubviews={true}
               renderItem={({ item }) => (
                 <ProductCard
                   image={
@@ -1084,6 +935,10 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
                 showsHorizontalScrollIndicator={false}
                 style={{ paddingBottom: 10 }}
                 keyExtractor={(item) => item.id.toString()}
+                initialNumToRender={4}
+                maxToRenderPerBatch={4}
+                windowSize={5}
+                removeClippedSubviews={true}
                 renderItem={({ item }) => (
                   <ProductCard
                     image={
@@ -1095,7 +950,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
                     packSize={""}
                     price={item.price}
                     oldPrice={item.mrp}
-                    discount={item.discount}
+                    discount={Number(item.discount).toFixed(0)}
                     isOrganic={false}
                     onAddPress={() => handleAddToCart(item.id, 1)}
                     onPress={() =>
@@ -1127,24 +982,6 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
           <View style={styles.brandSection}>
             <Text style={styles.brandTitle}>Shop by Brands</Text>
             <View style={{ flex: 1 }}>
-              {/* <FlatList
-                data={brandData}
-                numColumns={3}
-                keyExtractor={(item) => item.id}
-                columnWrapperStyle={{ justifyContent: "space-between" }}
-                scrollEnabled={false}
-                renderItem={({ item }) => (
-                  <BrandItem
-                    image={{ uri: item.image }}
-                    onPress={() =>
-                      navigation.navigate("BrandProduct", {
-                        brandId: item.id,
-                        brandName: item.name || "Brand",
-                      })
-                    }
-                  />
-                )}
-              /> */}
               {/* Top horizontal brand list */}
               <FlatList
                 ref={flatListLeftRef}
@@ -1154,6 +991,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
                 contentContainerStyle={{
                   paddingHorizontal: 10,
                   marginBottom: 2,
+                  marginTop: 10,
                 }}
                 data={brandData.slice(0, visibleBrandCount)}
                 keyExtractor={(item, index) => `left-${item.id}-${index}`}
@@ -1351,7 +1189,6 @@ const styles = StyleSheet.create({
 
   container: {
     flex: 1,
-    // backgroundColor: "#F8F9FD",
     backgroundColor: "#fff",
   },
 
@@ -1374,7 +1211,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginVertical: 15,
-    // marginTop: 45,
     paddingHorizontal: 14,
   },
   iconSet: {
@@ -1425,8 +1261,8 @@ const styles = StyleSheet.create({
     top: -5,
     backgroundColor: "#F59E0B",
     borderRadius: 50,
-    width: 18, // ✅ FIX: fixed width
-    height: 18, // ✅ FIX: fixed height
+    width: 18,
+    height: 18,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -1434,7 +1270,7 @@ const styles = StyleSheet.create({
   badgeText: {
     color: "#000",
     fontSize: 8,
-    fontWeight: "bold",
+    fontFamily: "DMSans-Regular",
   },
 
   addressText: {
@@ -1486,28 +1322,22 @@ const styles = StyleSheet.create({
   },
 
   bannerImage: {
-    // width: '100%',
     height: 180,
     borderRadius: 15,
   },
 
   categoryTitle: {
     fontSize: 16,
-    fontWeight: "600",
-    // marginVertical: 22,
+    fontWeight: "100",
     fontFamily: "DMSans-Medium",
     marginBottom: 10,
     paddingHorizontal: 14,
   },
   card: {
-    // backgroundColor: "",
-    // borderColor: "red",
-    // borderWidth: 1,
     borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
     aspectRatio: 1,
-    // overflow: "hidden",
     padding: 10,
   },
 
@@ -1516,7 +1346,8 @@ const styles = StyleSheet.create({
     fontSize: 10,
     marginTop: 5,
     fontFamily: "DMSans-SemiBold",
-    color: "#333",
+    color: "#303030",
+    fontWeight: "100",
   },
 
   categoryCard: {
@@ -1541,7 +1372,7 @@ const styles = StyleSheet.create({
 
   dealTitle: {
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "100",
     fontFamily: "DMSans-Medium",
   },
 
@@ -1559,18 +1390,18 @@ const styles = StyleSheet.create({
   },
 
   brandSection: {
-    // padding: 10,
     borderTopLeftRadius: 10,
     borderTopRightRadius: 10,
     backgroundColor: "rgb(232,241,230)",
     paddingVertical: 10,
+    marginTop: 10,
   },
 
   brandTitle: {
     fontSize: 16,
     marginBottom: 10,
     fontFamily: "DMSans-Medium",
-
+    fontWeight: "100",
     paddingHorizontal: 7,
   },
 
@@ -1600,7 +1431,6 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 13,
-    // backgroundColor: "red"
   },
 
   iconWrapper: {
@@ -1637,11 +1467,11 @@ const styles = StyleSheet.create({
   dot: {
     width: 7,
     height: 7,
-    borderRadius: 4,
-    marginHorizontal: 4,
+    borderRadius: 3.5,
+    marginHorizontal: 2.5,
   },
   activeDot: {
-    backgroundColor: "#487D44",
+    backgroundColor: "#6b8968ff",
   },
   inactiveDot: {
     backgroundColor: "#D1D5DB",

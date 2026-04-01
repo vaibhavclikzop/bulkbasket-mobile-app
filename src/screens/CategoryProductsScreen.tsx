@@ -527,7 +527,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
           <View style={{ flex: 1, flexDirection: "row", zIndex: 1 }}>
             {/* SIDEBAR */}
 
-            <View style={styles.sidebar}>
+            <View style={[styles.sidebar]}>
               <FlatList
                 data={categories}
                 keyExtractor={(item) => item.sub_category_id.toString()}
@@ -581,75 +581,68 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
             </View>
             <View style={{ flex: 1, backgroundColor: "#F1F2F6" }}>
               {/* SORT ROW */}
-              <FlatList
-                // data={categories[0]?.subSubCategory || []}
-                data={categories[selectedIndex]?.subSubCategory || []}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                keyExtractor={(item) => item.id}
-                contentContainerStyle={styles.sortRowContent}
-                style={[styles.sortRow, {}]}
-                renderItem={({ item }) =>
-                  item.isSort ? (
-                    <TouchableOpacity style={styles.sortChip}>
-                      <Image
-                        source={require("../assets/Common/filter.png")}
-                        style={{
-                          height: 10,
-                          width: 10,
-                          tintColor: "#000",
-                        }}
-                        resizeMode="contain"
-                      />
-                      <Text style={styles.sortText}> {item.label}</Text>
-                    </TouchableOpacity>
-                  ) : (
-                    <TouchableOpacity
-                      style={[
-                        styles.filterChip,
-                        selectedSubSubCats.includes(Number(item.id)) && {
-                          backgroundColor: "#487D44",
-                          borderColor: "#487D44",
-                        },
-                      ]}
-                      // onPress={() => {
-                      //   const subSubCatId = Number(item?.id);
-                      //   if (selectedSubSubCats.includes(subSubCatId)) {
-                      //     setSelectedSubSubCats([]);
-                      //   } else {
-                      //     setSelectedSubSubCats([subSubCatId]);
-                      //   }
-                      // }}
-                      onPress={() => {
-                        const subSubCatId = Number(item?.id);
-                        if (selectedSubSubCats.includes(subSubCatId)) {
-                          // ✅ Remove this one from selection
-                          setSelectedSubSubCats((prev) =>
-                            prev.filter((id) => id !== subSubCatId),
-                          );
-                        } else {
-                          // ✅ Add this one to existing selection
-                          setSelectedSubSubCats((prev) => [
-                            ...prev,
-                            subSubCatId,
-                          ]);
-                        }
-                      }}
-                    >
-                      <Text
-                        style={[
-                          styles.sortText,
-                          selectedSubSubCats.includes(Number(item.id)) && {
-                            color: "#fff",
-                          },
-                        ]}
-                      >
-                        {item.name}
-                      </Text>
-                    </TouchableOpacity>
-                  )
-                }
-              />
+              {categories[selectedIndex]?.subSubCategory &&
+                categories[selectedIndex]?.subSubCategory.length > 0 && (
+                  <FlatList
+                    // data={categories[0]?.subSubCategory || []}
+                    data={categories[selectedIndex]?.subSubCategory || []}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    keyExtractor={(item) => item.id}
+                    contentContainerStyle={styles.sortRowContent}
+                    style={[styles.sortRow, {}]}
+                    renderItem={({ item }) =>
+                      item.isSort ? (
+                        <TouchableOpacity style={styles.sortChip}>
+                          <Image
+                            source={require("../assets/Common/filter.png")}
+                            style={{
+                              height: 10,
+                              width: 10,
+                              tintColor: "#000",
+                            }}
+                            resizeMode="contain"
+                          />
+                          <Text style={styles.sortText}>{item.label}</Text>
+                        </TouchableOpacity>
+                      ) : (
+                        <TouchableOpacity
+                          style={[
+                            styles.filterChip,
+                            selectedSubSubCats.includes(Number(item.id)) && {
+                              backgroundColor: "#487D44",
+                              borderColor: "#487D44",
+                            },
+                          ]}
+                          onPress={() => {
+                            const subSubCatId = Number(item?.id);
+                            if (selectedSubSubCats.includes(subSubCatId)) {
+                              setSelectedSubSubCats((prev) =>
+                                prev.filter((id) => id !== subSubCatId),
+                              );
+                            } else {
+                              setSelectedSubSubCats((prev) => [
+                                ...prev,
+                                subSubCatId,
+                              ]);
+                            }
+                          }}
+                        >
+                          <Text
+                            style={[
+                              styles.sortText,
+                              selectedSubSubCats.includes(Number(item.id)) && {
+                                color: "#fff",
+                              },
+                            ]}
+                          >
+                            {item.name}
+                          </Text>
+                        </TouchableOpacity>
+                      )
+                    }
+                  />
+                )}
               <FlatList
                 ref={productListRef}
                 data={filteredProducts}
@@ -725,7 +718,6 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                                 height: 24,
                                 justifyContent: "center",
                                 alignItems: "center",
-                                // borderTopRightRadius: 20,
                                 borderBottomLeftRadius: 8,
                                 zIndex: 10,
                               }}
@@ -738,7 +730,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                                   fontFamily: "DMSans-Medium",
                                 }}
                               >
-                                {item.discount}% OFF
+                                {Number(item.discount).toFixed(0)}% OFF
                               </Text>
                             </View>
                           ) : null
@@ -750,7 +742,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                             style={styles.discountBadge}
                           >
                             <Text style={styles.discountText} numberOfLines={1}>
-                              {item.discount}% OFF
+                              {Number(item.discount).toFixed(0)}% OFF
                             </Text>
                           </LinearGradient>
                         ) : null}
@@ -768,7 +760,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                           style={{
                             position: "absolute",
                             bottom: 10,
-                            left: 70,
+                            left: 80,
                             padding: 4,
                           }}
                         >
@@ -1058,6 +1050,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
+    marginBottom: 10,
   },
 
   dealTitle: {
@@ -1130,7 +1123,7 @@ const styles = StyleSheet.create({
   },
 
   filterChip: {
-    backgroundColor: "#ffff",
+    // backgroundColor: "#ffff",
     borderColor: "#a5a4a4c7",
     borderWidth: 1,
     borderRadius: 15,
@@ -1364,6 +1357,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    marginVertical: 20,
   },
 
   emptyText: {
@@ -1398,8 +1392,8 @@ const styles = StyleSheet.create({
     top: -5,
     backgroundColor: "#F59E0B",
     borderRadius: 50,
-    width: 18, // ✅ FIX: fixed width
-    height: 18, // ✅ FIX: fixed height
+    width: 18,
+    height: 18,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -1407,6 +1401,6 @@ const styles = StyleSheet.create({
   badgeText: {
     color: "#000",
     fontSize: 8,
-    fontWeight: "bold",
+    fontFamily: "DMSans-Regular",
   },
 });

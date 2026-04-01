@@ -6,8 +6,6 @@ import {
   Image,
   TouchableOpacity,
   ScrollView,
-  Alert,
-  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -30,9 +28,10 @@ const menuItems: MenuItem[] = [
   { id: 1, title: "Profile", image: require("../assets/Tabs/Profile.png") },
   {
     id: 2,
-    title: "Your Orders",
-    image: require("../assets/Tabs/shopping.png"),
+    title: "Company Profile",
+    image: require("../assets/Common/contractor.png"),
   },
+
   {
     id: 3,
     title: "Estimate",
@@ -40,8 +39,8 @@ const menuItems: MenuItem[] = [
   },
   {
     id: 4,
-    title: "Company Profile",
-    image: require("../assets/Common/contractor.png"),
+    title: "Your Orders",
+    image: require("../assets/Tabs/shopping.png"),
   },
   {
     id: 5,
