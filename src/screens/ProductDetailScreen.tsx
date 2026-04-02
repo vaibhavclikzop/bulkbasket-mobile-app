@@ -959,7 +959,7 @@ const styles = StyleSheet.create({
 
   badgeText: {
     color: "#000",
-    fontSize: 8,
-    fontFamily: "DMSans-Regular",
+    fontSize: 10,
+    fontFamily: "DMSans-Bold",
   },
 });

@@ -17,27 +17,27 @@ const ContactSupportScreen = ({ navigation }: any) => {
     {
       id: "About",
       title: "About BulBasket",
-      desc: "You can get in touch with us through below platforms. Our Team will reach out to you as soon as it would be possible",
+      desc: "Learn more about BulBasket, our services, how the app works, and what we offer to users.",
     },
     {
       id: "Outlet",
       title: "Outlet and account related issues",
-      desc: "You can get in touch with us through below platforms. Our Team will reach out to you as soon as it would be possible",
+      desc: "Get help with account setup, login issues, profile updates, and outlet registration or management.",
     },
     {
       id: "Current",
       title: "Current order related issues",
-      desc: "You can get in touch with us through below platforms. Our Team will reach out to you as soon as it would be possible",
+      desc: "Facing issues with an ongoing order? Track your order, modify details, or report delays here.",
     },
     {
       id: "Delivered",
       title: "Delivered order related issues",
-      desc: "You can get in touch with us through below platforms. Our Team will reach out to you as soon as it would be possible",
+      desc: "Report problems with completed orders such as missing items, wrong delivery, or quality concerns.",
     },
     {
       id: "Payment",
       title: "Payment and refund issues",
-      desc: "You can get in touch with us through below platforms. Our Team will reach out to you as soon as it would be possible",
+      desc: "Resolve payment failures, check transaction status, and request refunds for canceled or failed orders.",
     },
   ];
 

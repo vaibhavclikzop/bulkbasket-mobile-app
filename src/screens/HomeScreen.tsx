@@ -15,6 +15,7 @@ import {
   Platform,
   Modal,
   Alert,
+  ImageBackground,
 } from "react-native";
 // import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import Carousel from "react-native-reanimated-carousel";
@@ -44,17 +45,17 @@ const dealBanners = [
 ];
 
 // const packingItems = [
-//   {
-//     id: "1",
-//     image: require("../assets/product/product1-.png"),
-//     title: "Disposables & Packaging Material",
-//     packSize: "Pack of 10",
-//     price: "640",
-//     oldPrice: "₹660",
-//     discount: "33% OFF",
-//     isOrganic: true,
-//     bestRate: "₹200/pack Best rate",
-//   },
+// {
+//   id: "1",
+//   image: require("../assets/product/product1-.png"),
+//   title: "Disposables & Packaging Material",
+//   packSize: "Pack of 10",
+//   price: "640",
+//   oldPrice: "₹660",
+//   discount: "33% OFF",
+//   isOrganic: true,
+//   bestRate: "₹200/pack Best rate",
+// },
 //   {
 //     id: "2",
 //     image: require("../assets/product/product1-.png"),
@@ -79,18 +80,18 @@ const dealBanners = [
 //   },
 // ];
 
-const brands = [
-  { id: "1", image: require("../assets/brand/brand1.png") },
-  { id: "2", image: require("../assets/brand/brand2.png") },
-  { id: "3", image: require("../assets/brand/brand3.png") },
-  { id: "4", image: require("../assets/brand/brand4.png") },
-  { id: "5", image: require("../assets/brand/brand5.png") },
-  { id: "6", image: require("../assets/brand/brand6.png") },
-];
+// const brands = [
+//   { id: "1", image: require("../assets/brand/brand1.png") },
+//   { id: "2", image: require("../assets/brand/brand2.png") },
+//   { id: "3", image: require("../assets/brand/brand3.png") },
+//   { id: "4", image: require("../assets/brand/brand4.png") },
+//   { id: "5", image: require("../assets/brand/brand5.png") },
+//   { id: "6", image: require("../assets/brand/brand6.png") },
+// ];
 
 // type Props = NativeStackScreenProps<HomeStackParamList, "HomeMain">;
 
-const HomeScreen: React.FC<Props> = ({ navigation }) => {
+const HomeScreen: React.FC<any> = ({ navigation }) => {
   const { width } = useWindowDimensions();
   const numColumns = 4;
   const spacing = 12;
@@ -133,7 +134,6 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
         animated: false,
       });
     }, 16);
-
     return () => clearInterval(interval);
   }, [brandData]);
 
@@ -153,6 +153,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
     try {
       setCartLoading(true);
       const data = await getCartApi();
+      console.log("Cart Data", data.data);
       setCartItems(data.data || []);
     } catch (error) {
       console.log("Cart fetch error:", error);
@@ -305,7 +306,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
       setLoading(true);
 
       const token = await AsyncStorage.getItem("userToken");
-      console.log("token", token);
+      // console.log("token", token);
 
       const response = await axios.get(`${BASE_URL}/home-page`, {
         headers: {
@@ -476,10 +477,10 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
 
       if (newStatus) {
         await addToWishlistApi(product.id);
-        Alert.alert("Success", "Successfully added to wishlist");
+        // Alert.alert("Success", "Successfully added to wishlist");
       } else {
         await updateWishlistQtyApi(product.id, 0);
-        Alert.alert("Success", "Item removed from wishlist");
+        // Alert.alert("Success", "Item removed from wishlist");
       }
     } catch (error) {
       console.log("Wishlist Toggle Error:", error);
@@ -617,8 +618,36 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
             resizeMode="contain"
           />
 
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>3+</Text>
+          <View
+            style={{
+              position: "absolute",
+              right: -7,
+              top: -7,
+              backgroundColor: "#F59E0B",
+              borderRadius: 50,
+              minWidth: 18, // थोड़ा increase
+              height: 18, // equal width/height for perfect circle
+              justifyContent: "center",
+              alignItems: "center",
+              paddingHorizontal: 4,
+            }}
+          >
+            <Text
+              style={[
+                // styles.badgeText,
+                {
+                  textAlign: "center",
+                  includeFontPadding: false, // 🔥 Android fix
+                  color: "#000",
+                  fontSize: 10,
+                  fontFamily: "DMSans-Bold",
+                  textAlignVertical: "center", // 🔥 Android fix
+                  marginTop: 2,
+                },
+              ]}
+            >
+              3+
+            </Text>
           </View>
         </TouchableOpacity>
       </View>
@@ -742,7 +771,6 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
           </View>
           {/* Category Title */}
           <Text style={styles.categoryTitle}>Shop by category</Text>
-
           {/* Categories Grid */}
           <View
             style={{
@@ -850,7 +878,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
               { paddingHorizontal: 16, marginBottom: 10 },
             ]}
           >
-            Deal Of The Day
+            Limited-Time Business Deals for HoReCa
           </Text>
 
           {dealOfDayProduct?.length === 0 ? (
@@ -920,7 +948,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
             <View key={index}>
               <View style={[styles.headerRow, { marginBottom: 10 }]}>
                 <Text style={styles.dealTitle}>
-                  {capitalizeWords(section.sub_category)}
+                  {capitalizeWords(section.category_name)}
                 </Text>
                 {/* <TouchableOpacity
                   onPress={() => console.log("View All Pressed")}
@@ -979,8 +1007,19 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
             </View>
           ))}
 
-          <View style={styles.brandSection}>
-            <Text style={styles.brandTitle}>Shop by Brands</Text>
+          <ImageBackground
+            source={require("../assets/brandbg.jpeg")}
+            style={styles.brandSection}
+            imageStyle={{}}
+          >
+            <Text
+              style={[
+                styles.brandTitle,
+                { color: "#fff", textAlign: "center" },
+              ]}
+            >
+              Shop by Brands
+            </Text>
             <View style={{ flex: 1 }}>
               {/* Top horizontal brand list */}
               <FlatList
@@ -1031,12 +1070,13 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
                 renderItem={({ item, index }) => (
                   <TouchableOpacity
                     style={styles.brandHorizontalCard}
-                    // onPress={() =>
-                    //   navigation.navigate("BrandProduct", {
-                    //     brandId: item.id,
-                    //     brandName: item.name || "Brand",
-                    //   })
-                    // }
+                    onPress={() =>
+                      // navigation.navigate("BrandProduct", {
+                      //   brandId: item.id,
+                      //   brandName: item.name || "Brand",
+                      // })
+                      console.log("Pressed Brand", item)
+                    }
                   >
                     <Image
                       source={{ uri: item.image }}
@@ -1053,7 +1093,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
                 </View>
               )}
             </View>
-          </View>
+          </ImageBackground>
         </ScrollView>
       )}
       {gst === null && (
@@ -1097,11 +1137,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
           activeOpacity={1}
           onPress={() => setShowAddressModal(false)}
         >
-          <TouchableOpacity
-            activeOpacity={1}
-            style={styles.modalSheet}
-            onPress={() => {}}
-          >
+          <TouchableOpacity activeOpacity={1} style={styles.modalSheet}>
             {/* Handle bar */}
             <View style={styles.modalHandle} />
 
@@ -1269,8 +1305,8 @@ const styles = StyleSheet.create({
 
   badgeText: {
     color: "#000",
-    fontSize: 8,
-    fontFamily: "DMSans-Regular",
+    fontSize: 10,
+    fontFamily: "DMSans-Bold",
   },
 
   addressText: {
@@ -1328,11 +1364,12 @@ const styles = StyleSheet.create({
 
   categoryTitle: {
     fontSize: 16,
-    fontWeight: "100",
+    fontWeight: "300",
     fontFamily: "DMSans-Medium",
     marginBottom: 10,
     paddingHorizontal: 14,
   },
+
   card: {
     borderRadius: 10,
     justifyContent: "center",
@@ -1372,7 +1409,7 @@ const styles = StyleSheet.create({
 
   dealTitle: {
     fontSize: 16,
-    fontWeight: "100",
+    fontWeight: "300",
     fontFamily: "DMSans-Medium",
   },
 
@@ -1392,7 +1429,6 @@ const styles = StyleSheet.create({
   brandSection: {
     borderTopLeftRadius: 10,
     borderTopRightRadius: 10,
-    backgroundColor: "rgb(232,241,230)",
     paddingVertical: 10,
     marginTop: 10,
   },

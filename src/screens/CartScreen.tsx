@@ -13,13 +13,11 @@ import {
   RefreshControl,
   Platform,
 } from "react-native";
-import Styles from "../components/Styles";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Header from "../components/Header";
 import {
   getCartApi,
   getCompanyProfileApi,
-  getProfileApi,
   removeCartItemApi,
   updateCartQuantityApi,
 } from "../services/api";
@@ -102,7 +100,6 @@ const CartScreen: React.FC = ({ navigation }: any) => {
     if (newQty !== "" && Number(newQty) < 0) return;
 
     try {
-      // Optimistic local update
       if (newQty !== "" && Number(newQty) <= 0) {
         setCartItems((prev) => prev.filter((i) => i.product_id !== product_id));
         debouncedUpdateCartQuantityApi(product_id, 0, item.cart_id);
@@ -160,6 +157,7 @@ const CartScreen: React.FC = ({ navigation }: any) => {
   // const formatPrice = (price: number) => {
   //   return Number(price) % 1 === 0 ? Number(price) : Number(price).toFixed(2);
   // };
+
   const formatPrice = (price: number) => {
     if (price === undefined || price === null) return "0.00";
     return Number(price).toFixed(2);
@@ -170,16 +168,13 @@ const CartScreen: React.FC = ({ navigation }: any) => {
 
     const num = Number(price);
 
-    // if whole number → no decimals
     if (num % 1 === 0) {
       return num.toString();
     }
 
-    // else keep 2 decimals
     return num.toFixed(2);
   };
 
-  // Function to get the best price based on current quantity
   const getCalculatedPrice = (item: any) => {
     let currentPrice = item.price;
     const currentQty = item.qty || 0;
@@ -202,7 +197,6 @@ const CartScreen: React.FC = ({ navigation }: any) => {
       <View style={styles.card}>
         <View
           style={{
-            // backgroundColor: "#F2F3F5",
             alignItems: "center",
             justifyContent: "center",
             padding: 5,
@@ -412,6 +406,7 @@ const CartScreen: React.FC = ({ navigation }: any) => {
                 keyExtractor={(item) => item.cart_id.toString()}
                 renderItem={({ item }) => <CartItem item={item} />}
                 scrollEnabled={false}
+                showsVerticalScrollIndicator={false}
                 ListEmptyComponent={() => (
                   <View
                     style={{

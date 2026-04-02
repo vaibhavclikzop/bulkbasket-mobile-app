@@ -3,8 +3,11 @@ const axios = require("axios");
 const BASE_URL = "https://store.bulkbasketindia.com/api/mobile";
 
 async function test() {
+  console.log("coming from text_api.js");
+
   try {
-    // 1. Get Categories
+    console.log("coming from text_api.js inside try");
+
     console.log("Fetching Categories...");
     const catRes = await axios.get(`${BASE_URL}/get-category`);
     const cats = catRes.data.data;
@@ -17,11 +20,9 @@ async function test() {
     const catId = sampleCat.id;
     console.log(`\nTesting Category: ${sampleCat.name} (ID: ${catId})`);
 
-    // We need subSubCategory List
     const prodRes = await axios.get(`${BASE_URL}/get-products/${catId}`);
     const data = prodRes.data.data;
 
-    // find a category inside data that has subSubCategory
     let sampleSubCatId = null;
     let sampleSubSubCatId = null;
 
@@ -44,11 +45,10 @@ async function test() {
       `Found valid testing IDs: SubCat=${sampleSubCatId}, SubSubCat=${sampleSubSubCatId}`,
     );
 
-    // Test form and response
     const formats = [
       `${BASE_URL}/get-products/${catId}/all/${sampleSubSubCatId}`,
       `${BASE_URL}/get-products/${catId}/0/${sampleSubSubCatId}`,
-      `${BASE_URL}/get-products/${catId}/${sampleSubCatId}/${sampleSubSubCatId}`, // Control test
+      `${BASE_URL}/get-products/${catId}/${sampleSubCatId}/${sampleSubSubCatId}`,
     ];
 
     for (const url of formats) {

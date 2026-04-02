@@ -22,8 +22,8 @@ const CompanyProfile = ({ navigation }: any) => {
   const [brandName, setBrandName] = useState("");
   const [legalName, setLegalName] = useState("");
   const [gstin, setGstin] = useState("");
-  const [fssai, setFssai] = useState("");
-  const [image, setImage] = useState<any>(null);
+  // const [fssai, setFssai] = useState("");
+  // const [image, setImage] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [address, setAddress] = useState("");
   const [gstVerified, setGstVerified] = useState(false);
@@ -47,12 +47,8 @@ const CompanyProfile = ({ navigation }: any) => {
       setBrandName(data?.company_name || "");
       setLegalName(data?.company_name || "");
       setGstin(data?.gst || "");
-      setFssai(data?.fssai || "");
+      // setFssai(data?.fssai || "");
       setAddress(data?.company_address);
-
-      if (data?.image) {
-        setImage(data.image);
-      }
     } catch (error) {
       console.log("Get Profile Error:", error);
     } finally {
@@ -77,11 +73,25 @@ const CompanyProfile = ({ navigation }: any) => {
     //   Alert.alert("Error", "Please fill all required fields");
     //   return;
     // }
-
-    if (gstin && gstin.length !== 15) {
-      Alert.alert("Invalid GST", "GST number must be 15 characters");
+    if (!gstin) {
+      Alert.alert("Error", "Please enter GST number");
       return;
     }
+
+    const cleanGstin = gstin.trim();
+
+    if (cleanGstin.length !== 15) {
+      Alert.alert(
+        "Invalid GST",
+        `GST number must be 15 characters. You have entered ${cleanGstin.length} characters.`,
+      );
+      return;
+    }
+
+    // if (gstin && gstin.length !== 15) {
+    //   Alert.alert("Invalid GST", "GST number must be 15 characters");
+    //   return;
+    // }
 
     console.log("asdjsdkjasdklj", gstin);
 
@@ -131,7 +141,7 @@ const CompanyProfile = ({ navigation }: any) => {
     }
   };
 
-  const handleUpdateProfile = async (selectedImage?: any) => {
+  const handleUpdateProfile = async () => {
     if (!gstVerified) {
       Alert.alert("GST Required", "Please verify GST number first");
       return;
@@ -141,26 +151,15 @@ const CompanyProfile = ({ navigation }: any) => {
       setLoading(true);
 
       const token = await AsyncStorage.getItem("userToken");
+      // console.log("token", token);
       const formData = new FormData();
-
       if (brandName) formData.append("name", brandName);
-      if (legalName) formData.append("legal_name", legalName);
+      if (legalName) formData.append("brand_name", legalName);
       if (gstin) formData.append("gst", gstin);
-      if (fssai) formData.append("fssai", fssai);
       if (address) formData.append("address", address);
 
-      const imageToUpload =
-        selectedImage && selectedImage.uri ? selectedImage : image;
-      if (imageToUpload && imageToUpload.uri) {
-        formData.append("image", {
-          uri: imageToUpload.uri,
-          type: imageToUpload.type || "image/jpeg",
-          name: imageToUpload.fileName || "profile.jpg",
-        } as any);
-      }
-
       const response = await axios.post(
-        `${BASE_URL}/update-profile`,
+        `${BASE_URL}/update-company`,
         formData,
         {
           headers: {
@@ -252,7 +251,9 @@ const CompanyProfile = ({ navigation }: any) => {
                   placeholder="07AAAZ9999A1Z5"
                   placeholderTextColor="#64748B"
                   value={gstin}
-                  onChangeText={(text) => setGstin(text.toUpperCase())}
+                  onChangeText={(text) =>
+                    setGstin(text.replace(/\s/g, "").toUpperCase())
+                  }
                   maxLength={15}
                   editable={!gstVerified}
                 />
@@ -300,18 +301,18 @@ const CompanyProfile = ({ navigation }: any) => {
             <TouchableOpacity
               style={[
                 styles.saveBtn,
-                gstVerified && { backgroundColor: "#A0AEC0" },
+                (gstVerified || loading) && { backgroundColor: "#A0AEC0" },
               ]}
-              onPress={handleVerifyGst}
+              onPress={
+                gstVerified ? () => handleUpdateProfile() : handleVerifyGst
+              }
               disabled={loading || gstVerified}
             >
               {loading ? (
                 <ActivityIndicator color="#fff" size="small" />
               ) : (
                 <Text style={styles.saveText}>
-                  {gstVerified
-                    ? "Account Verified"
-                    : "Add GST Number To Verify"}
+                  {gstVerified ? "Update GST" : "Add GST Number To Verify"}
                 </Text>
               )}
             </TouchableOpacity>

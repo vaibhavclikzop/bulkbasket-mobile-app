@@ -1284,7 +1284,7 @@ const styles = StyleSheet.create({
   },
 
   slabPrice: {
-    fontSize: 8,
+    fontSize: 10,
     fontFamily: "DMSans-Regular",
   },
 
@@ -1302,7 +1302,7 @@ const styles = StyleSheet.create({
   },
 
   addSmall: {
-    fontSize: 8,
+    fontSize: 10,
     color: "green",
     fontWeight: "600",
     fontFamily: "DMSans-Medium",

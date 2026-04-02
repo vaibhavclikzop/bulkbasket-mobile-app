@@ -30,8 +30,8 @@ const OrdersDetailScreen = ({ navigation, route }: any) => {
           .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
           .join(" ")
       : "";
-  /* ================= API ================= */
 
+  /* ================= API ================= */
   const fetchOrderDetails = async () => {
     try {
       setLoading(true);
@@ -39,7 +39,6 @@ const OrdersDetailScreen = ({ navigation, route }: any) => {
       const res = await getOrderDetailsApi(order_id);
       console.log("Order Details:", res);
 
-      // ✅ FIX HERE
       setOrder(res?.data?.[0] || null);
     } catch (error) {
       console.log("Error:", error);

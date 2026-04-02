@@ -254,12 +254,12 @@ const UpdateProfile = ({ navigation }: any) => {
               <View style={styles.inputHalf}>
                 <Text style={styles.label}>Email ID</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { textAlign: "left" }]}
                   placeholder="gourmet@bistro.in"
                   placeholderTextColor="#64748B"
                   value={email}
                   onChangeText={setEmail}
-                  // textAlign="left"
+                  textAlign="left"
                   textAlignVertical="center"
                   numberOfLines={1}
                 />
