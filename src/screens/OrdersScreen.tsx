@@ -32,6 +32,19 @@ const OrdersScreen = ({ navigation }: any) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
+  const formatDateTime = (dateString: string) => {
+    const safeDate = dateString.replace(" ", "T");
+    const date = new Date(safeDate);
+
+    return date.toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
   /* ================= API ================= */
 
   const fetchOrders = async () => {
@@ -120,7 +133,7 @@ const OrdersScreen = ({ navigation }: any) => {
                 }}
               />
               <Text style={styles.date}>
-                {item.delivery_date || item.created_at}
+                {formatDateTime(item.delivery_date || item.created_at)}
               </Text>
 
               <Text style={styles.price}>₹{item.total_amount}</Text>

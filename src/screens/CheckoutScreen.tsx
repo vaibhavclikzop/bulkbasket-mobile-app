@@ -130,7 +130,7 @@ export default function CheckoutScreen({ navigation }: any) {
           <Text
             style={{
               color: "#6B7280",
-              fontSize: 13,
+              fontSize: 14,
               fontFamily: "DMSans-Regular",
             }}
           >
@@ -264,10 +264,10 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    fontSize: 15,
+    fontSize: 16,
     fontFamily: "DMSans-Medium",
     marginBottom: 8,
-    marginTop: 10,
+    marginTop: 15,
   },
 
   textArea: {

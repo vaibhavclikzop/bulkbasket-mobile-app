@@ -21,6 +21,7 @@ export interface ProductCardProps {
   oldPrice?: string;
   discount?: string;
   isOrganic?: boolean;
+  product_type?: string;
   onAddPress?: () => void;
   onPress?: () => void;
   tiers?: any[];
@@ -32,6 +33,9 @@ export interface ProductCardProps {
   wishlist_status?: boolean;
   onWishlistPress?: () => void;
   containerStyle?: any;
+  current_stock?: string | number;
+  uom_name?: string;
+  mrp?: string;
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({
@@ -43,6 +47,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   oldPrice,
   discount,
   isOrganic,
+  product_type,
   onAddPress,
   onPress,
   tiers,
@@ -54,6 +59,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
   wishlist_status,
   onWishlistPress,
   containerStyle,
+  current_stock,
+  uom_name,
+  mrp,
 }) => {
   const getCalculatedPrice = () => {
     let currentPrice = price;
@@ -76,6 +84,17 @@ const ProductCard: React.FC<ProductCardProps> = ({
     return Number.isInteger(num) ? num : num.toFixed(2);
   };
 
+  const capitalizeWords = (text: string) =>
+    text
+      ? text
+          .toLowerCase()
+          .replace(/[_-]/g, " ")
+          .split(" ")
+          .filter(Boolean)
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" ")
+      : "";
+
   return (
     <TouchableOpacity
       style={[styles.cardContainer, containerStyle]}
@@ -83,19 +102,32 @@ const ProductCard: React.FC<ProductCardProps> = ({
       activeOpacity={0.9}
     >
       <View style={styles.cardInner}>
-        {/* Organic Ribbon */}
-        <View style={styles.ribbonWrapper}>
-          <LinearGradient
-            colors={["#487D44", "#12FF00"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.ribbonGradient}
-          >
-            <Text style={styles.ribbonText}>Organic</Text>
-          </LinearGradient>
-        </View>
+        {/* Ribbon */}
+        {product_type ? (
+          <View style={styles.ribbonWrapper}>
+            <LinearGradient
+              colors={["#487D44", "#12FF00"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.ribbonGradient}
+            >
+              <Text style={styles.ribbonText}>{product_type}</Text>
+            </LinearGradient>
+          </View>
+        ) : isOrganic ? (
+          <View style={styles.ribbonWrapper}>
+            <LinearGradient
+              colors={["#487D44", "#12FF00"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.ribbonGradient}
+            >
+              <Text style={styles.ribbonText}>Organic</Text>
+            </LinearGradient>
+          </View>
+        ) : null}
 
-        {Number(discount) > 0 &&
+        {/* {Number(discount) > 0 &&
           (Platform.OS === "ios" ? (
             <View
               style={[
@@ -137,8 +169,60 @@ const ProductCard: React.FC<ProductCardProps> = ({
             >
               <Text style={styles.discountText}>{discount}% OFF</Text>
             </LinearGradient>
-          ))}
-
+          ))} */}
+        {/* Stock / Discount Badge */}
+        {Number(current_stock) === 0 ? (
+          <LinearGradient
+            colors={["#FF4D4D", "#B30000"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.discountBadge}
+          >
+            <Text style={[styles.discountText, { color: "#fff" }]}>
+              Out of Stock
+            </Text>
+          </LinearGradient>
+        ) : (
+          Number(discount) > 0 &&
+          (Platform.OS === "ios" ? (
+            <View
+              style={{
+                backgroundColor: "#FAAF20",
+                position: "absolute",
+                top: 0,
+                right: 0,
+                paddingLeft: 10,
+                paddingRight: 12,
+                height: 24,
+                justifyContent: "center",
+                alignItems: "center",
+                borderTopRightRadius: 20,
+                borderBottomLeftRadius: 8,
+                zIndex: 10,
+              }}
+            >
+              <Text
+                numberOfLines={1}
+                style={{
+                  fontSize: 8,
+                  fontWeight: "600",
+                  fontFamily: "DMSans-Medium",
+                }}
+              >
+                {discount}% OFF
+              </Text>
+            </View>
+          ) : (
+            <LinearGradient
+              colors={["#FFDC61", "#FAAF20"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.discountBadge}
+            >
+              <Text style={styles.discountText}>{discount}% OFF</Text>
+            </LinearGradient>
+          ))
+        )}
         {/* Image Section */}
         <View style={styles.imageContainer}>
           {/* <Image
@@ -184,8 +268,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
         <View style={styles.content}>
           <View>
             <Text numberOfLines={2} style={styles.title}>
-              {title}
+              {capitalizeWords(title || "")}
             </Text>
+            {uom_name ? <Text style={styles.pack}>{uom_name}</Text> : null}
             {/* {packSize !== "" && (
               <Text style={styles.pack}>Pack of {packSize}</Text>
             )} */}
@@ -206,8 +291,18 @@ const ProductCard: React.FC<ProductCardProps> = ({
                           onPress={() =>
                             onTierAddPress && onTierAddPress(tier.qty)
                           }
+                          disabled={Number(current_stock) === 0}
                         >
-                          <Text style={styles.addSmall}>Add+</Text>
+                          <Text
+                            style={[
+                              styles.addSmall,
+                              Number(current_stock) === 0 && {
+                                color: "#A0A0A0",
+                              },
+                            ]}
+                          >
+                            Add+
+                          </Text>
                         </TouchableOpacity>
                       </View>
                       {!isLast && <View style={styles.dividerPrice} />}
@@ -225,7 +320,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
                 <Text style={styles.price}>
                   ₹{formatPrice(getCalculatedPrice())}
                 </Text>
-                <Text style={styles.oldPrice}>₹{formatPrice(oldPrice)}</Text>
+
+                {Number(mrp) > Number(getCalculatedPrice()) && (
+                  <Text style={styles.oldPrice}>₹{formatPrice(mrp)}</Text>
+                )}
+
+                {Number(oldPrice) > 0 && (
+                  <Text style={styles.oldPrice}>₹{formatPrice(oldPrice)}</Text>
+                )}
               </View>
               {bestRate ? (
                 <Text style={styles.bestRate}>{bestRate}</Text>
@@ -235,47 +337,54 @@ const ProductCard: React.FC<ProductCardProps> = ({
             {cart_status === true ||
             cart_status === 1 ||
             cart_status === "1" ? (
-              <View style={styles.qtyRow}>
-                {updatingQty ? (
-                  <ActivityIndicator size="small" color="#487D44" />
-                ) : (
-                  <>
-                    <TouchableOpacity
-                      style={styles.qtyBtn}
-                      onPress={() =>
-                        onUpdateQty && onUpdateQty((cartQty || 0) - 1)
-                      }
-                    >
-                      <Text style={styles.qtyText}>-</Text>
-                    </TouchableOpacity>
+              <View style={[styles.qtyRow, updatingQty && { opacity: 0.5 }]}>
+                <TouchableOpacity
+                  style={styles.qtyBtn}
+                  onPress={() => onUpdateQty && onUpdateQty((cartQty || 0) - 1)}
+                  disabled={updatingQty}
+                >
+                  <Text style={styles.qtyText}>-</Text>
+                </TouchableOpacity>
 
-                    <TextInput
-                      style={styles.qtyNumber}
-                      keyboardType="numeric"
-                      maxLength={4}
-                      value={
-                        cartQty !== undefined && cartQty !== null
-                          ? String(cartQty)
-                          : ""
-                      }
-                      onChangeText={(text) => {
-                        const val = text.replace(/[^0-9]/g, "");
-                        if (onUpdateQty) {
-                          onUpdateQty(val === "" ? 0 : Number(val));
-                        }
-                      }}
-                    />
+                <TextInput
+                  style={styles.qtyNumber}
+                  keyboardType="numeric"
+                  maxLength={4}
+                  value={
+                    cartQty !== undefined && cartQty !== null
+                      ? String(cartQty)
+                      : ""
+                  }
+                  onChangeText={(text) => {
+                    const val = text.replace(/[^0-9]/g, "");
+                    if (onUpdateQty) {
+                      onUpdateQty(val === "" ? 0 : Number(val));
+                    }
+                  }}
+                  editable={!updatingQty}
+                />
 
-                    <TouchableOpacity
-                      style={styles.qtyBtn}
-                      onPress={() =>
-                        onUpdateQty && onUpdateQty((cartQty || 0) + 1)
-                      }
-                    >
-                      <Text style={styles.qtyText}>+</Text>
-                    </TouchableOpacity>
-                  </>
-                )}
+                <TouchableOpacity
+                  style={[
+                    styles.qtyBtn,
+                    Number(current_stock) === 0 && {
+                      backgroundColor: "#A0A0A0",
+                    },
+                  ]}
+                  onPress={() => onUpdateQty && onUpdateQty((cartQty || 0) + 1)}
+                  disabled={updatingQty || Number(current_stock) === 0}
+                >
+                  <Text style={styles.qtyText}>+</Text>
+                </TouchableOpacity>
+              </View>
+            ) : Number(current_stock) === 0 ? (
+              <View
+                style={[
+                  styles.addButton,
+                  { backgroundColor: "#A0A0A0", paddingHorizontal: 8 },
+                ]}
+              >
+                <Text style={styles.addText}>Out of Stock</Text>
               </View>
             ) : (
               <TouchableOpacity style={styles.addButton} onPress={onAddPress}>
@@ -342,14 +451,14 @@ const styles = StyleSheet.create({
 
   title: {
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "500",
     fontFamily: "DMSans-Medium",
     width: "100%",
   },
 
   pack: {
     color: "#6b7280",
-    marginVertical: 6,
+    // marginVertical: 6,
     fontSize: 10,
     fontFamily: "DMSans-Regular",
   },
@@ -403,6 +512,7 @@ const styles = StyleSheet.create({
   price: {
     fontSize: 12,
     fontFamily: "DMSans-Medium",
+    fontWeight: "500",
   },
 
   oldPrice: {
@@ -433,8 +543,8 @@ const styles = StyleSheet.create({
     color: "#fff",
     marginRight: 4,
     fontFamily: "DMSans-Regular",
-    fontSize: 9,
-    fontWeight: "600",
+    fontSize: 10,
+    fontWeight: "400",
   },
   qtyRow: {
     flexDirection: "row",
@@ -506,7 +616,7 @@ const styles = StyleSheet.create({
 
   ribbonText: {
     color: "#FFFFFF",
-    fontSize: 8,
+    fontSize: 7,
     fontFamily: "DMSans-SemiBold",
     textAlign: "center",
   },

@@ -151,7 +151,7 @@ const UpdateProfile = ({ navigation }: any) => {
         },
       );
 
-      console.log("[Upload] ✅ Response status:", response.status);
+      // console.log("[Upload] ✅ Response status:", response.error);
       console.log(
         "[Upload] ✅ Response data:",
         JSON.stringify(response, null, 2),
@@ -162,7 +162,7 @@ const UpdateProfile = ({ navigation }: any) => {
           Alert.alert("Success", "Profile photo updated.");
         } else {
           await getProfile();
-          Alert.alert("Profile Updated", "Profile updated successfully");
+          // Alert.alert("Profile Updated", "Profile updated successfully");
         }
       } else {
         console.log("[Upload] ❌ Server returned error:", response.data);

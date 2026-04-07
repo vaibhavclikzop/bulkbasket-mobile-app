@@ -60,9 +60,10 @@ export default function WishlistScreen({ navigation }: any) {
           oldPrice: item.mrp || 0,
           discount: item.discount || 0,
           tiers: item.tiers || [],
-          image: item.image,
           name: item.name,
           is_organic: item.product_type?.toLowerCase() === "organic",
+          product_type: item.product_type,
+          mrp: item.mrp || 0,
         };
       });
 
@@ -300,7 +301,8 @@ export default function WishlistScreen({ navigation }: any) {
               oldPrice={item.oldPrice}
               discount={Number(item.discount).toFixed(0)}
               isOrganic={item.is_organic}
-              // bestRate={item.bestRate || "Best rate available"}
+              product_type={item.product_type}
+              mrp={item.mrp}
               tiers={item.tiers || []}
               cart_status={item.cart_status}
               cartQty={item.cartQty}
@@ -311,6 +313,8 @@ export default function WishlistScreen({ navigation }: any) {
               wishlist_status={item.wishlist_status}
               onWishlistPress={() => toggleWishlist(item)}
               onAddPress={() => handleAddToCart(item)}
+              current_stock={item.current_stock}
+              uom_name={item.uom_name}
               onPress={() =>
                 navigation.navigate("ProductDetail", {
                   productId: item.product_id || item.id,

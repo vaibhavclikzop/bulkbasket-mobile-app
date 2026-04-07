@@ -20,6 +20,19 @@ const OrdersDetailScreen = ({ navigation, route }: any) => {
   const [loading, setLoading] = useState(true);
   const [order, setOrder] = useState<any>(null);
 
+  const formatDateTime = (dateString: string) => {
+    const safeDate = dateString.replace(" ", "T");
+    const date = new Date(safeDate);
+
+    return date.toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
   const capitalizeWords = (text: string) =>
     text
       ? text
@@ -131,7 +144,7 @@ const OrdersDetailScreen = ({ navigation, route }: any) => {
             {capitalizeWords(order.order_status)}
           </Text>
 
-          <Text style={styles.date}>{order.created_at}</Text>
+          <Text style={styles.date}>{formatDateTime(order.created_at)}</Text>
 
           <Text style={styles.total}>
             Total Amount :- ₹{order.total_amount}
@@ -203,6 +216,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: "#64748B",
     marginTop: 4,
+    fontFamily: "DMSans-Regular",
   },
 
   total: {
@@ -235,19 +249,21 @@ const styles = StyleSheet.create({
 
   productName: {
     fontSize: 13,
-    fontFamily: "DMSans-Medium",
+    fontFamily: "DMSans-SemiBold",
   },
 
   qty: {
     fontSize: 12,
     color: "#64748B",
     marginTop: 2,
+    fontFamily: "DMSans-Regular",
   },
 
   price: {
     fontSize: 13,
     marginTop: 3,
     fontFamily: "DMSans-SemiBold",
+    // color: "#64748B",
   },
   loaderContainer: {
     flex: 1,

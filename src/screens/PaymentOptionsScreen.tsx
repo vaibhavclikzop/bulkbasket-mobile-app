@@ -7,6 +7,7 @@ import {
   ScrollView,
   Image,
   TextInput,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Styles from "../components/Styles";
@@ -16,6 +17,9 @@ const PaymentOptionsScreen = ({ navigation }: any) => {
   const [showAddCard, setShowAddCard] = useState(true);
   const [saveCard, setSaveCard] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState("");
+  const [cardNumber, setCardNumber] = useState("");
+  const [expiry, setExpiry] = useState("");
+  const [cvv, setCvv] = useState("");
   const cards = [
     {
       id: 1,
@@ -40,10 +44,58 @@ const PaymentOptionsScreen = ({ navigation }: any) => {
     },
   ];
 
-  // const UPI = require("../assets/Payment/UPI.png");
-  // const card = require("../assets/Payment/card.png");
+  const formatCardNumber = (text: string) => {
+    return text
+      .replace(/\D/g, "")
+      .slice(0, 16)
+      .replace(/(.{4})/g, "$1 ")
+      .trim();
+  };
 
-  // const bank = require("../assets/Payment/bank.png");
+  const formatExpiry = (text: string) => {
+    const clean = text.replace(/\D/g, "").slice(0, 4);
+
+    if (clean.length >= 3) {
+      return `${clean.slice(0, 2)}/${clean.slice(2)}`;
+    }
+    return clean;
+  };
+
+  const validateCard = () => {
+    const cleanCard = cardNumber.replace(/\s/g, "");
+
+    if (cleanCard.length !== 16) {
+      Alert.alert("Enter valid 16-digit card number");
+      return false;
+    }
+
+    if (!expiry.includes("/")) {
+      Alert.alert("Enter valid expiry (MM/YY)");
+      return false;
+    }
+
+    const [month, year] = expiry.split("/");
+
+    if (Number(month) < 1 || Number(month) > 12) {
+      Alert.alert("Invalid month");
+      return false;
+    }
+
+    const current = new Date();
+    const exp = new Date(`20${year}`, Number(month) - 1);
+
+    if (exp < current) {
+      Alert.alert("Card expired");
+      return false;
+    }
+
+    if (cvv.length < 3) {
+      Alert.alert("Invalid CVV");
+      return false;
+    }
+
+    return true;
+  };
 
   const PaymentMethod = ({ image, title, desc }: any) => {
     const selected = selectedMethod === title;
@@ -167,6 +219,10 @@ const PaymentOptionsScreen = ({ navigation }: any) => {
                   placeholder="**** **** **** 5468"
                   style={styles.input}
                   placeholderTextColor="#94A3B8"
+                  value={cardNumber}
+                  onChangeText={(text) => setCardNumber(formatCardNumber(text))}
+                  keyboardType="numeric"
+                  maxLength={19}
                 />
                 <Image
                   source={require("../assets/Payment/visa.png")}
@@ -186,6 +242,10 @@ const PaymentOptionsScreen = ({ navigation }: any) => {
                     placeholder="09/32"
                     style={styles.inputField}
                     placeholderTextColor="#94A3B8"
+                    value={expiry}
+                    onChangeText={(text) => setExpiry(formatExpiry(text))}
+                    keyboardType="numeric"
+                    maxLength={5}
                   />
                 </View>
 
@@ -194,7 +254,12 @@ const PaymentOptionsScreen = ({ navigation }: any) => {
                   <TextInput
                     placeholder="***"
                     style={styles.inputField}
-                    placeholderTextColor="#94A3B8"
+                    placeholderTextColor="#3a3b3bff"
+                    value={cvv}
+                    onChangeText={setCvv}
+                    keyboardType="numeric"
+                    maxLength={4}
+                    secureTextEntry
                   />
                 </View>
               </View>

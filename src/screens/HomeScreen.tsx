@@ -16,6 +16,7 @@ import {
   Modal,
   Alert,
   ImageBackground,
+  Pressable,
 } from "react-native";
 // import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import Carousel from "react-native-reanimated-carousel";
@@ -38,71 +39,18 @@ import {
 } from "../services/api";
 import { useFocusEffect } from "@react-navigation/native";
 
-const dealBanners = [
-  require("../assets/home/new-deal.png"),
-  require("../assets/home/new-deal.png"),
-  require("../assets/home/new-deal.png"),
-];
-
-// const packingItems = [
-// {
-//   id: "1",
-//   image: require("../assets/product/product1-.png"),
-//   title: "Disposables & Packaging Material",
-//   packSize: "Pack of 10",
-//   price: "640",
-//   oldPrice: "₹660",
-//   discount: "33% OFF",
-//   isOrganic: true,
-//   bestRate: "₹200/pack Best rate",
-// },
-//   {
-//     id: "2",
-//     image: require("../assets/product/product1-.png"),
-//     title: "Cello Tape - Transparent W: 1 Inch, L: 55 m",
-//     packSize: "Pack of 20",
-//     price: "820",
-//     oldPrice: "₹900",
-//     discount: "10% OFF",
-//     isOrganic: false,
-//     bestRate: "₹200/pack Best rate",
-//   },
-//   {
-//     id: "3",
-//     image: require("../assets/product/product1-.png"),
-//     title: "Disposables & Packaging",
-//     packSize: "Pack of 20",
-//     price: "820",
-//     oldPrice: "₹900",
-//     discount: "10% OFF",
-//     isOrganic: false,
-//     bestRate: "₹200/pack Best rate",
-//   },
-// ];
-
-// const brands = [
-//   { id: "1", image: require("../assets/brand/brand1.png") },
-//   { id: "2", image: require("../assets/brand/brand2.png") },
-//   { id: "3", image: require("../assets/brand/brand3.png") },
-//   { id: "4", image: require("../assets/brand/brand4.png") },
-//   { id: "5", image: require("../assets/brand/brand5.png") },
-//   { id: "6", image: require("../assets/brand/brand6.png") },
-// ];
-
-// type Props = NativeStackScreenProps<HomeStackParamList, "HomeMain">;
-
 const HomeScreen: React.FC<any> = ({ navigation }) => {
   const { width } = useWindowDimensions();
   const numColumns = 4;
   const spacing = 12;
   const itemSize = (width - spacing * (numColumns + 1)) / numColumns;
-  // const cardWidth = width * 0.75;
+  const cardWidth = width * 0.75;
   const [activeIndex, setActiveIndex] = React.useState(0);
   const [bannerData, setBannerData] = React.useState<any[]>([]);
   const [categoryData, setCategoryData] = React.useState<any[]>([]);
   const [brandData, setBrandData] = React.useState<any[]>([]);
   const [brandData1, setBrandData1] = React.useState<any[]>([]);
-  // const [allBrands, setAllBrands] = React.useState<any[]>([]);
+  const [dealBanner, setDealBanner] = React.useState<any[]>([]);
   const [visibleBrandCount, setVisibleBrandCount] = useState(10);
 
   const [dealOfDayData, setDealOfDayData] = React.useState<any[]>([]);
@@ -119,6 +67,7 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
   const [dealOfDayProduct, setDealOfDayProduct] = React.useState<any[]>([]);
   const [cartItems, setCartItems] = useState<any[]>([]);
   const [cartLoading, setCartLoading] = useState(true);
+  const isFirstLoad = React.useRef(true);
 
   const flatListLeftRef = React.useRef<FlatList>(null);
   const flatListRightRef = React.useRef<FlatList>(null);
@@ -164,13 +113,13 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
 
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([getProfile(), getHomePage()]);
+    await Promise.all([getProfile(true), getHomePage(true)]);
     setRefreshing(false);
   }, []);
 
-  const fetchDeals = async () => {
+  const fetchDeals = async (isSilent: boolean = false) => {
     try {
-      setLoading(true);
+      if (!isSilent) setLoading(true);
       const res = await getDealProductsApi();
 
       console.log("Deal of the day Product", res?.dealofdayproduct);
@@ -243,7 +192,7 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
         if (granted === PermissionsAndroid.RESULTS.GRANTED) {
           await getCurrentLocation();
         } else {
-          console.log("Permission denied");
+          // console.log("Permission denied");
           setCurrentLocation("Permission denied");
           Alert.alert(
             "Permission Required",
@@ -286,9 +235,9 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
     return `${d.getDate()} ${MONTHS[d.getMonth()]}`;
   };
 
-  const getProfile = async () => {
+  const getProfile = async (isSilent: boolean = false) => {
     try {
-      setLoading(true);
+      if (!isSilent) setLoading(true);
 
       const response = await getProfileApi();
       const data = response?.data;
@@ -301,9 +250,9 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
     }
   };
 
-  const getHomePage = async () => {
+  const getHomePage = async (isSilent: boolean = false) => {
     try {
-      setLoading(true);
+      if (!isSilent) setLoading(true);
 
       const token = await AsyncStorage.getItem("userToken");
       // console.log("token", token);
@@ -322,6 +271,7 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
       const brandsList1 = response.data.data.brand2 || [];
       console.log("brand1[0]:", brandsList); // 👈 check field name
       console.log("brand2[0]:", brandsList1);
+      setDealBanner(response.data.data.app_slider);
       // setAllBrands(brandsList);
       // setBrandData1(brandsList1);
       setBrandData(brandsList);
@@ -344,11 +294,15 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
           navigation.navigate("Signup");
           return;
         }
-        getProfile();
+        getProfile(!isFirstLoad.current);
         fetchAddresses();
-        getHomePage();
-        fetchDeals();
+        getHomePage(!isFirstLoad.current);
+        fetchDeals(!isFirstLoad.current);
         fetchCart();
+
+        if (isFirstLoad.current) {
+          isFirstLoad.current = false;
+        }
       };
 
       checkTokenAndFetch();
@@ -478,9 +432,11 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
       if (newStatus) {
         await addToWishlistApi(product.id);
         // Alert.alert("Success", "Successfully added to wishlist");
+        console.log("Success", "Successfully added to wishlist");
       } else {
         await updateWishlistQtyApi(product.id, 0);
         // Alert.alert("Success", "Item removed from wishlist");
+        console.log("Success", "Item removed from wishlist");
       }
     } catch (error) {
       console.log("Wishlist Toggle Error:", error);
@@ -516,6 +472,20 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
           .join(" ")
       : "";
 
+  // Fix for reanimated-carousel blank space when loop is true
+  // It requires at least 4 items to safely render parallax left/right neighbors without empty holes
+  const getLoopedData = (data: any[]) => {
+    if (!data || data.length === 0) return [];
+    if (data.length === 1) return [data[0], data[0], data[0], data[0]];
+    if (data.length === 2) return [...data, ...data];
+    // length 3 is sometimes enough, but 6 is butter smooth for looping
+    if (data.length === 3) return [...data, ...data];
+    return data;
+  };
+
+  const loopedBannerData = getLoopedData(bannerData);
+  const loopedDealBanner = getLoopedData(dealBanner);
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       {/* Top Address */}
@@ -535,7 +505,7 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
           {/* Address Row */}
           <TouchableOpacity
             style={[styles.iconTextRow, { marginTop: 3, width: "100%" }]}
-            onPress={() => setShowAddressModal(true)}
+            onPress={() => navigation.navigate("Addresses")}
           >
             <Image
               source={require("../assets/Common/SLocation.png")}
@@ -625,8 +595,8 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
               top: -7,
               backgroundColor: "#F59E0B",
               borderRadius: 50,
-              minWidth: 18, // थोड़ा increase
-              height: 18, // equal width/height for perfect circle
+              minWidth: 18,
+              height: 18,
               justifyContent: "center",
               alignItems: "center",
               paddingHorizontal: 4,
@@ -637,11 +607,11 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
                 // styles.badgeText,
                 {
                   textAlign: "center",
-                  includeFontPadding: false, // 🔥 Android fix
+                  includeFontPadding: false,
                   color: "#000",
                   fontSize: 10,
                   fontFamily: "DMSans-Bold",
-                  textAlignVertical: "center", // 🔥 Android fix
+                  textAlignVertical: "center",
                   marginTop: 2,
                 },
               ]}
@@ -720,7 +690,6 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
         >
           <View
             style={{
-              // height: 200,
               marginTop: 5,
             }}
           >
@@ -728,7 +697,7 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
               loop
               width={width}
               height={180}
-              data={bannerData}
+              data={loopedBannerData}
               autoPlay
               autoPlayInterval={3000}
               mode="parallax"
@@ -756,17 +725,18 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
 
             {/* Pagination */}
             <View style={styles.paginationContainer}>
-              {bannerData.map((_, index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.dot,
-                    activeIndex === index
-                      ? styles.activeDot
-                      : styles.inactiveDot,
-                  ]}
-                />
-              ))}
+              {bannerData.map((_, index) => {
+                const isActive = activeIndex % bannerData.length === index;
+                return (
+                  <View
+                    key={index}
+                    style={[
+                      styles.dot,
+                      isActive ? styles.activeDot : styles.inactiveDot,
+                    ]}
+                  />
+                );
+              })}
             </View>
           </View>
           {/* Category Title */}
@@ -822,51 +792,43 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
                   </TouchableOpacity>
 
                   <Text style={styles.title} numberOfLines={2}>
-                    {item.name}
+                    {capitalizeWords(item.name)}
                   </Text>
                 </View>
               );
             })}
           </View>
 
-          <View
-            style={{
-              alignItems: "center",
-              marginTop: 10,
-            }}
-          >
+          <View style={{ marginTop: 10 }}>
             <Carousel
               loop
-              width={width * 0.95}
-              height={140}
-              style={{ width: width, alignSelf: "center" }}
-              data={dealBanners}
+              width={width}
+              height={170}
+              data={loopedDealBanner}
               autoPlay
               autoPlayInterval={3000}
               mode="parallax"
               modeConfig={{
-                parallaxScrollingScale: 0.92,
-                parallaxScrollingOffset: 70,
-                parallaxAdjacentItemScale: 0.75,
+                parallaxScrollingScale: 1,
+                parallaxScrollingOffset: 80,
+                parallaxAdjacentItemScale: 0.8,
               }}
-              onSnapToItem={(index) => setActiveIndex(index)}
+              /* Intentionally removed onSnapToItem so it doesn't break the top banner's pagination dots! */
               renderItem={({ item }) => (
-                <View
-                  style={{
-                    flex: 1,
-                    justifyContent: "center",
-                    paddingHorizontal: 12,
-                    alignItems: "center",
-                  }}
-                >
+                <View style={{ paddingHorizontal: 10 }}>
                   <Image
-                    source={item}
+                    source={
+                      typeof item.image === "string"
+                        ? { uri: item.image }
+                        : item.image
+                    }
                     style={{
-                      width: "100%",
-                      height: "100%",
+                      width: width - 60,
+                      height: 160,
                       borderRadius: 18,
+                      alignSelf: "center",
                     }}
-                    resizeMode="contain"
+                    resizeMode={Platform.OS === "ios" ? "none" : "stretch"}
                   />
                 </View>
               )}
@@ -875,7 +837,7 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
           <Text
             style={[
               styles.dealTitle,
-              { paddingHorizontal: 16, marginBottom: 10 },
+              { paddingHorizontal: 16, marginBottom: 10, marginTop: 10 },
             ]}
           >
             Limited-Time Business Deals for HoReCa
@@ -914,7 +876,7 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
                   title={item.name}
                   packSize={""}
                   price={item.base_price}
-                  oldPrice={item.mrp}
+                  mrp={item.mrp}
                   discount={Number(item.discount).toFixed(0)}
                   isOrganic={item.is_organic || false}
                   onAddPress={() => handleAddToCart(item.id, 1)}
@@ -927,6 +889,8 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
                   tiers={item.tiers}
                   cart_status={item.cart_status}
                   cartQty={item.cart?.qty}
+                  current_stock={item.current_stock} // ✅ ADD THIS
+                  uom_name={item.uom_name}
                   onUpdateQty={(newQty) => updateQty(item.id, newQty)}
                   updatingQty={updatingQtyId === item.id}
                   wishlist_status={item.wishlist_status}
@@ -977,9 +941,12 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
                     title={item.name}
                     packSize={""}
                     price={item.price}
-                    oldPrice={item.mrp}
+                    mrp={item.mrp}
+                    current_stock={item.current_stock}
+                    uom_name={item.uom_name}
                     discount={Number(item.discount).toFixed(0)}
-                    isOrganic={false}
+                    isOrganic={item.product_type === "Organic"}
+                    product_type={item.product_type}
                     onAddPress={() => handleAddToCart(item.id, 1)}
                     onPress={() =>
                       navigation.navigate("ProductDetail", {
@@ -1010,12 +977,15 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
           <ImageBackground
             source={require("../assets/brandbg.jpeg")}
             style={styles.brandSection}
-            imageStyle={{}}
+            imageStyle={{ borderTopLeftRadius: 5, borderTopRightRadius: 5 }}
           >
             <Text
               style={[
                 styles.brandTitle,
-                { color: "#fff", textAlign: "center" },
+                {
+                  color: "#fff",
+                  paddingHorizontal: 16,
+                },
               ]}
             >
               Shop by Brands
@@ -1035,20 +1005,22 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
                 data={brandData.slice(0, visibleBrandCount)}
                 keyExtractor={(item, index) => `left-${item.id}-${index}`}
                 renderItem={({ item, index }) => (
-                  <TouchableOpacity
+                  <Pressable
                     style={styles.brandHorizontalCard}
-                    // onPress={() =>
-                    //   navigation.navigate("BrandProduct", {
-                    //     brandId: item.id,
-                    //     brandName: item.name || "Brand",
-                    //   })
-                    // }
+                    onPress={() =>
+                      //   navigation.navigate("BrandProduct", {
+                      //     brandId: item.id,
+                      //     brandName: item.name || "Brand",
+                      //   })
+                      console.log("Pressed Brand", item)
+                    }
                   >
                     <Image
                       source={{ uri: item.image }}
                       style={styles.brandHorizontalImage}
+                      resizeMode="contain"
                     />
-                  </TouchableOpacity>
+                  </Pressable>
                 )}
                 onEndReached={loadMoreBrands}
                 onEndReachedThreshold={0.5}
@@ -1068,7 +1040,7 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
                 data={brandData1.slice(0, visibleBrandCount)}
                 keyExtractor={(item, index) => `right-${item.id}-${index}`}
                 renderItem={({ item, index }) => (
-                  <TouchableOpacity
+                  <Pressable
                     style={styles.brandHorizontalCard}
                     onPress={() =>
                       // navigation.navigate("BrandProduct", {
@@ -1081,8 +1053,9 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
                     <Image
                       source={{ uri: item.image }}
                       style={styles.brandHorizontalImage}
+                      resizeMode="contain"
                     />
-                  </TouchableOpacity>
+                  </Pressable>
                 )}
                 onEndReached={loadMoreBrands}
                 onEndReachedThreshold={0.5}
@@ -1126,7 +1099,7 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
       )}
 
       {/* Address dropdown modal */}
-      <Modal
+      {/* <Modal
         visible={showAddressModal}
         transparent
         animationType="slide"
@@ -1138,7 +1111,6 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
           onPress={() => setShowAddressModal(false)}
         >
           <TouchableOpacity activeOpacity={1} style={styles.modalSheet}>
-            {/* Handle bar */}
             <View style={styles.modalHandle} />
 
             <View style={styles.modalHeader}>
@@ -1189,7 +1161,7 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
             </TouchableOpacity>
           </TouchableOpacity>
         </TouchableOpacity>
-      </Modal>
+      </Modal> */}
     </SafeAreaView>
   );
 };
@@ -1201,8 +1173,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
     marginRight: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
     borderWidth: 1,
     borderColor: "#F2F2F2",
     justifyContent: "center",
@@ -1218,8 +1190,8 @@ const styles = StyleSheet.create({
   },
 
   brandHorizontalImage: {
-    width: 65,
-    height: 65,
+    width: 76,
+    height: 66,
     resizeMode: "contain",
   },
 
@@ -1437,7 +1409,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 10,
     fontFamily: "DMSans-Medium",
-    fontWeight: "100",
+    fontWeight: "400",
     paddingHorizontal: 7,
   },
 

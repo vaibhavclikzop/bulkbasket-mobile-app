@@ -13,6 +13,7 @@ import {
   TextInput,
   Platform,
   RefreshControl,
+  Alert,
 } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
 import ProductCard from "../components/ProductCard";
@@ -82,6 +83,8 @@ interface Product {
   };
   product_type?: string;
   product_sub_sub_category?: number | string;
+  current_stock?: number | string;
+  uom_name?: string;
   // bestRate: number;
 }
 
@@ -105,10 +108,10 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
   const [qty, setQty] = useState(0);
   // const [likedProducts, setLikedProducts] = useState({});
   const { categoryId, catname } = route.params;
+  console.log("category Id", categoryId);
   const [selectedCategoryId, setSelectedCategoryId] = useState(categoryId);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  // console.log("casdfgksjdflksd", categoryId, catname);
   const [showDropdown, setShowDropdown] = useState(false);
   const [allCategories, setAllCategories] = useState([]);
   const [selectedSubSubCats, setSelectedSubSubCats] = useState<number[]>([]);
@@ -120,6 +123,17 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
   const [cartLoading, setCartLoading] = useState(true);
   const [cartItems, setCartItems] = useState<any[]>([]);
   const productListRef = useRef<FlatList>(null);
+  const isFirstLoad = useRef(true);
+  const [showSortModal, setShowSortModal] = useState(false);
+  const [selectedSort, setSelectedSort] = useState("relevance");
+  const [appliedSort, setAppliedSort] = useState("relevance");
+
+  const SORT_OPTIONS = [
+    { key: "relevance", label: "Relevance" },
+    { key: "price_low_high", label: "Price - low to high" },
+    { key: "price_high_low", label: "Price - high to low" },
+    { key: "alphabetical_a_to_z", label: "Alphabetical (A to Z)" },
+  ];
 
   const fetchCart = async () => {
     try {
@@ -133,6 +147,17 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
       setCartLoading(false);
     }
   };
+
+  const capitalizeWords = (text: string) =>
+    text
+      ? text
+          .toLowerCase()
+          .replace(/[_-]/g, " ")
+          .split(" ")
+          .filter(Boolean)
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" ")
+      : "";
 
   const fetchCategories = async () => {
     try {
@@ -168,9 +193,12 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
     id?: number,
     subcatId?: number | string,
     subsubcats: number[] = [],
+    isSilent: boolean = false,
   ) => {
     try {
-      setLoading(true);
+      if (!isSilent) {
+        setLoading(true);
+      }
 
       const resolvedId = id ?? selectedCategoryId;
 
@@ -208,6 +236,20 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
             products: allProducts,
           };
           setCategories([allCategory, ...data.data]);
+
+          // If no products exist across all subcategories, alert and go back
+          if (allProducts.length === 0) {
+            Alert.alert(
+              "No Products",
+              "There are no products available in this category right now.",
+              [
+                {
+                  text: "OK",
+                  onPress: () => navigation.goBack(),
+                },
+              ],
+            );
+          }
         }
         // FILTER PRODUCTS ONLY
         else {
@@ -270,9 +312,13 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
 
   useFocusEffect(
     useCallback(() => {
-      fetchProducts();
+      fetchProducts(undefined, undefined, [], !isFirstLoad.current);
       fetchCategories();
       fetchCart();
+
+      if (isFirstLoad.current) {
+        isFirstLoad.current = false;
+      }
     }, [route?.params?.categoryId]),
   );
 
@@ -293,7 +339,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
       } finally {
         setUpdatingQtyId(null);
       }
-    }, 1500),
+    }, 800),
     [],
   );
 
@@ -363,14 +409,36 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
     }
   };
 
-  const filteredProducts = (categories[selectedIndex]?.products || []).filter(
-    (p) => {
+  // const filteredProducts = (categories[selectedIndex]?.products || []).filter(
+  //   (p) => {
+  //     if (selectedSubSubCats.length === 0) return true;
+  //     return selectedSubSubCats
+  //       .map(String)
+  //       .includes(String(p.product_sub_sub_category));
+  //   },
+  // );
+
+  const filteredProducts = (() => {
+    const base = (categories[selectedIndex]?.products || []).filter((p) => {
       if (selectedSubSubCats.length === 0) return true;
       return selectedSubSubCats
         .map(String)
         .includes(String(p.product_sub_sub_category));
-    },
-  );
+    });
+
+    switch (appliedSort) {
+      case "price_low_high":
+        return [...base].sort((a, b) => Number(a.price) - Number(b.price));
+      case "price_high_low":
+        return [...base].sort((a, b) => Number(b.price) - Number(a.price));
+      case "alphabetical_a_to_z":
+        return [...base].sort((a, b) =>
+          (a.name || "").localeCompare(b.name || ""),
+        );
+      default:
+        return base;
+    }
+  })();
 
   useEffect(() => {
     if (productListRef.current) {
@@ -386,6 +454,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
         selectedCategoryId,
         categories[selectedIndex]?.sub_category_id,
         selectedSubSubCats,
+        true,
       );
     } catch (err) {
       console.log("Refresh error:", err);
@@ -404,7 +473,6 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
         />
       )}
       <SafeAreaView style={styles.container} edges={["top"]}>
-        {/* HEADER */}
         <View
           style={[
             styles.header,
@@ -529,18 +597,32 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
 
             <View style={[styles.sidebar]}>
               <FlatList
-                data={categories}
+                // data={categories}
+                data={categories.filter(
+                  (cat) => cat.products && cat.products.length > 0,
+                )}
                 keyExtractor={(item) => item.sub_category_id.toString()}
                 showsVerticalScrollIndicator={false}
-                renderItem={({ item, index }) => (
+                renderItem={({ item }) => (
                   <TouchableOpacity
                     onPress={() => {
-                      setSelectedIndex(index);
+                      const actualIndex = categories.findIndex(
+                        (c) => c.sub_category_id === item.sub_category_id,
+                      );
+                      setSelectedIndex(actualIndex !== -1 ? actualIndex : 0);
                       setSelectedSubSubCats([]);
+                      if (item.sub_category_id !== "all") {
+                        fetchProducts(
+                          selectedCategoryId,
+                          item.sub_category_id,
+                          [],
+                        );
+                      }
                     }}
                     style={[
                       styles.categoryItem,
-                      index === selectedIndex && styles.activeCategory,
+                      categories[selectedIndex]?.sub_category_id ===
+                        item.sub_category_id && styles.activeCategory,
                     ]}
                   >
                     {item.image === "local_all_icon" ? (
@@ -581,31 +663,69 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
             </View>
             <View style={{ flex: 1, backgroundColor: "#F1F2F6" }}>
               {/* SORT ROW */}
-              {categories[selectedIndex]?.subSubCategory &&
-                categories[selectedIndex]?.subSubCategory.length > 0 && (
-                  <FlatList
-                    // data={categories[0]?.subSubCategory || []}
-                    data={categories[selectedIndex]?.subSubCategory || []}
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    keyExtractor={(item) => item.id}
-                    contentContainerStyle={styles.sortRowContent}
-                    style={[styles.sortRow, {}]}
-                    renderItem={({ item }) =>
-                      item.isSort ? (
-                        <TouchableOpacity style={styles.sortChip}>
-                          <Image
-                            source={require("../assets/Common/filter.png")}
-                            style={{
-                              height: 10,
-                              width: 10,
-                              tintColor: "#000",
-                            }}
-                            resizeMode="contain"
-                          />
-                          <Text style={styles.sortText}>{item.label}</Text>
-                        </TouchableOpacity>
-                      ) : (
+              <View style={styles.sortRowWrapper}>
+                {/* Sort Button */}
+                <TouchableOpacity
+                  style={styles.sortButtonFixed}
+                  onPress={() => {
+                    setSelectedSort(appliedSort);
+                    setShowSortModal(true);
+                  }}
+                >
+                  <Image
+                    source={require("../assets/Common/filter.png")}
+                    style={{
+                      height: 11,
+                      width: 11,
+                      tintColor:
+                        appliedSort !== "relevance" ? "#487D44" : "#333",
+                    }}
+                    resizeMode="contain"
+                  />
+                  <Text
+                    style={[
+                      styles.sortButtonText,
+                      appliedSort !== "relevance" && { color: "#487D44" },
+                    ]}
+                  >
+                    Sort
+                  </Text>
+                  <Image
+                    source={require("../assets/Common/ArrowDown.png")}
+                    style={{
+                      height: 5,
+                      width: 7,
+                      tintColor:
+                        appliedSort !== "relevance" ? "#487D44" : "#333",
+                      marginLeft: 2,
+                    }}
+                    resizeMode="contain"
+                  />
+                </TouchableOpacity>
+
+                {/* Vertical divider */}
+                <View style={styles.sortDivider} />
+
+                {/* Sub-subcategory chips */}
+                {categories[selectedIndex]?.subSubCategory &&
+                  categories[selectedIndex]?.subSubCategory.length > 0 && (
+                    <FlatList
+                      data={(
+                        categories[selectedIndex]?.subSubCategory || []
+                      ).filter((subSub) => {
+                        if (subSub.isSort) return false; // hide old isSort items
+                        return (categories[selectedIndex]?.products || []).some(
+                          (p) =>
+                            String(p.product_sub_sub_category) ===
+                            String(subSub.id),
+                        );
+                      })}
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      keyExtractor={(item) => item.id}
+                      contentContainerStyle={styles.sortRowContent}
+                      style={{ flex: 1 }}
+                      renderItem={({ item }) => (
                         <TouchableOpacity
                           style={[
                             styles.filterChip,
@@ -636,13 +756,13 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                               },
                             ]}
                           >
-                            {item.name}
+                            {capitalizeWords(item.name || "")}
                           </Text>
                         </TouchableOpacity>
-                      )
-                    }
-                  />
-                )}
+                      )}
+                    />
+                  )}
+              </View>
               <FlatList
                 ref={productListRef}
                 data={filteredProducts}
@@ -666,16 +786,18 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                 renderItem={({ item }) => (
                   <View style={styles.card}>
                     {/* Organic Ribbon - Only show if product is organic */}
-                    {item.product_type === "Organic" && (
-                      <LinearGradient
-                        colors={["#487D44", "#12FF00"]}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                        style={styles.organicRibbon}
-                      >
-                        <Text style={styles.organicRibbonText}>Organic</Text>
-                      </LinearGradient>
-                    )}
+                    {/* {item.product_type === "Organic" && ( */}
+                    <LinearGradient
+                      colors={["#487D44", "#12FF00"]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.organicRibbon}
+                    >
+                      <Text style={styles.organicRibbonText}>
+                        {item.product_type}
+                      </Text>
+                    </LinearGradient>
+                    {/* )} */}
 
                     {/* Discount Badge - Positioned at top right of image area */}
                     {/* {item.discount && Number(item.discount) > 0 ? (
@@ -705,7 +827,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                           { width: "38%", backgroundColor: "" },
                         ]}
                       >
-                        {Platform.OS === "ios" ? (
+                        {/* {Platform.OS === "ios" ? (
                           Number(item.discount) > 0 ? (
                             <View
                               style={{
@@ -745,8 +867,48 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                               {Number(item.discount).toFixed(0)}% OFF
                             </Text>
                           </LinearGradient>
-                        ) : null}
-
+                        ) : null} */}
+                        {Number(item.discount) > 0 &&
+                          (Platform.OS === "ios" ? (
+                            <View
+                              style={{
+                                backgroundColor: "#FAAF20",
+                                position: "absolute",
+                                top: 0,
+                                right: 0,
+                                paddingLeft: 10,
+                                paddingRight: 12,
+                                height: 24,
+                                justifyContent: "center",
+                                alignItems: "center",
+                                borderTopRightRadius: 20,
+                                borderBottomLeftRadius: 8,
+                                zIndex: 10,
+                              }}
+                            >
+                              <Text
+                                numberOfLines={1}
+                                style={{
+                                  fontSize: 8,
+                                  fontWeight: "600",
+                                  fontFamily: "DMSans-Medium",
+                                }}
+                              >
+                                {item.discount}% OFF
+                              </Text>
+                            </View>
+                          ) : (
+                            <LinearGradient
+                              colors={["#FFDC61", "#FAAF20"]}
+                              start={{ x: 0, y: 0 }}
+                              end={{ x: 1, y: 0 }}
+                              style={styles.discountBadge}
+                            >
+                              <Text style={styles.discountText}>
+                                {Number(item.discount).toFixed(1)}% OFF
+                              </Text>
+                            </LinearGradient>
+                          ))}
                         <Image
                           source={
                             item?.image && item.image.trim() !== ""
@@ -760,7 +922,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                           style={{
                             position: "absolute",
                             bottom: 10,
-                            left: 80,
+                            left: 70,
                             padding: 4,
                           }}
                         >
@@ -789,7 +951,9 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                         ]}
                       >
                         <View>
-                          <Text style={styles.productTitle}>{item.name}</Text>
+                          <Text style={styles.productTitle}>
+                            {capitalizeWords(item.name || "")}
+                          </Text>
                           <Text
                             style={[
                               styles.productTitle,
@@ -803,7 +967,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                               },
                             ]}
                           >
-                            Pack Of 10
+                            {item.uom_name}
                           </Text>
                         </View>
                         {item.tiers && item.tiers.length > 0 && (
@@ -843,8 +1007,18 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                                         handleAddToCart(item.id, tier.qty);
                                       }
                                     }}
+                                    disabled={Number(item.current_stock) === 0}
                                   >
-                                    <Text style={styles.addSmall}>Add+</Text>
+                                    <Text
+                                      style={[
+                                        styles.addSmall,
+                                        Number(item.current_stock) === 0 && {
+                                          color: "#A0A0A0",
+                                        },
+                                      ]}
+                                    >
+                                      Add+
+                                    </Text>
                                   </TouchableOpacity>
                                 </View>
                               );
@@ -861,97 +1035,124 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                         >
                           {/* Price Section */}
                           <View style={styles.priceContainer}>
-                            <Text style={styles.price}>
-                              ₹{formatPrice(getCalculatedPrice(item))}
-                            </Text>
-                            {/* <Text style={styles.bestRate}>
-                              ₹81/pack Best rate
-                            </Text> */}
+                            <View
+                              style={{
+                                flexDirection: "row",
+                                alignItems: "center",
+                              }}
+                            >
+                              <Text style={styles.price}>
+                                ₹{formatPrice(getCalculatedPrice(item))}
+                              </Text>
+                              {Number(item.mrp) >
+                                Number(getCalculatedPrice(item)) && (
+                                <Text
+                                  style={[styles.oldPrice, { marginLeft: 6 }]}
+                                >
+                                  ₹{formatPrice(item.mrp)}
+                                </Text>
+                              )}
+                            </View>
                           </View>
 
                           {/* Quantity Counter */}
                           {item.cart_status === true ? (
-                            <View style={styles.qtyRow}>
-                              {updatingQtyId === item.id ? (
-                                <ActivityIndicator
-                                  size="small"
-                                  color="#487D44"
-                                />
-                              ) : (
-                                <>
-                                  <TouchableOpacity
-                                    style={styles.qtyBtn}
-                                    onPress={() =>
-                                      updateQty(
-                                        item.id,
-                                        (item.cart?.qty || 0) - 1,
-                                      )
-                                    }
-                                  >
-                                    <Text style={styles.qtyText}>-</Text>
-                                  </TouchableOpacity>
+                            <View
+                              style={[
+                                styles.qtyRow,
+                                // updatingQtyId === item.id && { opacity: 0.5 },
+                              ]}
+                            >
+                              <TouchableOpacity
+                                style={styles.qtyBtn}
+                                onPress={() =>
+                                  updateQty(item.id, (item.cart?.qty || 0) - 1)
+                                }
+                                // disabled={updatingQtyId === item.id}
+                              >
+                                <Text style={styles.qtyText}>-</Text>
+                              </TouchableOpacity>
 
-                                  <TextInput
-                                    style={styles.qtyNumber}
-                                    keyboardType="numeric"
-                                    value={
-                                      item.cart?.qty !== undefined &&
-                                      item.cart?.qty !== null
-                                        ? String(item.cart.qty)
-                                        : ""
-                                    }
-                                    onChangeText={(text) => {
-                                      const val = text.replace(/[^0-9]/g, "");
-                                      if (val === "") {
-                                        updateQty(item.id, "");
-                                      } else {
-                                        updateQty(item.id, Number(val));
-                                      }
-                                    }}
-                                    onBlur={() => {
-                                      if (
-                                        String(item.cart?.qty) === "" ||
-                                        item.cart?.qty === 0
-                                      ) {
-                                        updateQty(item.id, 0);
-                                      }
-                                    }}
-                                  />
+                              <TextInput
+                                style={styles.qtyNumber}
+                                keyboardType="numeric"
+                                value={
+                                  item.cart?.qty !== undefined &&
+                                  item.cart?.qty !== null
+                                    ? String(item.cart.qty)
+                                    : ""
+                                }
+                                onChangeText={(text) => {
+                                  const val = text.replace(/[^0-9]/g, "");
+                                  if (val === "") {
+                                    updateQty(item.id, "");
+                                  } else {
+                                    updateQty(item.id, Number(val));
+                                  }
+                                }}
+                                onBlur={() => {
+                                  if (
+                                    String(item.cart?.qty) === "" ||
+                                    item.cart?.qty === 0
+                                  ) {
+                                    updateQty(item.id, 0);
+                                  }
+                                }}
+                                // editable={updatingQtyId !== item.id}
+                              />
 
-                                  <TouchableOpacity
-                                    style={styles.qtyBtn}
-                                    onPress={() =>
-                                      updateQty(
-                                        item.id,
-                                        (item.cart?.qty || 0) + 1,
-                                      )
-                                    }
-                                  >
-                                    <Text style={styles.qtyText}>+</Text>
-                                  </TouchableOpacity>
-                                </>
-                              )}
+                              <TouchableOpacity
+                                style={[
+                                  styles.qtyBtn,
+                                  Number(item.current_stock) === 0 && {
+                                    backgroundColor: "#A0A0A0",
+                                  },
+                                ]}
+                                onPress={() =>
+                                  updateQty(item.id, (item.cart?.qty || 0) + 1)
+                                }
+                                disabled={
+                                  updatingQtyId === item.id ||
+                                  Number(item.current_stock) === 0
+                                }
+                              >
+                                <Text style={styles.qtyText}>+</Text>
+                              </TouchableOpacity>
                             </View>
                           ) : (
                             <TouchableOpacity
-                              style={styles.addButton}
+                              style={[
+                                styles.addButton,
+                                Number(item.current_stock) === 0 && {
+                                  backgroundColor: "#A0A0A0",
+                                },
+                              ]}
                               onPress={() => handleAddToCart(item.id)}
-                              disabled={addingToCartId === item.id}
+                              disabled={
+                                addingToCartId === item.id ||
+                                Number(item.current_stock) === 0
+                              }
                             >
                               {addingToCartId === item.id ? (
                                 <ActivityIndicator size="small" color="#fff" />
                               ) : (
                                 <>
-                                  <Text style={styles.addText}>Add</Text>
-                                  <Image
-                                    source={require("../assets/Common/cart.png")}
-                                    style={{
-                                      height: 12,
-                                      width: 12,
-                                      tintColor: "#fff",
-                                    }}
-                                    resizeMode="contain"
-                                  />
+                                  <Text style={styles.addText}>
+                                    {Number(item.current_stock) === 0
+                                      ? "Out of Stock"
+                                      : "Add"}
+                                  </Text>
+                                  {Number(item.current_stock) !== 0 && (
+                                    <Image
+                                      source={require("../assets/Common/cart.png")}
+                                      style={{
+                                        height: 12,
+                                        width: 12,
+                                        tintColor: "#fff",
+                                      }}
+                                      resizeMode="contain"
+                                    />
+                                  )}
                                 </>
                               )}
                             </TouchableOpacity>
@@ -961,40 +1162,119 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                     </TouchableOpacity>
                   </View>
                 )}
-                ListFooterComponent={
-                  <View style={{ marginTop: 10 }}>
-                    <View style={styles.headerRow}>
-                      <Text style={styles.dealTitle}>Suggested for You</Text>
-                    </View>
+                // ListFooterComponent={
+                //   <View style={{ marginTop: 10 }}>
+                //     <View style={styles.headerRow}>
+                //       <Text style={styles.dealTitle}>Suggested for You</Text>
+                //     </View>
 
-                    <FlatList
-                      data={packingItems}
-                      horizontal
-                      showsHorizontalScrollIndicator={false}
-                      keyExtractor={(item) => item.id}
-                      contentContainerStyle={{
-                        paddingHorizontal: 10,
-                        marginBottom: 100,
-                      }}
-                      renderItem={({ item }) => (
-                        <ProductCard
-                          image={item.image}
-                          title={item.title}
-                          packSize={item.packSize}
-                          price={item.price}
-                          oldPrice={item.oldPrice}
-                          discount={item.discount}
-                          isOrganic={item.isOrganic}
-                          onAddPress={() => console.log("Added")}
-                        />
-                      )}
-                    />
-                  </View>
-                }
+                //     <FlatList
+                //       data={packingItems}
+                //       horizontal
+                //       showsHorizontalScrollIndicator={false}
+                //       keyExtractor={(item) => item.id}
+                //       contentContainerStyle={{
+                //         paddingHorizontal: 10,
+                //         marginBottom: 100,
+                //       }}
+                //       renderItem={({ item }) => (
+                //         <ProductCard
+                //           image={item.image}
+                //           title={item.title}
+                //           packSize={item.packSize}
+                //           price={item.price}
+                //           oldPrice={item.oldPrice}
+                //           discount={item.discount}
+                //           isOrganic={item.isOrganic}
+                //           onAddPress={() => console.log("Added")}
+                //         />
+                //       )}
+                //     />
+                //   </View>
+                // }
               />
             </View>
           </View>
         )}
+
+        {/* SORT BY MODAL */}
+        <Modal
+          visible={showSortModal}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setShowSortModal(false)}
+        >
+          <TouchableOpacity
+            style={styles.sortModalOverlay}
+            activeOpacity={1}
+            onPress={() => setShowSortModal(false)}
+          />
+          <View style={styles.sortModalSheet}>
+            {/* Header */}
+            <View style={styles.sortModalHeader}>
+              <Text style={styles.sortModalTitle}>Sort by</Text>
+              <TouchableOpacity onPress={() => setShowSortModal(false)}>
+                <Text style={styles.sortModalClose}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Options */}
+            {SORT_OPTIONS.map((option) => (
+              <TouchableOpacity
+                key={option.key}
+                style={styles.sortOption}
+                onPress={() => setSelectedSort(option.key)}
+              >
+                <Text
+                  style={[
+                    styles.sortOptionText,
+                    selectedSort === option.key && styles.sortOptionTextActive,
+                  ]}
+                >
+                  {option.label}
+                </Text>
+                <View
+                  style={[
+                    styles.sortRadio,
+                    selectedSort === option.key && styles.sortRadioActive,
+                  ]}
+                >
+                  {selectedSort === option.key && (
+                    <View style={styles.sortRadioDot} />
+                  )}
+                </View>
+              </TouchableOpacity>
+            ))}
+
+            {/* Footer Buttons */}
+            <View style={styles.sortModalFooter}>
+              <TouchableOpacity
+                style={styles.sortClearBtn}
+                onPress={() => {
+                  setSelectedSort("relevance");
+                  setAppliedSort("relevance");
+                  setShowSortModal(false);
+                }}
+              >
+                <Text style={styles.sortClearText}>Clear all</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.sortApplyBtn,
+                  selectedSort !== "relevance" && {
+                    backgroundColor: "#487D44",
+                  },
+                ]}
+                onPress={() => {
+                  setAppliedSort(selectedSort);
+                  setShowSortModal(false);
+                }}
+              >
+                <Text style={styles.sortApplyText}>Apply</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
 
         <Modal
           visible={showDropdown}
@@ -1284,7 +1564,7 @@ const styles = StyleSheet.create({
   },
 
   slabPrice: {
-    fontSize: 10,
+    fontSize: 12,
     fontFamily: "DMSans-Regular",
   },
 
@@ -1302,7 +1582,7 @@ const styles = StyleSheet.create({
   },
 
   addSmall: {
-    fontSize: 10,
+    fontSize: 12,
     color: "green",
     fontWeight: "600",
     fontFamily: "DMSans-Medium",
@@ -1380,7 +1660,7 @@ const styles = StyleSheet.create({
   },
   organicRibbonText: {
     color: "#fff",
-    fontSize: 8,
+    fontSize: 7,
     // fontWeight: "600",
     textAlign: "center",
     fontFamily: "DMSans-SemiBold",
@@ -1402,5 +1682,147 @@ const styles = StyleSheet.create({
     color: "#000",
     fontSize: 8,
     fontFamily: "DMSans-Regular",
+  },
+
+  /* ── SORT ROW ── */
+  sortRowWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F5F6F8",
+    paddingVertical: 8,
+    maxHeight: 45,
+  },
+
+  sortButtonFixed: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    gap: 4,
+    borderRadius: 1,
+    // backgroundColor: "red",
+  },
+
+  sortButtonText: {
+    fontSize: 12,
+    fontFamily: "DMSans-Medium",
+    color: "#333",
+  },
+
+  sortDivider: {
+    width: 1,
+    height: 20,
+    backgroundColor: "#ccc",
+    marginRight: 6,
+  },
+
+  /* ── SORT BY MODAL ── */
+  sortModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.35)",
+  },
+
+  sortModalSheet: {
+    backgroundColor: "#F5F6FA",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 30,
+  },
+
+  sortModalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+
+  sortModalTitle: {
+    fontSize: 18,
+    fontFamily: "DMSans-Bold",
+    color: "#111",
+  },
+
+  sortModalClose: {
+    fontSize: 18,
+    color: "#555",
+    paddingHorizontal: 4,
+  },
+
+  sortOption: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    marginBottom: 8,
+  },
+
+  sortOptionText: {
+    fontSize: 14,
+    fontFamily: "DMSans-Regular",
+    color: "#333",
+  },
+
+  sortOptionTextActive: {
+    fontFamily: "DMSans-Bold",
+    color: "#111",
+  },
+
+  sortRadio: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: "#ccc",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  sortRadioActive: {
+    borderColor: "#E53935",
+  },
+
+  sortRadioDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "#E53935",
+  },
+
+  sortModalFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 16,
+  },
+
+  sortClearBtn: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+  },
+
+  sortClearText: {
+    fontSize: 14,
+    fontFamily: "DMSans-Medium",
+    color: "#E53935",
+  },
+
+  sortApplyBtn: {
+    flex: 1,
+    backgroundColor: "#B0B0B0",
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: "center",
+    marginLeft: 12,
+  },
+
+  sortApplyText: {
+    fontSize: 14,
+    fontFamily: "DMSans-SemiBold",
+    color: "#fff",
   },
 });

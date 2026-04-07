@@ -9,9 +9,8 @@ import {
   FlatList,
   TextInput,
   ActivityIndicator,
-  Alert,
-  ImageSourcePropType,
   RefreshControl,
+  Modal,
 } from "react-native";
 import { debounce } from "lodash";
 import Carousel from "react-native-reanimated-carousel";
@@ -27,6 +26,7 @@ import {
   updateWishlistQtyApi,
   getCartApi,
 } from "../services/api";
+// import LinearGradient from "react-native-linear-gradient";
 
 const backeryItems = [
   {
@@ -68,8 +68,16 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
   const [loading, setLoading] = useState(true);
   const [addingToCart, setAddingToCart] = useState(false);
   const [updatingQty, setUpdatingQty] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
   const [cartItems, setCartItems] = useState<any[]>([]);
   const [cartLoading, setCartLoading] = useState(true);
+  const [addingSuggestedCartId, setAddingSuggestedCartId] = useState<
+    number | null
+  >(null);
+  const [imageLoading, setImageLoading] = useState(true);
+  const [updatingSuggestedQtyId, setUpdatingSuggestedQtyId] = useState<
+    number | null
+  >(null);
   const { width } = useWindowDimensions();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -85,13 +93,13 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
     }
   };
 
-  const images: ImageSourcePropType[] = productDetail?.images?.length
-    ? productDetail.images
-    : [
-        require("../assets/home/banner1.png"),
-        require("../assets/home/banner2.png"),
-        require("../assets/home/banner3.png"),
-      ];
+  // const images: ImageSourcePropType[] = productDetail?.images?.length
+  //   ? productDetail.images
+  //   : [
+  //       require("../assets/home/banner1.png"),
+  //       require("../assets/home/banner2.png"),
+  //       require("../assets/home/banner3.png"),
+  //     ];
 
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -112,6 +120,31 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
   useEffect(() => {
     fetchCart();
   }, []);
+
+  const stock = Number(productDetail?.product?.current_stock || 0);
+
+  // Returns the tier-matched price for the current quantity
+  const getCalculatedPrice = () => {
+    const product = productDetail?.product;
+    if (!product) return 0;
+    const basePrice = Number(product.price || product.base_price || 0);
+    const currentQty = Number(quantity) || 0;
+
+    if (product.tiers && product.tiers.length > 0) {
+      const sortedTiers = [...product.tiers].sort(
+        (a: any, b: any) => b.qty - a.qty,
+      );
+      for (const tier of sortedTiers) {
+        if (currentQty >= tier.qty) {
+          return Number(tier.price);
+        }
+      }
+    }
+    return basePrice;
+  };
+
+  const formatPrice = (price: number) =>
+    Number(price) % 1 === 0 ? Number(price) : Number(price).toFixed(2);
 
   const debouncedUpdateCartApi = React.useCallback(
     debounce(async (id: number, newQty: number) => {
@@ -135,6 +168,7 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
       const res = await addToCartApi(productId, qty);
       console.log("Add to Cart Response", res.data);
       setQuantity(qty);
+      fetchCart();
       // Alert.alert("Success", "Successfully added to cart");
     } catch (error) {
       console.log(error);
@@ -145,20 +179,37 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
 
   const toggleWishlist = async () => {
     if (!productDetail) return;
+    const previousLiked = liked;
     try {
-      const newStatus = !liked;
-      setLiked(newStatus); // Optimistic UI update
+      const newStatus = !previousLiked;
+      setLiked(newStatus);
+      // Keep productDetail in sync across both locations
+      setProductDetail((prev: any) => ({
+        ...prev,
+        wishlist_status: newStatus,
+        product: prev?.product
+          ? { ...prev.product, wishlist_status: newStatus }
+          : prev?.product,
+      }));
 
       if (newStatus) {
         await addToWishlistApi(productId);
-        // Alert.alert("Success", "Successfully added to wishlist");
+        console.log("Success", "Successfully added to wishlist");
       } else {
         await updateWishlistQtyApi(productId, 0);
-        Alert.alert("Success", "Item removed from wishlist");
+        console.log("Success", "Item removed from wishlist");
       }
     } catch (error) {
       console.log("Wishlist Toggle Error:", error);
-      setLiked(liked);
+      // Revert on failure
+      setLiked(previousLiked);
+      setProductDetail((prev: any) => ({
+        ...prev,
+        wishlist_status: previousLiked,
+        product: prev?.product
+          ? { ...prev.product, wishlist_status: previousLiked }
+          : prev?.product,
+      }));
     }
   };
 
@@ -175,6 +226,112 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
     }
   };
 
+  const handleSuggestedAddToCart = async (id: number, qty: number = 1) => {
+    try {
+      setAddingSuggestedCartId(id);
+      const res = await addToCartApi(id, qty);
+
+      setProductDetail((prev: any) => ({
+        ...prev,
+        related_products:
+          prev.related_products?.map((p: any) =>
+            p.id === id ? { ...p, cart_status: true, cart: { qty } } : p,
+          ) || [],
+        brand_products:
+          prev.brand_products?.map((p: any) =>
+            p.id === id ? { ...p, cart_status: true, cart: { qty } } : p,
+          ) || [],
+      }));
+      fetchCart();
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setAddingSuggestedCartId(null);
+    }
+  };
+
+  const debouncedUpdateSuggestedQtyApi = React.useCallback(
+    debounce(async (id: number, newQty: number) => {
+      try {
+        setUpdatingSuggestedQtyId(id);
+        await updateCartQuantityApi(id, newQty);
+      } catch (error) {
+        console.log("Update Qty Error:", error);
+      } finally {
+        setUpdatingSuggestedQtyId(null);
+      }
+    }, 800),
+    [],
+  );
+
+  const capitalizeWords = (text: string) =>
+    text
+      ? text
+          .toLowerCase()
+          .replace(/[_-]/g, " ")
+          .split(" ")
+          .filter(Boolean)
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" ")
+      : "";
+
+  const updateSuggestedQty = (id: number, newQty: number | string) => {
+    const isTextInputEmpty = newQty === "" || Number.isNaN(Number(newQty));
+    const finalQty = isTextInputEmpty ? 0 : Number(newQty);
+    if (finalQty < 0) return;
+
+    setProductDetail((prev: any) => ({
+      ...prev,
+      related_products:
+        prev.related_products?.map((p: any) =>
+          p.id === id
+            ? {
+                ...p,
+                cart: { qty: isTextInputEmpty ? "" : finalQty },
+                cart_status: finalQty === 0 && newQty === 0 ? false : true,
+              }
+            : p,
+        ) || [],
+      brand_products:
+        prev.brand_products?.map((p: any) =>
+          p.id === id
+            ? {
+                ...p,
+                cart: { qty: isTextInputEmpty ? "" : finalQty },
+                cart_status: finalQty === 0 && newQty === 0 ? false : true,
+              }
+            : p,
+        ) || [],
+    }));
+
+    debouncedUpdateSuggestedQtyApi(id, finalQty);
+  };
+
+  const toggleSuggestedWishlist = async (product: any) => {
+    try {
+      const newStatus = !product.wishlist_status;
+      setProductDetail((prev: any) => ({
+        ...prev,
+        related_products:
+          prev.related_products?.map((p: any) =>
+            p.id === product.id ? { ...p, wishlist_status: newStatus } : p,
+          ) || [],
+        brand_products:
+          prev.brand_products?.map((p: any) =>
+            p.id === product.id ? { ...p, wishlist_status: newStatus } : p,
+          ) || [],
+      }));
+
+      if (newStatus) {
+        await addToWishlistApi(product.id);
+      } else {
+        await updateWishlistQtyApi(product.id, 0);
+      }
+    } catch (error) {
+      console.log("Wishlist Toggle Error:", error);
+    }
+  };
+
   useEffect(() => {
     if (productId) {
       setLoading(true);
@@ -182,19 +339,24 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
         .then((res) => {
           console.log("Product Detail Data:", res);
           const data = res?.data || res;
+          console.log(" Pressed Product Data:", data);
           setProductDetail(data);
 
-          if (data?.cart_status && data?.cart?.qty) {
-            setQuantity(data.cart.qty);
+          // Support both root-level and product-nested cart info
+          const cartStatus = data?.cart_status ?? data?.product?.cart_status;
+          // API returns flat `cart_qty` field; fall back to nested shapes just in case
+          const cartQty =
+            data?.cart_qty ?? data?.cart?.qty ?? data?.product?.cart?.qty;
+
+          if (cartStatus && cartQty) {
+            setQuantity(Number(cartQty));
           } else {
             setQuantity(0);
           }
 
-          if (data?.wishlist_status) {
-            setLiked(true);
-          } else {
-            setLiked(false);
-          }
+          const wishlistStatus =
+            data?.product?.wishlist_status || data?.wishlist_status;
+          setLiked(!!wishlistStatus);
         })
         .catch((error) => console.log("Product Detail Error:", error))
         .finally(() => setLoading(false));
@@ -276,76 +438,78 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
         >
           {/*  PRODUCT IMAGE */}
           <View style={styles.imageSection}>
-            {productDetail?.image ? (
-              <Image
-                source={{ uri: productDetail.image }}
-                style={[
-                  styles.productImage,
-                  { height: 250, resizeMode: "contain" },
-                ]}
-              />
-            ) : (
-              // <Swiper
-              //   autoplay
-              //   autoplayTimeout={3}
-              //   showsPagination={true}
-              //   dotStyle={styles.dot}
-              //   activeDotStyle={styles.activeDot}
-              //   paginationStyle={styles.paginationContainer}
-              //   height={250}
-              // >
-              //   <Image
-              //     source={require("../assets/images/product-image.png")}
-              //     style={styles.productImage}
-              //     resizeMode="contain"
-              //   />
-
-              //   <Image
-              //     source={require("../assets/images/product-image.png")}
-              //     style={styles.productImage}
-              //     resizeMode="contain"
-              //   />
-
-              //   <Image
-              //     source={require("../assets/images/product-image.png")}
-              //     style={styles.productImage}
-              //     resizeMode="contain"
-              //   />
-              // </Swiper>
+            {Array.isArray(productDetail?.product_images) &&
+            productDetail.product_images.length > 0 ? (
               <View>
                 <Carousel
                   width={width}
                   height={250}
-                  data={images}
+                  data={productDetail.product_images}
                   autoPlay
                   autoPlayInterval={3000}
                   scrollAnimationDuration={800}
                   onSnapToItem={(index) => setActiveIndex(index)}
                   renderItem={({ item }) => (
-                    <Image
-                      source={typeof item === "string" ? { uri: item } : item}
-                      style={styles.productImage}
-                      resizeMode="contain"
-                    />
+                    <TouchableOpacity
+                      activeOpacity={0.9}
+                      onPress={() => setShowImageModal(true)}
+                    >
+                      <Image
+                        source={{ uri: item?.image }}
+                        style={styles.productImage}
+                        resizeMode="contain"
+                      />
+                    </TouchableOpacity>
                   )}
                 />
 
-                {/* ✅ Pagination Dots */}
-                {images.length > 1 && (
+                {productDetail.product_images.length > 1 && (
                   <View style={styles.paginationContainer}>
-                    {images.map((_, index) => (
-                      <View
-                        key={index}
-                        style={[
-                          styles.dot,
-                          activeIndex === index && styles.activeDot,
-                        ]}
-                      />
-                    ))}
+                    {productDetail.product_images.map(
+                      (_: any, index: number) => (
+                        <View
+                          key={index}
+                          style={[
+                            styles.dotStyle,
+                            activeIndex === index && styles.activeDot,
+                          ]}
+                        />
+                      ),
+                    )}
                   </View>
                 )}
               </View>
+            ) : (
+              <TouchableOpacity
+                activeOpacity={0.9}
+                onPress={() => setShowImageModal(true)}
+              >
+                <Image
+                  source={
+                    productDetail?.product?.image
+                      ? { uri: productDetail.product.image }
+                      : require("../assets/icons/sicon2.png")
+                  }
+                  style={[
+                    styles.productImage,
+                    { height: 250, resizeMode: "contain" },
+                  ]}
+                />
+              </TouchableOpacity>
             )}
+
+            {/* {stock === 0 && (
+              <LinearGradient
+                colors={["#FF4D4D", "#B30000"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.discountBadge}
+              >
+                <Text style={[styles.discountText, { color: "#fff" }]}>
+                  Out of Stock
+                </Text>
+              </LinearGradient>
+            )} */}
 
             {/* Wishlist Icon */}
             <TouchableOpacity
@@ -371,64 +535,94 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
             <View style={styles.productRow}>
               {/* LEFT SIDE */}
               <View style={{ flex: 1 }}>
-                <Text style={styles.title}>{productDetail?.name}</Text>
+                <Text style={[styles.title, { width: "90%" }]}>
+                  {capitalizeWords(productDetail?.product?.name || "")}
+                </Text>
               </View>
 
-              {/* RIGHT SIDE */}
+              {/* RIGHT SIDE - dynamic tier-aware price */}
               <View style={styles.priceColumn}>
-                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
                   <Text style={styles.price}>
-                    ₹{productDetail?.price || productDetail?.mrp}
+                    ₹{formatPrice(getCalculatedPrice())}
                   </Text>
-                  {productDetail?.mrp > 0 &&
-                    productDetail?.price !== productDetail?.mrp && (
-                      <Text style={styles.oldPrice}>₹{productDetail.mrp}</Text>
+                  {productDetail?.product?.mrp > 0 &&
+                    getCalculatedPrice() <
+                      Number(productDetail?.product?.mrp) && (
+                      <Text style={styles.oldPrice}>
+                        ₹{productDetail.product.mrp}
+                      </Text>
                     )}
                 </View>
-                {productDetail?.discount > 0 && (
+                {productDetail?.product?.discount > 0 && (
                   <Text style={styles.save}>
-                    Save {productDetail.discount}%
+                    Save {productDetail.product.discount}%
                   </Text>
                 )}
               </View>
             </View>
 
-            {productDetail?.tiers && productDetail.tiers.length > 0 && (
-              <View style={styles.optionBox}>
-                {productDetail.tiers.map((tier: any, index: number) => (
-                  <View key={index}>
-                    <View style={styles.optionRow}>
-                      <Text style={styles.pText}>
-                        {tier.qty} Pc ₹{tier.price}/pc
-                      </Text>
-                      <TouchableOpacity
-                        onPress={() => {
-                          if (quantity > 0) {
-                            updateQty(tier.qty);
-                          } else {
-                            handleAddToCart(tier.qty);
-                          }
-                        }}
-                      >
-                        <Text style={styles.addText}>Add+</Text>
-                      </TouchableOpacity>
-                    </View>
-                    {index < productDetail.tiers.length - 1 && (
-                      <View style={styles.dividerP} />
-                    )}
-                  </View>
-                ))}
-              </View>
-            )}
+            {productDetail?.product?.tiers &&
+              productDetail.product.tiers.length > 0 && (
+                <View style={styles.optionBox}>
+                  {productDetail.product.tiers.map(
+                    (tier: any, index: number) => (
+                      <View key={index}>
+                        <View style={styles.optionRow}>
+                          <Text style={styles.pText}>
+                            {tier.qty} Pc ₹{tier.price}/pc
+                          </Text>
+                          <TouchableOpacity
+                            disabled={stock === 0}
+                            style={stock === 0 && { opacity: 0.5 }}
+                            onPress={() => {
+                              if (quantity > 0) {
+                                updateQty(tier.qty);
+                              } else {
+                                handleAddToCart(tier.qty);
+                              }
+                            }}
+                          >
+                            <Text
+                              style={[
+                                styles.addText,
+                                stock === 0 && { color: "#A0A0A0" },
+                              ]}
+                            >
+                              Add+
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                        {index < productDetail.product.tiers.length - 1 && (
+                          <View style={styles.dividerP} />
+                        )}
+                      </View>
+                    ),
+                  )}
+                </View>
+              )}
 
             {quantity === 0 ? (
               <TouchableOpacity
-                style={styles.cartButton}
-                onPress={() => handleAddToCart()}
-                disabled={addingToCart}
+                style={[
+                  styles.cartButton,
+                  stock === 0 && { backgroundColor: "#ccc" }, // grey when disabled
+                ]}
+                onPress={() => {
+                  if (stock > 0) handleAddToCart();
+                }}
+                disabled={addingToCart || stock === 0}
               >
                 {addingToCart ? (
                   <ActivityIndicator size="small" color="#fff" />
+                ) : stock === 0 ? (
+                  <Text style={styles.cartText}>Out of Stock</Text>
                 ) : (
                   <>
                     <Image
@@ -446,9 +640,11 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
               </TouchableOpacity>
             ) : (
               <View style={styles.actionRow}>
-                <View style={styles.qtyBox}>
+                {/* <View style={styles.qtyBox}>
                   {updatingQty ? (
-                    <ActivityIndicator size="small" color="#487D44" />
+                    <View style={styles.actionRow}>
+                      <ActivityIndicator size="small" color="#487D44" />
+                    </View>
                   ) : (
                     <>
                       <TouchableOpacity
@@ -502,6 +698,64 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
                       </TouchableOpacity>
                     </>
                   )}
+                </View> */}
+                <View style={styles.qtyBox}>
+                  {/* CONTENT (always visible) */}
+                  <TouchableOpacity
+                    onPress={() =>
+                      updateQty(Number(quantity) > 1 ? Number(quantity) - 1 : 0)
+                    }
+                    style={styles.qtyBtn}
+                    disabled={updatingQty}
+                  >
+                    <Image
+                      source={require("../assets/Common/sub.png")}
+                      style={{ height: 20, width: 20 }}
+                    />
+                  </TouchableOpacity>
+
+                  <View style={{ justifyContent: "center" }}>
+                    <TextInput
+                      style={styles.qtyNumber}
+                      keyboardType="numeric"
+                      value={
+                        quantity !== undefined && quantity !== null
+                          ? String(quantity)
+                          : ""
+                      }
+                      editable={!updatingQty}
+                      onChangeText={(text) => {
+                        const val = text.replace(/[^0-9]/g, "");
+                        if (val === "") {
+                          updateQty("");
+                        } else {
+                          updateQty(Number(val));
+                        }
+                      }}
+                    />
+
+                    {updatingQty && (
+                      <View style={styles.loaderOverlay}>
+                        <ActivityIndicator size="small" color="#487D44" />
+                      </View>
+                    )}
+                  </View>
+
+                  <TouchableOpacity
+                    onPress={() => updateQty(Number(quantity || 0) + 1)}
+                    style={[
+                      styles.qtyBtn,
+                      stock === 0 && { backgroundColor: "#A0A0A0" },
+                    ]}
+                    disabled={updatingQty || stock === 0}
+                  >
+                    <Image
+                      source={require("../assets/Common/add.png")}
+                      style={{ height: 20, width: 20 }}
+                    />
+                  </TouchableOpacity>
+
+                  {/* 🔥 OVERLAY LOADER */}
                 </View>
 
                 {/* Buy Now */}
@@ -525,7 +779,8 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
               <View style={styles.bulletRow}>
                 <Text style={styles.dot}>•</Text>
                 <Text style={styles.bulletText}>
-                  {productDetail?.description || productDetail?.name}
+                  {productDetail?.product?.description ||
+                    productDetail?.product?.name}
                 </Text>
               </View>
             </View>
@@ -566,28 +821,170 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
             <Text style={styles.dealTitle}>Suggested Products</Text>
           </View>
           <FlatList
-            data={backeryItems}
+            data={productDetail?.related_products || []}
             horizontal
             showsHorizontalScrollIndicator={false}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) =>
+              item.id?.toString() || Math.random().toString()
+            }
+            renderItem={({ item }) => (
+              <View style={{ marginBottom: 15 }}>
+                {/* <ProductCard
+                  image={item.image}
+                  title={item.name}
+                  packSize={item.uom_name || ""}
+                  price={item.price}
+                  mrp={item.mrp}
+                  discount={item.discount}
+                  isOrganic={item.product_type === "Organic"}
+                  product_type={item.product_type}
+                  tiers={item.tiers}
+                /> */}
+                <ProductCard
+                  image={
+                    typeof item.image === "string"
+                      ? { uri: item.image }
+                      : item.image
+                  }
+                  title={item.name}
+                  packSize={item.uom_name || ""}
+                  price={item.base_price || item.price}
+                  mrp={item.mrp}
+                  discount={Number(item.discount || 0).toFixed(0)}
+                  isOrganic={item.product_type === "Organic"}
+                  product_type={item.product_type}
+                  tiers={item.tiers}
+                  // ✅ ADD THESE
+                  cart_status={item.cart_status}
+                  cartQty={item.cart?.qty}
+                  updatingQty={
+                    updatingSuggestedQtyId === item.id ||
+                    addingSuggestedCartId === item.id
+                  }
+                  onAddPress={() => handleSuggestedAddToCart(item.id, 1)}
+                  onUpdateQty={(newQty) => updateSuggestedQty(item.id, newQty)}
+                  onWishlistPress={() => toggleSuggestedWishlist(item)}
+                  wishlist_status={item.wishlist_status}
+                  onTierAddPress={(tierQty: number) => {
+                    if (item.cart_status) {
+                      updateSuggestedQty(item.id, tierQty);
+                    } else {
+                      handleSuggestedAddToCart(item.id, tierQty);
+                    }
+                  }}
+                  onPress={() =>
+                    navigation.navigate("ProductDetail", {
+                      productId: item.id,
+                    })
+                  }
+                />
+              </View>
+            )}
+          />
+
+          <View style={styles.headerRow}>
+            <Text style={styles.dealTitle}>Products by Brands</Text>
+          </View>
+          <FlatList
+            data={productDetail?.brand_products || []}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item) =>
+              item.id?.toString() || Math.random().toString()
+            }
             renderItem={({ item }) => (
               <View style={{ marginBottom: 15 }}>
                 <ProductCard
-                  image={item.image}
-                  title={item.title}
-                  packSize={item.packSize}
-                  price={item.price}
-                  oldPrice={item.oldPrice}
-                  discount={item.discount}
-                  isOrganic={item.isOrganic}
-                  bestRate="₹81/pack Best rate"
-                  onAddPress={() => console.log("Added")}
+                  image={
+                    typeof item.image === "string"
+                      ? { uri: item.image }
+                      : item.image
+                  }
+                  title={item.name}
+                  packSize={item.uom_name || ""}
+                  price={item.base_price || item.price}
+                  mrp={item.mrp}
+                  discount={Number(item.discount || 0).toFixed(0)}
+                  isOrganic={item.product_type === "Organic"}
+                  product_type={item.product_type}
+                  tiers={item.tiers}
+                  // ✅ ADD THESE
+                  cart_status={item.cart_status}
+                  cartQty={item.cart?.qty}
+                  updatingQty={
+                    updatingSuggestedQtyId === item.id ||
+                    addingSuggestedCartId === item.id
+                  }
+                  onAddPress={() => handleSuggestedAddToCart(item.id, 1)}
+                  onUpdateQty={(newQty) => updateSuggestedQty(item.id, newQty)}
+                  onWishlistPress={() => toggleSuggestedWishlist(item)}
+                  wishlist_status={item.wishlist_status}
+                  onTierAddPress={(tierQty: number) => {
+                    if (item.cart_status) {
+                      updateSuggestedQty(item.id, tierQty);
+                    } else {
+                      handleSuggestedAddToCart(item.id, tierQty);
+                    }
+                  }}
+                  onPress={() =>
+                    navigation.navigate("ProductDetail", {
+                      productId: item.id,
+                    })
+                  }
                 />
               </View>
             )}
           />
         </ScrollView>
       )}
+
+      {/* Image Modal */}
+      <Modal visible={showImageModal} transparent={true} animationType="fade">
+        <View style={styles.modalBackground}>
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={() => setShowImageModal(false)}
+          >
+            <Text style={styles.closeText}>✕</Text>
+          </TouchableOpacity>
+
+          {Array.isArray(productDetail?.product_images) &&
+          productDetail.product_images.length > 0 ? (
+            <Carousel
+              width={width}
+              height={width * 1.2}
+              data={productDetail.product_images}
+              defaultIndex={activeIndex}
+              onSnapToItem={(index) => setActiveIndex(index)}
+              renderItem={({ item }) => (
+                <View
+                  style={{
+                    flex: 1,
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                >
+                  <Image
+                    source={{ uri: item.image }}
+                    style={{ width: "100%", height: "100%" }}
+                    resizeMode="contain"
+                  />
+                </View>
+              )}
+            />
+          ) : (
+            <Image
+              source={
+                productDetail?.product?.image
+                  ? { uri: productDetail.product.image }
+                  : require("../assets/icons/sicon2.png")
+              }
+              style={{ width: "100%", height: "60%" }}
+              resizeMode="contain"
+            />
+          )}
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -652,6 +1049,9 @@ const styles = StyleSheet.create({
     // paddingHorizontal: 10,
     paddingVertical: 2,
     borderRadius: 12,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
   },
   productImage: {
     width: "100%",
@@ -961,5 +1361,56 @@ const styles = StyleSheet.create({
     color: "#000",
     fontSize: 10,
     fontFamily: "DMSans-Bold",
+  },
+  loaderOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.6)",
+    borderRadius: 9,
+  },
+  discountBadge: {
+    position: "absolute",
+    top: 10,
+    left: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 6,
+  },
+
+  discountText: {
+    fontSize: 12,
+    fontFamily: "DMSans-SemiBold",
+  },
+  dotStyle: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#bbb",
+    marginHorizontal: 3,
+  },
+  modalBackground: {
+    flex: 1,
+    backgroundColor: "#fff",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  closeButton: {
+    position: "absolute",
+    top: 50,
+    right: 20,
+    zIndex: 999,
+    padding: 10,
+    backgroundColor: "#000",
+    borderRadius: 20,
+  },
+  closeText: {
+    color: "#fff",
+    fontSize: 20,
+    fontWeight: "bold",
   },
 });

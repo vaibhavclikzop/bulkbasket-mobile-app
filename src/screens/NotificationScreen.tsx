@@ -13,69 +13,79 @@ import Styles from "../components/Styles";
 
 const NotificationScreen = ({ navigation }: any) => {
   const [activeTab, setActiveTab] = useState("All");
+  const [notifications, setNotifications] = useState<NotificationType[]>([]);
   const shoppingGreen = require("../assets/Notification/shoppinggreen.png");
   const groceryRed = require("../assets/Notification/groceryred.png");
   const redCup = require("../assets/Notification/redcup.png");
   const grocery = require("../assets/Notification/grocery.png");
+  type NotificationType = {
+    id: number;
+    title: string;
+    desc: string;
+    time: string;
+    icon: any;
+  };
 
-  const notifications = [
-    {
-      id: 1,
-      title: "Back in Stock !!",
-      desc: "1000+ kitchen items from frozen foods, dairy, packaging & more.",
-      time: "4 hours ago",
-      icon: grocery,
-    },
-    {
-      id: 2,
-      title: "Almost there!",
-      desc: "Your cart has few items waiting for you. Order Now!!",
-      time: "6 hours ago",
-      icon: shoppingGreen,
-    },
-    {
-      id: 3,
-      title: "Tea & coffee from:",
-      desc: "Nescafe, Wagh Bakri, Tata Tea & more at deal prices. Check Now.",
-      time: "1 day ago",
-      icon: redCup,
-    },
-    {
-      id: 4,
-      title: "Tea & coffee from:",
-      desc: "Nescafe, Wagh Bakri, Tata Tea & more at deal prices. Check Now.",
-      time: "1 day ago",
-      icon: groceryRed,
-    },
-    {
-      id: 5,
-      title: "Back in Stock !!",
-      desc: "1000+ kitchen items from frozen foods, dairy, packaging & more.",
-      time: "4 hours ago",
-      icon: grocery,
-    },
-    {
-      id: 6,
-      title: "Almost there!",
-      desc: "Your cart has few items waiting for you. Order Now!!",
-      time: "6 hours ago",
-      icon: shoppingGreen,
-    },
-    {
-      id: 7,
-      title: "Tea & coffee from:",
-      desc: "Nescafe, Wagh Bakri, Tata Tea & more at deal prices. Check Now.",
-      time: "1 day ago",
-      icon: redCup,
-    },
-    {
-      id: 8,
-      title: "Back in Stock !!",
-      desc: "1000+ kitchen items from frozen foods, dairy, packaging & more.",
-      time: "4 hours ago",
-      icon: grocery,
-    },
-  ];
+  // const notifications = [
+  //   {
+  //     id: 1,
+  //     title: "Back in Stock !!",
+  //     desc: "1000+ kitchen items from frozen foods, dairy, packaging & more.",
+  //     time: "4 hours ago",
+  //     icon: grocery,
+  //   },
+  //   {
+  //     id: 2,
+  //     title: "Almost there!",
+  //     desc: "Your cart has few items waiting for you. Order Now!!",
+  //     time: "6 hours ago",
+  //     icon: shoppingGreen,
+  //   },
+  //   {
+  //     id: 3,
+  //     title: "Tea & coffee from:",
+  //     desc: "Nescafe, Wagh Bakri, Tata Tea & more at deal prices. Check Now.",
+  //     time: "1 day ago",
+  //     icon: redCup,
+  //   },
+  //   {
+  //     id: 4,
+  //     title: "Tea & coffee from:",
+  //     desc: "Nescafe, Wagh Bakri, Tata Tea & more at deal prices. Check Now.",
+  //     time: "1 day ago",
+  //     icon: groceryRed,
+  //   },
+  //   {
+  //     id: 5,
+  //     title: "Back in Stock !!",
+  //     desc: "1000+ kitchen items from frozen foods, dairy, packaging & more.",
+  //     time: "4 hours ago",
+  //     icon: grocery,
+  //   },
+  //   {
+  //     id: 6,
+  //     title: "Almost there!",
+  //     desc: "Your cart has few items waiting for you. Order Now!!",
+  //     time: "6 hours ago",
+  //     icon: shoppingGreen,
+  //   },
+  //   {
+  //     id: 7,
+  //     title: "Tea & coffee from:",
+  //     desc: "Nescafe, Wagh Bakri, Tata Tea & more at deal prices. Check Now.",
+  //     time: "1 day ago",
+  //     icon: redCup,
+  //   },
+  //   {
+  //     id: 8,
+  //     title: "Back in Stock !!",
+  //     desc: "1000+ kitchen items from frozen foods, dairy, packaging & more.",
+  //     time: "4 hours ago",
+  //     icon: grocery,
+  //   },
+  // ];
+
+  // const notifications = [];
 
   const NotificationItem = ({ item }: any) => (
     <View style={styles.notificationItem}>
@@ -155,6 +165,11 @@ const NotificationScreen = ({ navigation }: any) => {
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => <NotificationItem item={item} />}
           showsVerticalScrollIndicator={false}
+          ListEmptyComponent={() => (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No notifications received</Text>
+            </View>
+          )}
         />
       </View>
     </SafeAreaView>
@@ -281,5 +296,17 @@ const styles = StyleSheet.create({
     color: "#9CA3AF",
     marginTop: 4,
     fontFamily: "DMSans-Regular",
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 100, // adjust if needed
+  },
+
+  emptyText: {
+    fontSize: 14,
+    color: "#64748B",
+    fontFamily: "DMSans-Medium",
   },
 });

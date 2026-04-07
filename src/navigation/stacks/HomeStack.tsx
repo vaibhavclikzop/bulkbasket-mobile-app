@@ -6,6 +6,8 @@ import CategoryProductsScreen from '../../screens/CategoryProductsScreen';
 import ProductDetailScreen from '../../screens/ProductDetailScreen';
 import BrandProductScreen from '../../screens/BrandProductScreen';
 import NotificationScreen from '../../screens/NotificationScreen';
+import AddressAddUpd from '../../screens/AddressAddUpd';
+import Addresses from '../../screens/Addresses';
 
 export type HomeStackParamList = {
   HomeMain: undefined;
@@ -14,6 +16,8 @@ export type HomeStackParamList = {
   ProductDetail: undefined;
   BrandProduct: { brandId: number; brandName: string };
   NotificationScreen: undefined;
+  Addresses: undefined;
+  AddressAddUpd: undefined;
 };
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
@@ -27,6 +31,8 @@ const HomeStack = () => {
       <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
       <Stack.Screen name="BrandProduct" component={BrandProductScreen} />
       <Stack.Screen name="NotificationScreen" component={NotificationScreen} />
+            <Stack.Screen name="AddressAddUpd" component={AddressAddUpd} />
+      <Stack.Screen name="Addresses" component={Addresses} />
     </Stack.Navigator>
   );
 };

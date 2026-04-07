@@ -273,9 +273,11 @@ const CartScreen: React.FC = ({ navigation }: any) => {
                 <Text style={styles.price}>
                   ₹{formatPriceClean(getCalculatedPrice(item))}
                 </Text>
-                <Text style={styles.oldPrice}>
-                  ₹{formatPriceClean(item.mrp)}
-                </Text>
+                {Number(item.mrp) > 0 && (
+                  <Text style={styles.oldPrice}>
+                    ₹{formatPriceClean(item.mrp)}
+                  </Text>
+                )}
               </View>
               {/* Show best rate based on current quantity */}
               {/* {item.price_tiers && item.price_tiers.length > 0 && (

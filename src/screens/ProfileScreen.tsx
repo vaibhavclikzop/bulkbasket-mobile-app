@@ -48,11 +48,11 @@ const menuItems: MenuItem[] = [
     title: "Notifications",
     image: require("../assets/Common/notification.png"),
   },
-  {
-    id: 6,
-    title: "Payment Options",
-    image: require("../assets/Payment/card.png"),
-  },
+  // {
+  //   id: 6,
+  //   title: "Payment Options",
+  //   image: require("../assets/Payment/card.png"),
+  // },
   {
     id: 7,
     title: "Saved Address",
@@ -237,8 +237,9 @@ export default function ProfileScreen({ navigation }: any) {
                     navigation.navigate("ContactSupportScreen");
                   } else if (item.title === "Profile") {
                     navigation.navigate("UpdateProfile");
-                  } else if (item.title === "Payment Options") {
-                    navigation.navigate("PaymentOptionsScreen");
+                    // }
+                    // else if (item.title === "Payment Options") {
+                    //   navigation.navigate("PaymentOptionsScreen");
                   } else if (item.title === "Saved Address") {
                     navigation.navigate("Addresses");
                   } else if (item.title === "Your Orders") {

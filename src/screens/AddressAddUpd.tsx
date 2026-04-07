@@ -274,7 +274,12 @@ const AddressAddUpd = ({ navigation, route }: any) => {
               detectedState.toLowerCase(),
           );
           console.log("Matched State Object:", stateObj);
-          const matchedName = stateObj ? (stateObj.title || stateObj.name || stateObj.state_name || stateObj.state) : detectedState;
+          const matchedName = stateObj
+            ? stateObj.title ||
+              stateObj.name ||
+              stateObj.state_name ||
+              stateObj.state
+            : detectedState;
           fetchDistricts(matchedName);
         }
       }
@@ -314,17 +319,17 @@ const AddressAddUpd = ({ navigation, route }: any) => {
         city: district,
         pincode: pincode,
         coordinates: `${marker.latitude},${marker.longitude}`,
-        id: addressId, // Uses existing ID for update, or blank for new address
+        id: addressId,
       };
 
       const res = await saveAddressApi(data);
       if (res) {
-        Alert.alert("Success", "Address saved successfully.");
+        // Alert.alert("Success", "Address saved successfully.");
         navigation.goBack();
       }
     } catch (error) {
       console.log("Save Address Error", error);
-      Alert.alert("Error", "Failed to save address. Try again.");
+      // Alert.alert("Error", "Failed to save address. Try again.");
     } finally {
       setLoading(false);
     }
