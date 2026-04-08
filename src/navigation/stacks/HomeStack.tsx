@@ -1,13 +1,14 @@
-import React from 'react';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import HomeScreen from '../../screens/HomeScreen';
-import SearchScreen from '../../components/SearchScreen';
-import CategoryProductsScreen from '../../screens/CategoryProductsScreen';
-import ProductDetailScreen from '../../screens/ProductDetailScreen';
-import BrandProductScreen from '../../screens/BrandProductScreen';
-import NotificationScreen from '../../screens/NotificationScreen';
-import AddressAddUpd from '../../screens/AddressAddUpd';
-import Addresses from '../../screens/Addresses';
+import React from "react";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import HomeScreen from "../../screens/HomeScreen";
+import SearchScreen from "../../components/SearchScreen";
+import CategoryProductsScreen from "../../screens/CategoryProductsScreen";
+import ProductDetailScreen from "../../screens/ProductDetailScreen";
+import BrandProductScreen from "../../screens/BrandProductScreen";
+import NotificationScreen from "../../screens/NotificationScreen";
+import AddressAddUpd from "../../screens/AddressAddUpd";
+import Addresses from "../../screens/Addresses";
+import CompanyProfile from "../../screens/CompanyProfile";
 
 export type HomeStackParamList = {
   HomeMain: undefined;
@@ -18,6 +19,7 @@ export type HomeStackParamList = {
   NotificationScreen: undefined;
   Addresses: undefined;
   AddressAddUpd: undefined;
+  CompanyProfile: undefined;
 };
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
@@ -31,8 +33,9 @@ const HomeStack = () => {
       <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
       <Stack.Screen name="BrandProduct" component={BrandProductScreen} />
       <Stack.Screen name="NotificationScreen" component={NotificationScreen} />
-            <Stack.Screen name="AddressAddUpd" component={AddressAddUpd} />
+      <Stack.Screen name="AddressAddUpd" component={AddressAddUpd} />
       <Stack.Screen name="Addresses" component={Addresses} />
+      {/* <Stack.Screen name="CompanyProfile" component={CompanyProfile} /> */}
     </Stack.Navigator>
   );
 };

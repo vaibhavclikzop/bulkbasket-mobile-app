@@ -14,9 +14,10 @@ import {
   Platform,
   RefreshControl,
   Alert,
+  Vibration,
 } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
-import ProductCard from "../components/ProductCard";
+// import ProductCard from "../components/ProductCard";
 import Styles from "../components/Styles";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useIsFocused, useFocusEffect } from "@react-navigation/native";
@@ -105,8 +106,7 @@ interface Category {
 
 const CategoryProductsScreen = ({ navigation, route }: any) => {
   const isFocused = useIsFocused();
-  const [qty, setQty] = useState(0);
-  // const [likedProducts, setLikedProducts] = useState({});
+  // const [qty, setQty] = useState(0);
   const { categoryId, catname } = route.params;
   console.log("category Id", categoryId);
   const [selectedCategoryId, setSelectedCategoryId] = useState(categoryId);
@@ -813,19 +813,18 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                       </LinearGradient>
                     ) : null} */}
 
-                    <TouchableOpacity
-                      onPress={() =>
-                        navigation.navigate("ProductDetail", {
-                          productId: item.id,
-                        })
-                      }
-                      style={{ flexDirection: "row" }}
-                    >
-                      <View
+                    <View style={{ flexDirection: "row" }}>
+                      <TouchableOpacity
+                        onPress={() =>
+                          navigation.navigate("ProductDetail", {
+                            productId: item.id,
+                          })
+                        }
                         style={[
                           styles.productImageBg,
                           { width: "38%", backgroundColor: "" },
                         ]}
+                        activeOpacity={0.9}
                       >
                         {/* {Platform.OS === "ios" ? (
                           Number(item.discount) > 0 ? (
@@ -939,18 +938,17 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                             }}
                           />
                         </TouchableOpacity>
-                      </View>
+                      </TouchableOpacity>
 
-                      <View
-                        style={[
-                          styles.details,
-                          {
-                            // alignItems: "center",
-                            // justifyContent: "center",
-                          },
-                        ]}
-                      >
-                        <View>
+                      <View style={[styles.details]}>
+                        <TouchableOpacity
+                          onPress={() =>
+                            navigation.navigate("ProductDetail", {
+                              productId: item.id,
+                            })
+                          }
+                          activeOpacity={0.9}
+                        >
                           <Text style={styles.productTitle}>
                             {capitalizeWords(item.name || "")}
                           </Text>
@@ -969,7 +967,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                           >
                             {item.uom_name}
                           </Text>
-                        </View>
+                        </TouchableOpacity>
                         {item.tiers && item.tiers.length > 0 && (
                           <View
                             style={[
@@ -980,8 +978,9 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                             ]}
                           >
                             {item.tiers.map((tier: Tier, index: number) => {
-                              const isLast =
-                                index === (item.tiers?.length ?? 0) - 1;
+                              const currentQty = Number(item.cart?.qty || 0);
+                              const isLast = index === (item.tiers?.length ?? 0) - 1;
+
                               return (
                                 <View
                                   key={index}
@@ -1001,6 +1000,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
 
                                   <TouchableOpacity
                                     onPress={() => {
+                                      Vibration.vibrate(10);
                                       if (item.cart_status) {
                                         updateQty(item.id, tier.qty);
                                       } else {
@@ -1009,16 +1009,27 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                                     }}
                                     disabled={Number(item.current_stock) === 0}
                                   >
-                                    <Text
-                                      style={[
-                                        styles.addSmall,
-                                        Number(item.current_stock) === 0 && {
-                                          color: "#A0A0A0",
-                                        },
-                                      ]}
-                                    >
-                                      Add+
-                                    </Text>
+                                    {currentQty >= tier.qty ? (
+                                      <Image
+                                        source={require("../assets/check.png")}
+                                        style={{
+                                          height: 16,
+                                          width: 16,
+                                          tintColor: "#487D44",
+                                        }}
+                                      />
+                                    ) : (
+                                      <Text
+                                        style={[
+                                          styles.addSmall,
+                                          Number(item.current_stock) === 0 && {
+                                            color: "#A0A0A0",
+                                          },
+                                        ]}
+                                      >
+                                        Add+
+                                      </Text>
+                                    )}
                                   </TouchableOpacity>
                                 </View>
                               );
@@ -1065,9 +1076,10 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                             >
                               <TouchableOpacity
                                 style={styles.qtyBtn}
-                                onPress={() =>
-                                  updateQty(item.id, (item.cart?.qty || 0) - 1)
-                                }
+                                onPress={() => {
+                                  Vibration.vibrate(10);
+                                  updateQty(item.id, (item.cart?.qty || 0) - 1);
+                                }}
                                 // disabled={updatingQtyId === item.id}
                               >
                                 <Text style={styles.qtyText}>-</Text>
@@ -1108,9 +1120,10 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                                     backgroundColor: "#A0A0A0",
                                   },
                                 ]}
-                                onPress={() =>
-                                  updateQty(item.id, (item.cart?.qty || 0) + 1)
-                                }
+                                onPress={() => {
+                                  Vibration.vibrate(10);
+                                  updateQty(item.id, (item.cart?.qty || 0) + 1);
+                                }}
                                 disabled={
                                   updatingQtyId === item.id ||
                                   Number(item.current_stock) === 0
@@ -1120,19 +1133,22 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                               </TouchableOpacity>
                             </View>
                           ) : (
-                            <TouchableOpacity
-                              style={[
-                                styles.addButton,
-                                Number(item.current_stock) === 0 && {
-                                  backgroundColor: "#A0A0A0",
-                                },
-                              ]}
-                              onPress={() => handleAddToCart(item.id)}
-                              disabled={
-                                addingToCartId === item.id ||
-                                Number(item.current_stock) === 0
-                              }
-                            >
+                              <TouchableOpacity
+                                style={[
+                                  styles.addButton,
+                                  Number(item.current_stock) === 0 && {
+                                    backgroundColor: "#A0A0A0",
+                                  },
+                                ]}
+                                onPress={() => {
+                                  Vibration.vibrate(10);
+                                  handleAddToCart(item.id);
+                                }}
+                                disabled={
+                                  addingToCartId === item.id ||
+                                  Number(item.current_stock) === 0
+                                }
+                              >
                               {addingToCartId === item.id ? (
                                 <ActivityIndicator size="small" color="#fff" />
                               ) : (
@@ -1159,7 +1175,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                           )}
                         </View>
                       </View>
-                    </TouchableOpacity>
+                    </View>
                   </View>
                 )}
                 // ListFooterComponent={
@@ -1248,7 +1264,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
 
             {/* Footer Buttons */}
             <View style={styles.sortModalFooter}>
-              <TouchableOpacity
+              {/* <TouchableOpacity
                 style={styles.sortClearBtn}
                 onPress={() => {
                   setSelectedSort("relevance");
@@ -1257,7 +1273,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                 }}
               >
                 <Text style={styles.sortClearText}>Clear all</Text>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
               <TouchableOpacity
                 style={[
                   styles.sortApplyBtn,
@@ -1493,7 +1509,7 @@ const styles = StyleSheet.create({
     fontFamily: "DMSans-Regular",
   },
 
-  price: { fontSize: 12, fontFamily: "DMSans-SemiBold" },
+  price: { fontSize: 13, fontFamily: "DMSans-SemiBold" },
   oldPrice: {
     textDecorationLine: "line-through",
     fontSize: 12,

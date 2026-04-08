@@ -23,7 +23,7 @@ type Props = NativeStackScreenProps<RootStackParamList, "OTP">;
 const OTPScreen: React.FC<Props> = ({ navigation, route }) => {
   const { mobile } = route.params;
   const [loading, setLoading] = useState(false);
-
+  const [seconds, setSeconds] = useState(30);
   const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
   const inputs = useRef<Array<TextInput | null>>([]);
 
@@ -35,7 +35,47 @@ const OTPScreen: React.FC<Props> = ({ navigation, route }) => {
     return () => clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    if (seconds === 0) return;
+
+    const interval = setInterval(() => {
+      setSeconds((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [seconds]);
+
+  const formatTime = (sec: number) => {
+    const mins = Math.floor(sec / 60);
+    const secs = sec % 60;
+
+    return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+  };
+
   const handleChange = (text: string, index: number) => {
+    // Handle paste or auto-fill
+    if (text.length > 1) {
+      const numbers = text
+        .replace(/[^0-9]/g, "")
+        .slice(0, 6)
+        .split("");
+      if (numbers.length > 0) {
+        const newOtp = [...otp];
+        numbers.forEach((num, i) => {
+          if (index + i < 6) {
+            newOtp[index + i] = num;
+          }
+        });
+        setOtp(newOtp);
+
+        // Focus the next appropriate input
+        const nextIndex = Math.min(index + numbers.length, 5);
+        inputs.current[nextIndex]?.focus();
+      }
+      return;
+    }
+
+    // Handle single character typed
     if (!/^[0-9]?$/.test(text)) return;
 
     const newOtp = [...otp];
@@ -169,7 +209,9 @@ const OTPScreen: React.FC<Props> = ({ navigation, route }) => {
               }}
               style={styles.otpBox}
               keyboardType="number-pad"
-              maxLength={1}
+              maxLength={6}
+              textContentType="oneTimeCode"
+              autoComplete="sms-otp"
               textAlign="center"
               value={digit}
               onChangeText={(text) => handleChange(text, index)}
@@ -189,7 +231,7 @@ const OTPScreen: React.FC<Props> = ({ navigation, route }) => {
         <Text
           style={[Styles.SemiBoldTitle, { marginTop: 15, marginBottom: 8 }]}
         >
-          00:30
+          {formatTime(seconds)}
         </Text>
 
         {/* Resend */}

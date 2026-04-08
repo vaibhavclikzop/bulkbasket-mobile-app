@@ -36,6 +36,7 @@ import {
   updateWishlistQtyApi,
   getDealProductsApi,
   getCartApi,
+  getCompanyProfileApi,
 } from "../services/api";
 import { useFocusEffect } from "@react-navigation/native";
 
@@ -97,6 +98,18 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
     }, 16);
     return () => clearInterval(interval);
   }, [brandData1]);
+
+  const getCompanyProfile = async () => {
+    try {
+      const response = await getCompanyProfileApi();
+      const data = response?.data;
+      console.log("Get Company Api Data home screen :-------->", data);
+
+      setGst(data?.gst);
+    } catch (error) {
+      console.log("Get Profile Error:", error);
+    }
+  };
 
   const fetchCart = async () => {
     try {
@@ -241,8 +254,8 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
 
       const response = await getProfileApi();
       const data = response?.data;
-      console.log("Get Profile in Profile Screen:", response.data);
-      setGst(data?.gst);
+      console.log("Get Profile in Home Screen:", response.data);
+      // setGst(data?.gst);
     } catch (error: any) {
       console.log("Get Profile Error:", error.response?.data || error.message);
     } finally {
@@ -299,6 +312,7 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
         getHomePage(!isFirstLoad.current);
         fetchDeals(!isFirstLoad.current);
         fetchCart();
+        getCompanyProfile();
 
         if (isFirstLoad.current) {
           isFirstLoad.current = false;
@@ -1069,7 +1083,7 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
           </ImageBackground>
         </ScrollView>
       )}
-      {gst === null && (
+      {!loading && !gst && (
         <View style={[styles.containerBotom, { width: "100%" }]}>
           <View style={styles.iconWrapper}>
             <Image
@@ -1088,7 +1102,7 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
           <TouchableOpacity
             onPress={() =>
               navigation.navigate("Profile", {
-                screen: "UpdateProfile",
+                screen: "CompanyProfile",
               })
             }
             style={styles.button}

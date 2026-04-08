@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   Modal,
+  Vibration,
 } from "react-native";
 import { debounce } from "lodash";
 import Carousel from "react-native-reanimated-carousel";
@@ -181,6 +182,7 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
     if (!productDetail) return;
     const previousLiked = liked;
     try {
+      Vibration.vibrate(10);
       const newStatus = !previousLiked;
       setLiked(newStatus);
       // Keep productDetail in sync across both locations
@@ -228,6 +230,7 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
 
   const handleSuggestedAddToCart = async (id: number, qty: number = 1) => {
     try {
+      Vibration.vibrate(10);
       setAddingSuggestedCartId(id);
       const res = await addToCartApi(id, qty);
 
@@ -331,6 +334,20 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
       console.log("Wishlist Toggle Error:", error);
     }
   };
+
+  // const hasMultipleImages =
+  //   Array.isArray(productDetail?.product_images) &&
+  //   productDetail.product_images.length > 1;
+
+  const imagesData =
+    Array.isArray(productDetail?.product_images) &&
+    productDetail.product_images.length > 0
+      ? productDetail.product_images
+      : productDetail?.product?.image
+      ? [{ image: productDetail.product.image }]
+      : [];
+
+  const hasMultipleImages = imagesData.length > 1;
 
   useEffect(() => {
     if (productId) {
@@ -438,78 +455,80 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
         >
           {/*  PRODUCT IMAGE */}
           <View style={styles.imageSection}>
-            {Array.isArray(productDetail?.product_images) &&
-            productDetail.product_images.length > 0 ? (
-              <View>
-                <Carousel
-                  width={width}
-                  height={250}
-                  data={productDetail.product_images}
-                  autoPlay
-                  autoPlayInterval={3000}
-                  scrollAnimationDuration={800}
-                  onSnapToItem={(index) => setActiveIndex(index)}
-                  renderItem={({ item }) => (
-                    <TouchableOpacity
-                      activeOpacity={0.9}
-                      onPress={() => setShowImageModal(true)}
-                    >
-                      <Image
-                        source={{ uri: item?.image }}
-                        style={styles.productImage}
-                        resizeMode="contain"
-                      />
-                    </TouchableOpacity>
-                  )}
-                />
-
-                {productDetail.product_images.length > 1 && (
-                  <View style={styles.paginationContainer}>
-                    {productDetail.product_images.map(
-                      (_: any, index: number) => (
-                        <View
-                          key={index}
-                          style={[
-                            styles.dotStyle,
-                            activeIndex === index && styles.activeDot,
-                          ]}
-                        />
-                      ),
-                    )}
-                  </View>
+            <View>
+              {/* <Carousel
+                width={width}
+                height={250}
+                data={imagesData}
+                // scrollEnabled={hasMultipleImages}
+                // autoPlay={hasMultipleImages && imagesData.length > 1}
+                scrollEnabled={hasMultipleImages}
+                autoPlay={hasMultipleImages}
+                pagingEnabled={hasMultipleImages}
+                autoPlayInterval={3000}
+                scrollAnimationDuration={800}
+                onSnapToItem={(index) => setActiveIndex(index)}
+                renderItem={({ item }: { item: any }) => (
+                  <TouchableOpacity
+                    activeOpacity={0.9}
+                    onPress={() => setShowImageModal(true)}
+                  >
+                    <Image
+                      source={
+                        item?.image
+                          ? { uri: item.image }
+                          : require("../assets/icons/sicon2.png")
+                      }
+                      style={styles.productImage}
+                      resizeMode="contain"
+                    />
+                  </TouchableOpacity>
                 )}
-              </View>
-            ) : (
-              <TouchableOpacity
-                activeOpacity={0.9}
-                onPress={() => setShowImageModal(true)}
-              >
-                <Image
-                  source={
-                    productDetail?.product?.image
-                      ? { uri: productDetail.product.image }
-                      : require("../assets/icons/sicon2.png")
-                  }
-                  style={[
-                    styles.productImage,
-                    { height: 250, resizeMode: "contain" },
-                  ]}
-                />
-              </TouchableOpacity>
-            )}
+              /> */}
+              <Carousel
+                width={width}
+                height={250}
+                data={imagesData}
+                loop={hasMultipleImages}
+                enabled={hasMultipleImages}
+                // scrollEnabled={hasMultipleImages}
+                pagingEnabled={hasMultipleImages}
+                autoPlay={hasMultipleImages}
+                autoPlayInterval={3000}
+                scrollAnimationDuration={800}
+                onSnapToItem={(index) => setActiveIndex(index)}
+                renderItem={({ item }: { item: any }) => (
+                  <TouchableOpacity
+                    activeOpacity={0.9}
+                    onPress={() => setShowImageModal(true)}
+                  >
+                    <Image
+                      source={
+                        item?.image
+                          ? { uri: item.image }
+                          : require("../assets/icons/sicon2.png")
+                      }
+                      style={styles.productImage}
+                      resizeMode="contain"
+                    />
+                  </TouchableOpacity>
+                )}
+              />
 
-            {/* {stock === 0 && (
-              <LinearGradient
-                colors={["#FF4D4D", "#B30000"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.discountBadge}
-              >
-                <Text style={[styles.discountText, { color: "#fff" }]}>
-                  Out of Stock
-                </Text>
-              </LinearGradient>
-            )} */}
+              {hasMultipleImages && imagesData.length > 1 && (
+                <View style={styles.paginationContainer}>
+                  {imagesData.map((_: any, index: number) => (
+                    <View
+                      key={index}
+                      style={[
+                        styles.dotStyle,
+                        activeIndex === index && styles.activeDot,
+                      ]}
+                    />
+                  ))}
+                </View>
+              )}
+            </View>
 
             {/* Wishlist Icon */}
             <TouchableOpacity
@@ -572,38 +591,63 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
               productDetail.product.tiers.length > 0 && (
                 <View style={styles.optionBox}>
                   {productDetail.product.tiers.map(
-                    (tier: any, index: number) => (
-                      <View key={index}>
-                        <View style={styles.optionRow}>
-                          <Text style={styles.pText}>
-                            {tier.qty} Pc ₹{tier.price}/pc
-                          </Text>
-                          <TouchableOpacity
-                            disabled={stock === 0}
-                            style={stock === 0 && { opacity: 0.5 }}
-                            onPress={() => {
-                              if (quantity > 0) {
-                                updateQty(tier.qty);
-                              } else {
-                                handleAddToCart(tier.qty);
-                              }
-                            }}
-                          >
-                            <Text
-                              style={[
-                                styles.addText,
-                                stock === 0 && { color: "#A0A0A0" },
-                              ]}
-                            >
-                              Add+
+                    (tier: any, index: number) => {
+                      const tiers = [...productDetail.product.tiers].sort(
+                        (a, b) => b.qty - a.qty,
+                      );
+
+                      const activeTier = tiers.find(
+                        (t) => Number(quantity || 0) >= Number(t.qty),
+                      );
+
+                      const isSelected = Number(quantity || 0) >= Number(tier.qty); // ✅ Tick all satisfied tiers
+
+                      return (
+                        <View key={index}>
+                          <View style={styles.optionRow}>
+                            <Text style={styles.pText}>
+                              {tier.qty} Pc ₹{tier.price}/pc
                             </Text>
-                          </TouchableOpacity>
+
+                            <TouchableOpacity
+                              disabled={stock === 0}
+                              onPress={() => {
+                                Vibration.vibrate(10);
+                                if (quantity > 0) {
+                                  updateQty(tier.qty);
+                                } else {
+                                  handleAddToCart(tier.qty);
+                                }
+                              }}
+                            >
+                              {isSelected ? (
+                                <Image
+                                  source={require("../assets/check.png")}
+                                  style={{
+                                    height: 16,
+                                    width: 16,
+                                    tintColor: "#487D44",
+                                  }}
+                                />
+                              ) : (
+                                <Text
+                                  style={[
+                                    styles.addText,
+                                    stock === 0 && { color: "#A0A0A0" },
+                                  ]}
+                                >
+                                  Add+
+                                </Text>
+                              )}
+                            </TouchableOpacity>
+                          </View>
+
+                          {index < productDetail.product.tiers.length - 1 && (
+                            <View style={styles.dividerP} />
+                          )}
                         </View>
-                        {index < productDetail.product.tiers.length - 1 && (
-                          <View style={styles.dividerP} />
-                        )}
-                      </View>
-                    ),
+                      );
+                    },
                   )}
                 </View>
               )}
@@ -615,7 +659,10 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
                   stock === 0 && { backgroundColor: "#ccc" }, // grey when disabled
                 ]}
                 onPress={() => {
-                  if (stock > 0) handleAddToCart();
+                  if (stock > 0) {
+                    Vibration.vibrate(10);
+                    handleAddToCart();
+                  }
                 }}
                 disabled={addingToCart || stock === 0}
               >
@@ -702,9 +749,10 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
                 <View style={styles.qtyBox}>
                   {/* CONTENT (always visible) */}
                   <TouchableOpacity
-                    onPress={() =>
-                      updateQty(Number(quantity) > 1 ? Number(quantity) - 1 : 0)
-                    }
+                    onPress={() => {
+                      Vibration.vibrate(10);
+                      updateQty(Number(quantity) > 1 ? Number(quantity) - 1 : 0);
+                    }}
                     style={styles.qtyBtn}
                     disabled={updatingQty}
                   >
@@ -742,7 +790,10 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
                   </View>
 
                   <TouchableOpacity
-                    onPress={() => updateQty(Number(quantity || 0) + 1)}
+                    onPress={() => {
+                      Vibration.vibrate(10);
+                      updateQty(Number(quantity || 0) + 1);
+                    }}
                     style={[
                       styles.qtyBtn,
                       stock === 0 && { backgroundColor: "#A0A0A0" },
@@ -829,17 +880,6 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
             }
             renderItem={({ item }) => (
               <View style={{ marginBottom: 15 }}>
-                {/* <ProductCard
-                  image={item.image}
-                  title={item.name}
-                  packSize={item.uom_name || ""}
-                  price={item.price}
-                  mrp={item.mrp}
-                  discount={item.discount}
-                  isOrganic={item.product_type === "Organic"}
-                  product_type={item.product_type}
-                  tiers={item.tiers}
-                /> */}
                 <ProductCard
                   image={
                     typeof item.image === "string"
@@ -854,7 +894,6 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
                   isOrganic={item.product_type === "Organic"}
                   product_type={item.product_type}
                   tiers={item.tiers}
-                  // ✅ ADD THESE
                   cart_status={item.cart_status}
                   cartQty={item.cart?.qty}
                   updatingQty={
@@ -945,44 +984,67 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
             style={styles.closeButton}
             onPress={() => setShowImageModal(false)}
           >
-            <Text style={styles.closeText}>✕</Text>
-          </TouchableOpacity>
-
-          {Array.isArray(productDetail?.product_images) &&
-          productDetail.product_images.length > 0 ? (
-            <Carousel
-              width={width}
-              height={width * 1.2}
-              data={productDetail.product_images}
-              defaultIndex={activeIndex}
-              onSnapToItem={(index) => setActiveIndex(index)}
-              renderItem={({ item }) => (
-                <View
-                  style={{
-                    flex: 1,
-                    justifyContent: "center",
-                    alignItems: "center",
-                  }}
-                >
-                  <Image
-                    source={{ uri: item.image }}
-                    style={{ width: "100%", height: "100%" }}
-                    resizeMode="contain"
-                  />
-                </View>
-              )}
-            />
-          ) : (
+            {/* <Text style={styles.closeText}>✕</Text> */}
             <Image
-              source={
-                productDetail?.product?.image
-                  ? { uri: productDetail.product.image }
-                  : require("../assets/icons/sicon2.png")
-              }
-              style={{ width: "100%", height: "60%" }}
-              resizeMode="contain"
+              source={require("../assets/cancel.png")}
+              style={{ width: 25, height: 25, resizeMode: "contain" }}
             />
-          )}
+          </TouchableOpacity>
+          <Text
+            style={{
+              color: "#000",
+              fontSize: 16,
+              fontWeight: "600",
+              textAlign: "center",
+              marginTop: 20,
+              position: "absolute",
+              top: 0,
+              right: 60,
+              zIndex: 999,
+              padding: 10,
+              fontFamily: "DMSans-SemiBold",
+              width: "70%",
+              // alignSelf: "center",
+              // backgroundColor: "red",
+              // borderRadius: 20,
+            }}
+          >
+            {productDetail?.product?.name}
+          </Text>
+
+          <Carousel
+            width={width}
+            height={width * 1.2}
+            data={
+              Array.isArray(productDetail?.product_images) &&
+              productDetail.product_images.length > 0
+                ? productDetail.product_images
+                : productDetail?.product?.image
+                ? [{ image: productDetail.product.image }]
+                : []
+            }
+            defaultIndex={0}
+            onSnapToItem={(index) => setActiveIndex(index)}
+            renderItem={({ item }: { item: any }) => (
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <Image
+                  source={
+                    item?.image
+                      ? { uri: item.image }
+                      : require("../assets/icons/sicon2.png")
+                  }
+                  style={{ width: "100%", height: "100%" }}
+                  resizeMode="contain"
+                />
+              </View>
+            )}
+          />
         </View>
       </Modal>
     </SafeAreaView>
@@ -1401,16 +1463,15 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     position: "absolute",
-    top: 50,
+    top: 20,
     right: 20,
     zIndex: 999,
     padding: 10,
-    backgroundColor: "#000",
     borderRadius: 20,
   },
   closeText: {
     color: "#fff",
-    fontSize: 20,
-    fontWeight: "bold",
+    fontSize: 16,
+    fontFamily: "DMSans-SemiBold",
   },
 });

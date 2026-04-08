@@ -210,6 +210,7 @@ const CompanyProfile = ({ navigation }: any) => {
 
           <Text style={Styles.headerText}>Company Profile</Text>
         </View>
+
         <ScrollView
           style={styles.container}
           showsVerticalScrollIndicator={false}
@@ -217,8 +218,9 @@ const CompanyProfile = ({ navigation }: any) => {
         >
           {/* Form */}
           <View style={styles.form}>
-            <Text style={styles.menuText}>{legalName}</Text>
-
+            <Text style={styles.menuText}>
+              {legalName ? legalName : "Enter the GST number for verification"}
+            </Text>
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Brand Name</Text>
               <TextInput
@@ -364,7 +366,7 @@ const styles = StyleSheet.create({
   form: {
     borderRadius: 16,
     paddingHorizontal: 16,
-    marginTop: 20,
+    // marginTop: 20,
   },
 
   row: {

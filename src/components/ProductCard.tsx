@@ -9,6 +9,7 @@ import {
   TextInput,
   ActivityIndicator,
   Platform,
+  Vibration,
 } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
 
@@ -95,13 +96,28 @@ const ProductCard: React.FC<ProductCardProps> = ({
           .join(" ")
       : "";
 
+
+const getActiveTier = () => {
+  if (!tiers || tiers.length === 0) return null;
+
+  const currentQty = Number(cartQty || 0);
+  const sortedTiers = [...tiers].sort((a, b) => a.qty - b.qty);
+
+  let active = null;
+
+  for (const tier of sortedTiers) {
+    if (currentQty >= tier.qty) {
+      active = tier;
+    }
+  }
+
+  return active;
+};
+
   return (
-    <TouchableOpacity
-      style={[styles.cardContainer, containerStyle]}
-      onPress={onPress}
-      activeOpacity={0.9}
-    >
+    <View style={[styles.cardContainer, containerStyle]}>
       <View style={styles.cardInner}>
+        <TouchableOpacity onPress={onPress} activeOpacity={0.9}>
         {/* Ribbon */}
         {product_type ? (
           <View style={styles.ribbonWrapper}>
@@ -263,10 +279,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
             </TouchableOpacity>
           )}
         </View>
+      </TouchableOpacity>
 
-        {/* Content */}
-        <View style={styles.content}>
-          <View>
+      {/* Content */}
+      <View style={styles.content}>
+          <TouchableOpacity onPress={onPress} activeOpacity={0.9}>
             <Text numberOfLines={2} style={styles.title}>
               {capitalizeWords(title || "")}
             </Text>
@@ -275,9 +292,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
               <Text style={styles.pack}>Pack of {packSize}</Text>
             )} */}
             <View style={styles.divider} />
+          </TouchableOpacity>
 
             {/* Variant Box */}
-            {tiers && tiers.length > 0 && (
+            {/* {tiers && tiers.length > 0 && (
               <View style={styles.variantBox}>
                 {tiers.map((tier: any, index: number) => {
                   const isLast = index === tiers.length - 1;
@@ -287,22 +305,34 @@ const ProductCard: React.FC<ProductCardProps> = ({
                         <Text style={styles.slabPrice}>
                           {tier.qty} Pc ₹{tier.price}/pc
                         </Text>
+                      
                         <TouchableOpacity
                           onPress={() =>
                             onTierAddPress && onTierAddPress(tier.qty)
                           }
                           disabled={Number(current_stock) === 0}
                         >
-                          <Text
-                            style={[
-                              styles.addSmall,
-                              Number(current_stock) === 0 && {
-                                color: "#A0A0A0",
-                              },
-                            ]}
-                          >
-                            Add+
-                          </Text>
+                          {Number(cartQty || 0) >= Number(tier.qty) ? (
+                            <Image
+                              source={require("../assets/check.png")}
+                              style={{
+                                height: 16,
+                                width: 16,
+                                tintColor: "#487D44",
+                              }}
+                            />
+                          ) : (
+                            <Text
+                              style={[
+                                styles.addSmall,
+                                Number(current_stock) === 0 && {
+                                  color: "#A0A0A0",
+                                },
+                              ]}
+                            >
+                              Add+
+                            </Text>
+                          )}
                         </TouchableOpacity>
                       </View>
                       {!isLast && <View style={styles.dividerPrice} />}
@@ -310,8 +340,111 @@ const ProductCard: React.FC<ProductCardProps> = ({
                   );
                 })}
               </View>
-            )}
+            )} */}
+         
+            {/* {tiers && tiers.length > 0 && (
+              <View style={styles.variantBox}>
+                
+                {tiers.map((tier: any, index: number) => {
+                  const isLast = index === tiers.length - 1;
+
+                   const activeTier = getActiveTier();
+
+                  return (
+                    <View key={index}>
+                      <View style={styles.variantRow}>
+                        <Text style={styles.slabPrice}>
+                          {tier.qty} Pc ₹{tier.price}/pc
+                        </Text>
+
+                        <TouchableOpacity
+                          onPress={() =>
+                            onTierAddPress && onTierAddPress(tier.qty)
+                          }
+                          disabled={Number(current_stock) === 0}
+                        >
+                          {isSelected ? (
+                            <Image
+                              source={require("../assets/check.png")}
+                              style={{
+                                height: 16,
+                                width: 16,
+                                tintColor: "#487D44",
+                              }}
+                            />
+                          ) : (
+                            <Text
+                              style={[
+                                styles.addSmall,
+                                Number(current_stock) === 0 && {
+                                  color: "#A0A0A0",
+                                },
+                              ]}
+                            >
+                              Add+
+                            </Text>
+                          )}
+                        </TouchableOpacity>
+                      </View>
+
+                      {!isLast && <View style={styles.dividerPrice} />}
+                    </View>
+                  );
+                })}
+              </View>
+            )} */}
+            {tiers && tiers.length > 0 && (
+  <View style={styles.variantBox}>
+    {(() => {
+      return tiers.map((tier: any, index: number) => {
+        const isLast = index === tiers.length - 1;
+        const isSelected = Number(cartQty || 0) >= tier.qty; // ✅ Tick all satisfied tiers
+
+        return (
+          <View key={index}>
+            <View style={styles.variantRow}>
+              <Text style={styles.slabPrice}>
+                {tier.qty} Pc ₹{tier.price}/pc
+              </Text>
+
+              <TouchableOpacity
+                onPress={() => {
+                  Vibration.vibrate(10);
+                  onTierAddPress && onTierAddPress(tier.qty);
+                }}
+                disabled={Number(current_stock) === 0}
+              >
+                {isSelected ? (
+                  <Image
+                    source={require("../assets/check.png")}
+                    style={{
+                      height: 16,
+                      width: 16,
+                      tintColor: "#487D44",
+                    }}
+                  />
+                ) : (
+                  <Text
+                    style={[
+                      styles.addSmall,
+                      Number(current_stock) === 0 && {
+                        color: "#A0A0A0",
+                      },
+                    ]}
+                  >
+                    Add+
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
+
+            {!isLast && <View style={styles.dividerPrice} />}
           </View>
+        );
+      });
+    })()}
+  </View>
+)}
 
           {/* Bottom Price Section */}
           <View style={[styles.bottomRow, {}]}>
@@ -321,9 +454,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
                   ₹{formatPrice(getCalculatedPrice())}
                 </Text>
 
-                {Number(mrp) > Number(getCalculatedPrice()) && (
+                {/* {Number(mrp) > Number(getCalculatedPrice()) && (
                   <Text style={styles.oldPrice}>₹{formatPrice(mrp)}</Text>
-                )}
+                )} */}
 
                 {Number(oldPrice) > 0 && (
                   <Text style={styles.oldPrice}>₹{formatPrice(oldPrice)}</Text>
@@ -340,7 +473,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
               <View style={[styles.qtyRow, updatingQty && { opacity: 0.5 }]}>
                 <TouchableOpacity
                   style={styles.qtyBtn}
-                  onPress={() => onUpdateQty && onUpdateQty((cartQty || 0) - 1)}
+                  onPress={() => {
+                    Vibration.vibrate(10);
+                    onUpdateQty && onUpdateQty((cartQty || 0) - 1);
+                  }}
                   disabled={updatingQty}
                 >
                   <Text style={styles.qtyText}>-</Text>
@@ -371,7 +507,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
                       backgroundColor: "#A0A0A0",
                     },
                   ]}
-                  onPress={() => onUpdateQty && onUpdateQty((cartQty || 0) + 1)}
+                  onPress={() => {
+                    Vibration.vibrate(10);
+                    onUpdateQty && onUpdateQty((cartQty || 0) + 1);
+                  }}
                   disabled={updatingQty || Number(current_stock) === 0}
                 >
                   <Text style={styles.qtyText}>+</Text>
@@ -387,7 +526,13 @@ const ProductCard: React.FC<ProductCardProps> = ({
                 <Text style={styles.addText}>Out of Stock</Text>
               </View>
             ) : (
-              <TouchableOpacity style={styles.addButton} onPress={onAddPress}>
+              <TouchableOpacity
+                style={styles.addButton}
+                onPress={() => {
+                  Vibration.vibrate(10);
+                  onAddPress && onAddPress();
+                }}
+              >
                 <Text style={styles.addText}>Add</Text>
                 <Image
                   source={require("../assets/Common/cart.png")}
@@ -398,7 +543,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
           </View>
         </View>
       </View>
-    </TouchableOpacity>
+    </View>
   );
 };
 
@@ -510,9 +655,9 @@ const styles = StyleSheet.create({
   },
 
   price: {
-    fontSize: 12,
-    fontFamily: "DMSans-Medium",
-    fontWeight: "500",
+    fontSize: 13,
+    fontFamily: "DMSans-SemiBold",
+    fontWeight: "600",
   },
 
   oldPrice: {

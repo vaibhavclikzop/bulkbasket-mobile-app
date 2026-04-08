@@ -12,6 +12,7 @@ import {
   TextInput,
   RefreshControl,
   Platform,
+  Vibration,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Header from "../components/Header";
@@ -54,7 +55,6 @@ const CartScreen: React.FC = ({ navigation }: any) => {
     }
   };
 
-  // UPDATE QUANTITY
   const debouncedUpdateCartQuantityApi = useCallback(
     debounce(async (product_id: number, newQty: number, cart_id: number) => {
       try {
@@ -65,9 +65,7 @@ const CartScreen: React.FC = ({ navigation }: any) => {
         } else {
           const res = await updateCartQuantityApi(product_id, newQty);
           console.log("Update API response:", res);
-          // Alert.alert("Success", "Quantity updated successfully");
         }
-        // Fetch cart again to update the overall order summary (totals and taxes)
         fetchCart();
       } catch (error) {
         console.log("Update quantity API error:", error);
@@ -154,10 +152,6 @@ const CartScreen: React.FC = ({ navigation }: any) => {
     }, []),
   );
 
-  // const formatPrice = (price: number) => {
-  //   return Number(price) % 1 === 0 ? Number(price) : Number(price).toFixed(2);
-  // };
-
   const formatPrice = (price: number) => {
     if (price === undefined || price === null) return "0.00";
     return Number(price).toFixed(2);
@@ -190,6 +184,22 @@ const CartScreen: React.FC = ({ navigation }: any) => {
     }
 
     return currentPrice;
+  };
+
+  const getActiveTier = (item: any) => {
+    if (!item.price_tiers || item.price_tiers.length === 0) return null;
+
+    const sortedTiers = [...item.price_tiers].sort((a, b) => b.qty - a.qty);
+
+    const currentQty = Number(item?.qty || 0);
+
+    for (const tier of sortedTiers) {
+      if (currentQty >= tier.qty) {
+        return tier;
+      }
+    }
+
+    return null;
   };
 
   const CartItem = ({ item }: { item: any }) => {
@@ -241,25 +251,42 @@ const CartScreen: React.FC = ({ navigation }: any) => {
 
           <View style={styles.line} />
 
-          {/* Enhanced Price Tiers Display - Similar to ProductCard */}
           {item?.price_tiers && item.price_tiers.length > 0 && (
             <View style={styles.variantBox}>
               {item.price_tiers.map((tier: any, index: number) => {
                 const isLast = index === item.price_tiers.length - 1;
+
+                const activeTier = getActiveTier(item);
+                const isSelected = Number(item?.qty || 0) >= tier.qty; // ✅ Tick all satisfied tiers
+
                 return (
                   <View key={index}>
                     <View style={styles.variantRow}>
                       <Text style={styles.slabPrice}>
                         {tier.qty} Pc ₹{formatPrice(tier.price)}/pc
                       </Text>
+
                       <TouchableOpacity
-                        onPress={() =>
-                          updateQty(item.product_id, "set", tier.qty)
-                        }
+                        onPress={() => {
+                          Vibration.vibrate(10);
+                          updateQty(item.product_id, "set", tier.qty);
+                        }}
                       >
-                        <Text style={styles.addSmall}>Add+</Text>
+                        {isSelected ? (
+                          <Image
+                            source={require("../assets/check.png")}
+                            style={{
+                              height: 16,
+                              width: 16,
+                              tintColor: "#487D44",
+                            }}
+                          />
+                        ) : (
+                          <Text style={styles.addSmall}>Add+</Text>
+                        )}
                       </TouchableOpacity>
                     </View>
+
                     {!isLast && <View style={styles.dividerPrice} />}
                   </View>
                 );
@@ -295,7 +322,10 @@ const CartScreen: React.FC = ({ navigation }: any) => {
                 <>
                   <TouchableOpacity
                     style={styles.qtyBtn}
-                    onPress={() => updateQty(item.product_id, "dec")}
+                    onPress={() => {
+                      Vibration.vibrate(10);
+                      updateQty(item.product_id, "dec");
+                    }}
                   >
                     <Text style={styles.qtyicon}>-</Text>
                   </TouchableOpacity>
@@ -325,7 +355,10 @@ const CartScreen: React.FC = ({ navigation }: any) => {
 
                   <TouchableOpacity
                     style={styles.qtyBtn}
-                    onPress={() => updateQty(item.product_id, "inc")}
+                    onPress={() => {
+                      Vibration.vibrate(10);
+                      updateQty(item.product_id, "inc");
+                    }}
                   >
                     <Text style={styles.qtyicon}>+</Text>
                   </TouchableOpacity>
