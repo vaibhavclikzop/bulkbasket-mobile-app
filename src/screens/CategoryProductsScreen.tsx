@@ -979,7 +979,8 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                           >
                             {item.tiers.map((tier: Tier, index: number) => {
                               const currentQty = Number(item.cart?.qty || 0);
-                              const isLast = index === (item.tiers?.length ?? 0) - 1;
+                              const isLast =
+                                index === (item.tiers?.length ?? 0) - 1;
 
                               return (
                                 <View
@@ -1000,7 +1001,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
 
                                   <TouchableOpacity
                                     onPress={() => {
-                                      Vibration.vibrate(10);
+                                      Vibration.vibrate(60);
                                       if (item.cart_status) {
                                         updateQty(item.id, tier.qty);
                                       } else {
@@ -1077,7 +1078,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                               <TouchableOpacity
                                 style={styles.qtyBtn}
                                 onPress={() => {
-                                  Vibration.vibrate(10);
+                                  Vibration.vibrate(60);
                                   updateQty(item.id, (item.cart?.qty || 0) - 1);
                                 }}
                                 // disabled={updatingQtyId === item.id}
@@ -1121,7 +1122,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                                   },
                                 ]}
                                 onPress={() => {
-                                  Vibration.vibrate(10);
+                                  Vibration.vibrate(60);
                                   updateQty(item.id, (item.cart?.qty || 0) + 1);
                                 }}
                                 disabled={
@@ -1133,22 +1134,22 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                               </TouchableOpacity>
                             </View>
                           ) : (
-                              <TouchableOpacity
-                                style={[
-                                  styles.addButton,
-                                  Number(item.current_stock) === 0 && {
-                                    backgroundColor: "#A0A0A0",
-                                  },
-                                ]}
-                                onPress={() => {
-                                  Vibration.vibrate(10);
-                                  handleAddToCart(item.id);
-                                }}
-                                disabled={
-                                  addingToCartId === item.id ||
-                                  Number(item.current_stock) === 0
-                                }
-                              >
+                            <TouchableOpacity
+                              style={[
+                                styles.addButton,
+                                Number(item.current_stock) === 0 && {
+                                  backgroundColor: "#A0A0A0",
+                                },
+                              ]}
+                              onPress={() => {
+                                Vibration.vibrate(60);
+                                handleAddToCart(item.id);
+                              }}
+                              disabled={
+                                addingToCartId === item.id ||
+                                Number(item.current_stock) === 0
+                              }
+                            >
                               {addingToCartId === item.id ? (
                                 <ActivityIndicator size="small" color="#fff" />
                               ) : (

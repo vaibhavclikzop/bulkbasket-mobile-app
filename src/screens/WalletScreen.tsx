@@ -7,8 +7,8 @@ import {
   Image,
   FlatList,
   RefreshControl,
+  ActivityIndicator,
 } from "react-native";
-import Feather from "@react-native-vector-icons/feather";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getWalletLedgerApi } from "../services/api";
 import { useFocusEffect } from "@react-navigation/native";
@@ -17,6 +17,7 @@ export default function WalletScreen({ navigation }: any) {
   const [amount, setAmount] = useState("");
   const [history, setHistory] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -26,14 +27,19 @@ export default function WalletScreen({ navigation }: any) {
 
   const getWalletData = async () => {
     try {
+      setLoading(true);
       const res = await getWalletLedgerApi();
 
       console.log("Wallet Data:", res);
 
-      setAmount(res?.company?.wallet || "0");
+      const walletAmount = Number(res?.company?.wallet) || 0;
+      const usedWallet = Number(res?.company?.used_wallet) || 0;
+      setAmount(String(Number(walletAmount) - Number(usedWallet)));
       setHistory(res?.data || []);
     } catch (error) {
       console.log("Wallet Error:", error);
+    } finally {
+      setLoading(false); // Stop loader
     }
   };
 
@@ -200,38 +206,46 @@ export default function WalletScreen({ navigation }: any) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
       /> */}
-      <FlatList
-        data={history}
-        keyExtractor={(item: any) => item.id.toString()}
-        renderItem={renderTransaction}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={["#487D44"]}
-          />
-        }
-        ListHeaderComponent={HeaderComponent}
-        ListEmptyComponent={() => (
-          <View style={{ alignItems: "center", marginTop: 50 }}>
-            <Text
-              style={{
-                fontSize: 14,
-                color: "#666",
-                fontFamily: "DMSans-Medium",
-              }}
-            >
-              No transaction history yet
-            </Text>
-          </View>
-        )}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingBottom: 20,
-          flexGrow: 1,
-        }}
-      />
+      {loading ? (
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
+          <ActivityIndicator size="large" color="#487D44" />
+        </View>
+      ) : (
+        <FlatList
+          data={history}
+          keyExtractor={(item: any) => item.id.toString()}
+          renderItem={renderTransaction}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={["#487D44"]}
+            />
+          }
+          ListHeaderComponent={HeaderComponent}
+          ListEmptyComponent={() => (
+            <View style={{ alignItems: "center", marginTop: 50 }}>
+              <Text
+                style={{
+                  fontSize: 14,
+                  color: "#666",
+                  fontFamily: "DMSans-Medium",
+                }}
+              >
+                No transaction history yet
+              </Text>
+            </View>
+          )}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingBottom: 20,
+            flexGrow: 1,
+          }}
+        />
+      )}
     </SafeAreaView>
   );
 }

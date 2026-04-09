@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   ImageSourcePropType,
   TextInput,
-  ActivityIndicator,
   Platform,
   Vibration,
 } from "react-native";
@@ -96,54 +95,53 @@ const ProductCard: React.FC<ProductCardProps> = ({
           .join(" ")
       : "";
 
+  const getActiveTier = () => {
+    if (!tiers || tiers.length === 0) return null;
 
-const getActiveTier = () => {
-  if (!tiers || tiers.length === 0) return null;
+    const currentQty = Number(cartQty || 0);
+    const sortedTiers = [...tiers].sort((a, b) => a.qty - b.qty);
 
-  const currentQty = Number(cartQty || 0);
-  const sortedTiers = [...tiers].sort((a, b) => a.qty - b.qty);
+    let active = null;
 
-  let active = null;
-
-  for (const tier of sortedTiers) {
-    if (currentQty >= tier.qty) {
-      active = tier;
+    for (const tier of sortedTiers) {
+      if (currentQty >= tier.qty) {
+        active = tier;
+      }
     }
-  }
 
-  return active;
-};
+    return active;
+  };
 
   return (
     <View style={[styles.cardContainer, containerStyle]}>
       <View style={styles.cardInner}>
         <TouchableOpacity onPress={onPress} activeOpacity={0.9}>
-        {/* Ribbon */}
-        {product_type ? (
-          <View style={styles.ribbonWrapper}>
-            <LinearGradient
-              colors={["#487D44", "#12FF00"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.ribbonGradient}
-            >
-              <Text style={styles.ribbonText}>{product_type}</Text>
-            </LinearGradient>
-          </View>
-        ) : isOrganic ? (
-          <View style={styles.ribbonWrapper}>
-            <LinearGradient
-              colors={["#487D44", "#12FF00"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.ribbonGradient}
-            >
-              <Text style={styles.ribbonText}>Organic</Text>
-            </LinearGradient>
-          </View>
-        ) : null}
+          {/* Ribbon */}
+          {product_type ? (
+            <View style={styles.ribbonWrapper}>
+              <LinearGradient
+                colors={["#487D44", "#12FF00"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.ribbonGradient}
+              >
+                <Text style={styles.ribbonText}>{product_type}</Text>
+              </LinearGradient>
+            </View>
+          ) : isOrganic ? (
+            <View style={styles.ribbonWrapper}>
+              <LinearGradient
+                colors={["#487D44", "#12FF00"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.ribbonGradient}
+              >
+                <Text style={styles.ribbonText}>Organic</Text>
+              </LinearGradient>
+            </View>
+          ) : null}
 
-        {/* {Number(discount) > 0 &&
+          {/* {Number(discount) > 0 &&
           (Platform.OS === "ios" ? (
             <View
               style={[
@@ -186,103 +184,103 @@ const getActiveTier = () => {
               <Text style={styles.discountText}>{discount}% OFF</Text>
             </LinearGradient>
           ))} */}
-        {/* Stock / Discount Badge */}
-        {Number(current_stock) === 0 ? (
-          <LinearGradient
-            colors={["#FF4D4D", "#B30000"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.discountBadge}
-          >
-            <Text style={[styles.discountText, { color: "#fff" }]}>
-              Out of Stock
-            </Text>
-          </LinearGradient>
-        ) : (
-          Number(discount) > 0 &&
-          (Platform.OS === "ios" ? (
-            <View
-              style={{
-                backgroundColor: "#FAAF20",
-                position: "absolute",
-                top: 0,
-                right: 0,
-                paddingLeft: 10,
-                paddingRight: 12,
-                height: 24,
-                justifyContent: "center",
-                alignItems: "center",
-                borderTopRightRadius: 20,
-                borderBottomLeftRadius: 8,
-                zIndex: 10,
-              }}
-            >
-              <Text
-                numberOfLines={1}
-                style={{
-                  fontSize: 8,
-                  fontWeight: "600",
-                  fontFamily: "DMSans-Medium",
-                }}
-              >
-                {discount}% OFF
-              </Text>
-            </View>
-          ) : (
+          {/* Stock / Discount Badge */}
+          {Number(current_stock) === 0 ? (
             <LinearGradient
-              colors={["#FFDC61", "#FAAF20"]}
+              colors={["#FF4D4D", "#B30000"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.discountBadge}
             >
-              <Text style={styles.discountText}>{discount}% OFF</Text>
+              <Text style={[styles.discountText, { color: "#fff" }]}>
+                Out of Stock
+              </Text>
             </LinearGradient>
-          ))
-        )}
-        {/* Image Section */}
-        <View style={styles.imageContainer}>
-          {/* <Image
+          ) : (
+            Number(discount) > 0 &&
+            (Platform.OS === "ios" ? (
+              <View
+                style={{
+                  backgroundColor: "#FAAF20",
+                  position: "absolute",
+                  top: 0,
+                  right: 0,
+                  paddingLeft: 10,
+                  paddingRight: 12,
+                  height: 24,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  borderTopRightRadius: 20,
+                  borderBottomLeftRadius: 8,
+                  zIndex: 10,
+                }}
+              >
+                <Text
+                  numberOfLines={1}
+                  style={{
+                    fontSize: 8,
+                    fontWeight: "600",
+                    fontFamily: "DMSans-Medium",
+                  }}
+                >
+                  {discount}% OFF
+                </Text>
+              </View>
+            ) : (
+              <LinearGradient
+                colors={["#FFDC61", "#FAAF20"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.discountBadge}
+              >
+                <Text style={styles.discountText}>{discount}% OFF</Text>
+              </LinearGradient>
+            ))
+          )}
+          {/* Image Section */}
+          <View style={styles.imageContainer}>
+            {/* <Image
             source={image ? image : require("../assets/icons/sicon5.png")}
             style={styles.image}
           /> */}
-          <Image
-            source={
-              typeof image === "string"
-                ? { uri: image }
-                : image || require("../assets/icons/sicon5.png")
-            }
-            style={styles.image}
-          />
-          {onWishlistPress && (
-            <TouchableOpacity
-              onPress={onWishlistPress}
-              style={{
-                position: "absolute",
-                bottom: 8,
-                right: 8,
-                padding: 4,
-                zIndex: 10,
-              }}
-            >
-              <Image
-                source={
-                  wishlist_status
-                    ? require("../assets/Common/fillheart.png")
-                    : require("../assets/Common/heart.png")
-                }
+            <Image
+              source={
+                typeof image === "string"
+                  ? { uri: image }
+                  : image || require("../assets/icons/sicon5.png")
+              }
+              style={styles.image}
+            />
+            {onWishlistPress && (
+              <TouchableOpacity
+                onPress={onWishlistPress}
                 style={{
-                  height: 18,
-                  width: 18,
-                  resizeMode: "contain",
+                  position: "absolute",
+                  bottom: 8,
+                  right: 8,
+                  padding: 4,
+                  zIndex: 10,
                 }}
-              />
-            </TouchableOpacity>
-          )}
-        </View>
-      </TouchableOpacity>
+              >
+                <Image
+                  source={
+                    wishlist_status
+                      ? require("../assets/Common/fillheart.png")
+                      : require("../assets/Common/heart.png")
+                  }
+                  style={{
+                    height: 18,
+                    width: 18,
+                    resizeMode: "contain",
+                  }}
+                />
+              </TouchableOpacity>
+            )}
+          </View>
+        </TouchableOpacity>
 
-      {/* Content */}
-      <View style={styles.content}>
+        {/* Content */}
+        <View style={styles.content}>
           <TouchableOpacity onPress={onPress} activeOpacity={0.9}>
             <Text numberOfLines={2} style={styles.title}>
               {capitalizeWords(title || "")}
@@ -294,8 +292,8 @@ const getActiveTier = () => {
             <View style={styles.divider} />
           </TouchableOpacity>
 
-            {/* Variant Box */}
-            {/* {tiers && tiers.length > 0 && (
+          {/* Variant Box */}
+          {/* {tiers && tiers.length > 0 && (
               <View style={styles.variantBox}>
                 {tiers.map((tier: any, index: number) => {
                   const isLast = index === tiers.length - 1;
@@ -341,8 +339,8 @@ const getActiveTier = () => {
                 })}
               </View>
             )} */}
-         
-            {/* {tiers && tiers.length > 0 && (
+
+          {/* {tiers && tiers.length > 0 && (
               <View style={styles.variantBox}>
                 
                 {tiers.map((tier: any, index: number) => {
@@ -393,58 +391,58 @@ const getActiveTier = () => {
                 })}
               </View>
             )} */}
-            {tiers && tiers.length > 0 && (
-  <View style={styles.variantBox}>
-    {(() => {
-      return tiers.map((tier: any, index: number) => {
-        const isLast = index === tiers.length - 1;
-        const isSelected = Number(cartQty || 0) >= tier.qty; // ✅ Tick all satisfied tiers
+          {tiers && tiers.length > 0 && (
+            <View style={styles.variantBox}>
+              {(() => {
+                return tiers.map((tier: any, index: number) => {
+                  const isLast = index === tiers.length - 1;
+                  const isSelected = Number(cartQty || 0) >= tier.qty; // ✅ Tick all satisfied tiers
 
-        return (
-          <View key={index}>
-            <View style={styles.variantRow}>
-              <Text style={styles.slabPrice}>
-                {tier.qty} Pc ₹{tier.price}/pc
-              </Text>
+                  return (
+                    <View key={index}>
+                      <View style={styles.variantRow}>
+                        <Text style={styles.slabPrice}>
+                          {tier.qty} Pc ₹{tier.price}/pc
+                        </Text>
 
-              <TouchableOpacity
-                onPress={() => {
-                  Vibration.vibrate(10);
-                  onTierAddPress && onTierAddPress(tier.qty);
-                }}
-                disabled={Number(current_stock) === 0}
-              >
-                {isSelected ? (
-                  <Image
-                    source={require("../assets/check.png")}
-                    style={{
-                      height: 16,
-                      width: 16,
-                      tintColor: "#487D44",
-                    }}
-                  />
-                ) : (
-                  <Text
-                    style={[
-                      styles.addSmall,
-                      Number(current_stock) === 0 && {
-                        color: "#A0A0A0",
-                      },
-                    ]}
-                  >
-                    Add+
-                  </Text>
-                )}
-              </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={() => {
+                            Vibration.vibrate(60);
+                            onTierAddPress && onTierAddPress(tier.qty);
+                          }}
+                          disabled={Number(current_stock) === 0}
+                        >
+                          {isSelected ? (
+                            <Image
+                              source={require("../assets/check.png")}
+                              style={{
+                                height: 16,
+                                width: 16,
+                                tintColor: "#487D44",
+                              }}
+                            />
+                          ) : (
+                            <Text
+                              style={[
+                                styles.addSmall,
+                                Number(current_stock) === 0 && {
+                                  color: "#A0A0A0",
+                                },
+                              ]}
+                            >
+                              Add+
+                            </Text>
+                          )}
+                        </TouchableOpacity>
+                      </View>
+
+                      {!isLast && <View style={styles.dividerPrice} />}
+                    </View>
+                  );
+                });
+              })()}
             </View>
-
-            {!isLast && <View style={styles.dividerPrice} />}
-          </View>
-        );
-      });
-    })()}
-  </View>
-)}
+          )}
 
           {/* Bottom Price Section */}
           <View style={[styles.bottomRow, {}]}>
@@ -474,7 +472,7 @@ const getActiveTier = () => {
                 <TouchableOpacity
                   style={styles.qtyBtn}
                   onPress={() => {
-                    Vibration.vibrate(10);
+                    Vibration.vibrate(60);
                     onUpdateQty && onUpdateQty((cartQty || 0) - 1);
                   }}
                   disabled={updatingQty}
@@ -508,7 +506,7 @@ const getActiveTier = () => {
                     },
                   ]}
                   onPress={() => {
-                    Vibration.vibrate(10);
+                    Vibration.vibrate(60);
                     onUpdateQty && onUpdateQty((cartQty || 0) + 1);
                   }}
                   disabled={updatingQty || Number(current_stock) === 0}
@@ -529,7 +527,7 @@ const getActiveTier = () => {
               <TouchableOpacity
                 style={styles.addButton}
                 onPress={() => {
-                  Vibration.vibrate(10);
+                  Vibration.vibrate(60);
                   onAddPress && onAddPress();
                 }}
               >
@@ -621,7 +619,7 @@ const styles = StyleSheet.create({
   },
 
   slabPrice: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: "DMSans-Regular",
   },
 

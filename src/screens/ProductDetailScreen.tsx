@@ -600,7 +600,8 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
                         (t) => Number(quantity || 0) >= Number(t.qty),
                       );
 
-                      const isSelected = Number(quantity || 0) >= Number(tier.qty); // ✅ Tick all satisfied tiers
+                      const isSelected =
+                        Number(quantity || 0) >= Number(tier.qty); // ✅ Tick all satisfied tiers
 
                       return (
                         <View key={index}>
@@ -612,7 +613,7 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
                             <TouchableOpacity
                               disabled={stock === 0}
                               onPress={() => {
-                                Vibration.vibrate(10);
+                                Vibration.vibrate(60);
                                 if (quantity > 0) {
                                   updateQty(tier.qty);
                                 } else {
@@ -660,7 +661,7 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
                 ]}
                 onPress={() => {
                   if (stock > 0) {
-                    Vibration.vibrate(10);
+                    Vibration.vibrate(60);
                     handleAddToCart();
                   }
                 }}
@@ -750,8 +751,10 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
                   {/* CONTENT (always visible) */}
                   <TouchableOpacity
                     onPress={() => {
-                      Vibration.vibrate(10);
-                      updateQty(Number(quantity) > 1 ? Number(quantity) - 1 : 0);
+                      Vibration.vibrate(60);
+                      updateQty(
+                        Number(quantity) > 1 ? Number(quantity) - 1 : 0,
+                      );
                     }}
                     style={styles.qtyBtn}
                     disabled={updatingQty}
@@ -791,7 +794,7 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
 
                   <TouchableOpacity
                     onPress={() => {
-                      Vibration.vibrate(10);
+                      Vibration.vibrate(60);
                       updateQty(Number(quantity || 0) + 1);
                     }}
                     style={[
@@ -947,7 +950,6 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
                   isOrganic={item.product_type === "Organic"}
                   product_type={item.product_type}
                   tiers={item.tiers}
-                  // ✅ ADD THESE
                   cart_status={item.cart_status}
                   cartQty={item.cart?.qty}
                   updatingQty={

@@ -7,15 +7,128 @@ import {
   TextInput,
   ScrollView,
   Image,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Styles from "../components/Styles";
+import { addWalletAmountApi } from "../services/api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
 
 const AddMoney = ({ navigation }: any) => {
   const [amount, setAmount] = useState("20000");
   const [selectedMethod, setSelectedMethod] = useState("card");
 
   const quickAmounts = [10000, 20000, 50000];
+
+  const handleAddMoney = async () => {
+    try {
+      const userId = await AsyncStorage.getItem("userId");
+      console.log("🚀 ~ handleAddMoney ~ userId:", userId);
+
+      if (!userId) {
+        Alert.alert("Error", "User not found");
+        return;
+      }
+
+      if (!amount) {
+        Alert.alert("Error", "Please enter amount");
+        return;
+      }
+
+      const res = await addWalletAmountApi(userId, Number(amount));
+
+      console.log("Wallet updated:", res);
+
+      if (res?.status === false || res?.error) {
+        if (res?.message === "Your account currently not active") {
+          Alert.alert(
+            "Complete Profile",
+            "Please complete your account setup (GST required) before adding money.",
+            [
+              {
+                text: "Go to Setup",
+                onPress: () =>
+                  navigation.navigate("Profile", {
+                    screen: "CompanyProfile",
+                  }),
+              },
+              { text: "Cancel", style: "cancel" },
+            ],
+          );
+        } else {
+          Alert.alert("Error", res?.message || "Failed to add money");
+        }
+        return;
+      }
+
+      Alert.alert("Success", "Money added successfully");
+    } catch (error: any) {
+      console.log("Error:", error);
+      if (error?.message === "Your account currently not active") {
+        Alert.alert(
+          "Complete Profile",
+          "Please complete your account setup (GST required) before adding money.",
+          [
+            {
+              text: "Go to Setup",
+              onPress: () =>
+                navigation.navigate("Profile", {
+                  screen: "CompanyProfile",
+                }),
+            },
+            { text: "Cancel", style: "cancel" },
+          ],
+        );
+      } else {
+        Alert.alert("Error", error?.message || "Failed to add money");
+      }
+    }
+  };
+
+  // const handleAddMoney = async () => {
+  //   try {
+  //     const userId = await AsyncStorage.getItem("userId");
+  //     console.log("🚀 ~ handleAddMoney ~ userId:", userId);
+
+  //     if (!userId) {
+  //       Alert.alert("Error", "User not found");
+  //       return;
+  //     }
+
+  //     if (!amount) {
+  //       Alert.alert("Error", "Please enter amount");
+  //       return;
+  //     }
+
+  //     // Prepare form data
+  //     const formData = new FormData();
+  //     formData.append("customer_id", userId);
+  //     formData.append("amount", String(amount));
+
+  //     // Send POST request
+  //     const response = await axios.post(
+  //       "https://store.bulkbasketindia.com/api/add-walllet-amount",
+  //       formData,
+  //       {
+  //         headers: {
+  //           "Content-Type": "multipart/form-data",
+  //         },
+  //       },
+  //     );
+
+  //     console.log("Wallet updated:", response.data);
+
+  //     if (response.data.error === false || response.data.success) {
+  //       Alert.alert("Success", "Money added successfully");
+  //     } else {
+  //       Alert.alert("Error", response.data.message || "Failed to add money");
+  //     }
+  //   } catch (error: any) {
+  //     console.log("Error:", error.response?.data || error.message);
+  //     Alert.alert("Error", "Failed to add money");
+  //   }
+  // };
 
   const PaymentMethod = ({ id, image, title, desc }: any) => {
     const active = selectedMethod === id;
@@ -131,7 +244,10 @@ const AddMoney = ({ navigation }: any) => {
         </ScrollView>
 
         {/* Pay Now */}
-        <TouchableOpacity style={styles.payBtn}>
+        <TouchableOpacity
+          onPress={() => handleAddMoney()}
+          style={styles.payBtn}
+        >
           <Text style={styles.payText}>Pay Now</Text>
         </TouchableOpacity>
       </View>

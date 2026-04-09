@@ -23,6 +23,7 @@ type Props = NativeStackScreenProps<RootStackParamList, "OTP">;
 const OTPScreen: React.FC<Props> = ({ navigation, route }) => {
   const { mobile } = route.params;
   const [loading, setLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
   const [seconds, setSeconds] = useState(30);
   const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
   const inputs = useRef<Array<TextInput | null>>([]);
@@ -112,11 +113,17 @@ const OTPScreen: React.FC<Props> = ({ navigation, route }) => {
 
       if (response.data.error === false) {
         const token = response.data.token;
+        const customerId = response.data?.data?.customer_id;
 
+        if (customerId) {
+          await AsyncStorage.setItem("userId", String(customerId));
+        } else {
+          console.log("customer_id not found in response");
+        }
         Alert.alert("Success", response.data.message);
 
         await AsyncStorage.setItem("userToken", token);
-
+        await AsyncStorage.setItem("userId", String(customerId));
         await getCompanyProfile();
       } else {
         Alert.alert("Error", response.data.message || "Invalid OTP");
@@ -152,7 +159,9 @@ const OTPScreen: React.FC<Props> = ({ navigation, route }) => {
   */
 
   const handleResendOtp = async () => {
+    if (seconds > 0 || resendLoading) return;
     try {
+      setResendLoading(true);
       const formData = new FormData();
       formData.append("number", mobile);
       //   return;
@@ -165,10 +174,14 @@ const OTPScreen: React.FC<Props> = ({ navigation, route }) => {
 
       if (response.data.error === false) {
         Alert.alert("Success", response.data.message);
+        setSeconds(30); // Restart the 30-second timer
+        setOtp(["", "", "", "", "", ""]); // Clear old OTP completely to prevent confusion
       }
     } catch (error: any) {
       console.log("OTP Error:", error);
       Alert.alert("Error", "Failed to send OTP");
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -210,8 +223,11 @@ const OTPScreen: React.FC<Props> = ({ navigation, route }) => {
               style={styles.otpBox}
               keyboardType="number-pad"
               maxLength={6}
-              textContentType="oneTimeCode"
-              autoComplete="sms-otp"
+              textContentType={index === 0 ? "oneTimeCode" : "none"}
+              autoComplete={index === 0 ? "sms-otp" : "off"}
+              importantForAutofill={
+                index === 0 ? "yes" : "noExcludeDescendants"
+              }
               textAlign="center"
               value={digit}
               onChangeText={(text) => handleChange(text, index)}
@@ -238,15 +254,34 @@ const OTPScreen: React.FC<Props> = ({ navigation, route }) => {
         <View style={{ flexDirection: "row", marginBottom: 30 }}>
           <Text style={styles.resend}>Didn’t receive OTP ? </Text>
 
-          <TouchableOpacity onPress={handleResendOtp}>
-            <Text style={{ color: "#487D44", fontFamily: "DMSans-SemiBold" }}>
-              Resend now
-            </Text>
-          </TouchableOpacity>
+          {resendLoading ? (
+            <ActivityIndicator size="small" color="#487D44" />
+          ) : (
+            <TouchableOpacity
+              onPress={handleResendOtp}
+              disabled={seconds > 0 || resendLoading}
+            >
+              <Text
+                style={{
+                  color: seconds > 0 ? "#A0A0A0" : "#487D44",
+                  fontFamily: "DMSans-SemiBold",
+                }}
+              >
+                Resend now
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Verify Button */}
-        <TouchableOpacity style={styles.button} onPress={handleVerify}>
+        <TouchableOpacity
+          style={[
+            styles.button,
+            (loading || resendLoading) && { opacity: 0.7 },
+          ]}
+          onPress={handleVerify}
+          disabled={loading || resendLoading}
+        >
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (

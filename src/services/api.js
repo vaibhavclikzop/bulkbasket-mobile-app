@@ -569,4 +569,24 @@ export const getDealProductsApi = async () => {
   }
 };
 
+// ---------------- ADD WALLET AMOUNT API ----------------
+export const addWalletAmountApi = async (customer_id, amount) => {
+  try {
+    const response = await api.post("/add-walllet-amount", {
+      customer_id: customer_id,
+      amount: amount,
+    });
+
+    console.log("Add Wallet Amount API Response:", response.data);
+
+    return response.data;
+  } catch (error) {
+    console.log(
+      "Add Wallet Amount API Error:",
+      error.response?.data || error.message,
+    );
+    throw error.response?.data || error.message;
+  }
+};
+
 export default api;

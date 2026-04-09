@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -13,6 +13,8 @@ import {
   RefreshControl,
   Platform,
   Vibration,
+  PermissionsAndroid,
+  ToastAndroid,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Header from "../components/Header";
@@ -24,6 +26,10 @@ import {
 } from "../services/api";
 import { useFocusEffect } from "@react-navigation/native";
 import { debounce } from "lodash";
+import { generatePDF as convertToPDF } from "react-native-html-to-pdf";
+import * as XLSX from "xlsx";
+import RNFS from "react-native-fs";
+import Share from "react-native-share";
 
 const CartScreen: React.FC = ({ navigation }: any) => {
   const [cartItems, setCartItems] = useState<any[]>([]);
@@ -31,7 +37,9 @@ const CartScreen: React.FC = ({ navigation }: any) => {
   const [orderSummary, setOrderSummary] = useState<any>(null);
   const [hasGST, setHasGST] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [updatingQtyId, setUpdatingQtyId] = useState<number | null>(null); // Track which item is being updated
+  const [updatingQtyId, setUpdatingQtyId] = useState<number | null>(null);
+  const [exportingPDF, setExportingPDF] = useState(false);
+  const [exportingExcel, setExportingExcel] = useState(false);
 
   const onRefresh = useCallback(async () => {
     try {
@@ -169,6 +177,303 @@ const CartScreen: React.FC = ({ navigation }: any) => {
     return num.toFixed(2);
   };
 
+  // const saveToDownloads = async (
+  //   base64Data: string,
+  //   fileName: string,
+  //   fileType: string,
+  // ) => {
+  //   try {
+  //     if (Platform.OS === "android") {
+  //       if (Number(Platform.Version) < 33) {
+  //         const granted = await PermissionsAndroid.request(
+  //           PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+  //         );
+  //         if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+  //           Alert.alert(
+  //             "Permission Required",
+  //             "Storage permission is needed to download files.",
+  //           );
+  //           return false;
+  //         }
+  //       }
+  //       const downloadPath = RNFS.DownloadDirectoryPath + "/" + fileName;
+  //       await RNFS.writeFile(downloadPath, base64Data, "base64");
+  //       await RNFS.scanFile(downloadPath);
+  //       // Alert.alert("Success", `File downloaded successfully to your Downloads folder!\n(${fileName})`);
+  //       return true;
+  //     } else {
+  //       const iosPath = RNFS.DocumentDirectoryPath + "/" + fileName;
+  //       await RNFS.writeFile(iosPath, base64Data, "base64");
+  //       Alert.alert("Success", "File saved to your app's Documents folder.");
+  //       return true;
+  //     }
+  //   } catch (e: any) {
+  //     console.log("Error saving to downloads:", e);
+  //     Alert.alert(`Failed to Download ${fileType}`, e?.message || String(e));
+  //     return false;
+  //   }
+  // };
+
+  const saveToDownloads = async (
+    base64Data: string,
+    fileName: string,
+    fileType: string,
+  ) => {
+    try {
+      if (Platform.OS === "android") {
+        if (Number(Platform.Version) < 33) {
+          const granted = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+          );
+          if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+            Alert.alert(
+              "Permission Required",
+              "Storage permission is needed to download files.",
+            );
+            return false;
+          }
+        }
+        const downloadPath = RNFS.DownloadDirectoryPath + "/" + fileName;
+        await RNFS.writeFile(downloadPath, base64Data, "base64");
+        await RNFS.scanFile(downloadPath);
+        ToastAndroid.show(
+          `${fileType} saved to Downloads!`,
+          ToastAndroid.SHORT,
+        );
+        return true;
+      } else {
+        const iosPath = RNFS.DocumentDirectoryPath + "/" + fileName;
+        await RNFS.writeFile(iosPath, base64Data, "base64");
+        Alert.alert("Success", "File saved to your app's Documents folder.");
+        return true;
+      }
+    } catch (e: any) {
+      console.log("Error saving to downloads:", e);
+      Alert.alert(`Failed to Download ${fileType}`, e?.message || String(e));
+      return false;
+    }
+  };
+
+  const generatePDF = async () => {
+    if (cartItems.length === 0) {
+      Alert.alert("Empty Cart", "No items to export");
+      return;
+    }
+    try {
+      setExportingPDF(true);
+      let htmlContent = `
+        <html>
+          <head>
+            <style>
+              body { font-family: 'Helvetica', 'Arial', sans-serif; padding: 20px; }
+              h1 { text-align: center; color: #487D44; }
+              table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+              th { text-align: left; padding: 10px; border-bottom: 2px solid #ccc; font-size: 14px; }
+              td { padding: 10px; border-bottom: 1px solid #eee; font-size: 14px; word-wrap: break-word; }
+              .section-title { font-size: 18px; font-weight: bold; margin-top: 20px; margin-bottom: 10px; }
+              .summary-row { display: flex; flex-direction: row; justify-content: space-between; margin-bottom: 5px; }
+              .summary-text { font-size: 12px; font-weight: bold; }
+              .summary-value { font-size: 12px; }
+            </style>
+          </head>
+          <body>
+            <h1>Order Summary</h1>
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 60%;">Product</th>
+                  <th style="width: 15%; text-align: center;">Qty</th>
+                  <th style="width: 25%; text-align: right;">Price</th>
+                </tr>
+              </thead>
+              <tbody>
+      `;
+
+      cartItems.forEach((item: any) => {
+        htmlContent += `
+                <tr>
+                  <td>${item.name}</td>
+                  <td style="text-align: center;">${item.qty || 0}</td>
+                  <td style="text-align: right;">₹${formatPriceClean(
+                    getCalculatedPrice(item),
+                  )}</td>
+                </tr>
+        `;
+      });
+
+      htmlContent += `
+              </tbody>
+            </table>
+            
+            <div class="section-title">Order Summary</div>
+            
+            <div class="summary-row" style="margin-top: 10px;">
+              <div class="summary-text">Taxable Value</div>
+              <div class="summary-value">₹${orderSummary?.taxable || 0}</div>
+            </div>
+               <div class="summary-row" style="margin-top: 10px;">
+              <div class="summary-text">GST</div>
+              <div class="summary-value">₹${orderSummary?.gst || 0}</div>
+            </div>
+      `;
+
+      if (orderSummary?.gstBifurcation) {
+        orderSummary.gstBifurcation.forEach((gst: any) => {
+          htmlContent += `
+            <div class="summary-row">
+              <div class="summary-text">GST (${gst.percentage}%)</div>
+              <div class="summary-value">₹${formatPrice(gst.price)}</div>
+            </div>
+          `;
+        });
+      }
+
+      htmlContent += `
+            <div class="summary-row" style="margin-top: 10px; border-top: 1px solid #000; padding-top: 10px;">
+              <div class="summary-text" style="font-size: 14px;">Total</div>
+              <div class="summary-text" style="font-size: 14px;">₹${formatPrice(
+                orderSummary?.totalAmount,
+              )}</div>
+            </div>
+          </body>
+        </html>
+      `;
+
+      let options = {
+        html: htmlContent,
+        fileName: "OrderSummary_" + Date.now(),
+        base64: true,
+      };
+
+      let file = await convertToPDF(options);
+
+      if (!file || !file.base64) {
+        throw new Error("PDF generation returned null or empty");
+      }
+
+      const fileName = "OrderSummary_" + Date.now() + ".pdf";
+
+      // 1. Download to device storage directly
+      await saveToDownloads(file.base64, fileName, "PDF");
+      Alert.alert("Success", "PDF downloaded successfully!"); // ← ADD THIS LINE
+
+      // 2. Safely write to Cache for Share Provider to avoid Null URI scheme error
+      const path = RNFS.CachesDirectoryPath + "/" + fileName;
+      await RNFS.writeFile(path, file.base64, "base64");
+
+      let filePath = path;
+      if (!filePath.startsWith("file://")) {
+        filePath = "file://" + filePath;
+      }
+
+      // const shareOptions = {
+      //   title: "Share PDF",
+      //   url: filePath,
+      //   type: "application/pdf",
+      // };
+
+      // try {
+      //   await Share.open(shareOptions);
+      // } catch (shareError: any) {
+      //   if (shareError?.message !== "User did not share") {
+      //     throw shareError;
+      //   }
+      // }
+    } catch (error: any) {
+      console.log("PDF Generation Error:", error);
+      Alert.alert("Error", error?.message || "Failed to generate PDF");
+    } finally {
+      setExportingPDF(false);
+    }
+  };
+
+  const generateExcel = async () => {
+    if (cartItems.length === 0) {
+      Alert.alert("Empty Cart", "No items to export");
+      return;
+    }
+
+    try {
+      setExportingExcel(true);
+
+      // 1. Prepare Data
+      const data: any[] = cartItems.map((item) => ({
+        "Product Name": item.name,
+        Quantity: item.qty || 0,
+        "Price per Unit (₹)": formatPriceClean(getCalculatedPrice(item)),
+        "Total (₹)": (
+          Number(formatPriceClean(getCalculatedPrice(item))) *
+          Number(item.qty || 0)
+        ).toFixed(2),
+      }));
+
+      data.push({}); // Empty row
+      data.push({
+        "Product Name": "Taxable Value",
+        Quantity: "",
+        "Price per Unit (₹)": "",
+        "Total (₹)": orderSummary?.taxable || "0",
+      });
+
+      if (orderSummary?.gstBifurcation) {
+        orderSummary.gstBifurcation.forEach((gst: any) => {
+          data.push({
+            "Product Name": `GST (${gst.percentage}%)`,
+            Quantity: "",
+            "Price per Unit (₹)": "",
+            "Total (₹)": formatPrice(gst.price),
+          });
+        });
+      }
+
+      data.push({
+        "Product Name": "Total Amount",
+        Quantity: "",
+        "Price per Unit (₹)": "",
+        "Total (₹)": formatPrice(orderSummary?.totalAmount),
+      });
+
+      // 2. Create Workbook and Worksheet
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Order Summary");
+
+      const wbout = XLSX.write(wb, { type: "base64", bookType: "xlsx" });
+      const fileName = "OrderSummary_" + Date.now() + ".xlsx";
+
+      // 4. Caches Write for Share Option
+      const path = RNFS.CachesDirectoryPath + "/" + fileName;
+      await RNFS.writeFile(path, wbout, "base64");
+      await saveToDownloads(wbout, fileName, "Excel");
+      Alert.alert("Success", "Excel downloaded successfully to Downloads!");
+
+      let filePath = path;
+      if (!filePath.startsWith("file://")) {
+        filePath = "file://" + filePath;
+      }
+
+      // 5. Share file via FileProvider-compatible cache path
+      // const shareOptions = {
+      //   title: "Share Excel File",
+      //   url: filePath,
+      //   type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      // };
+
+      // try {
+      //   await Share.open(shareOptions);
+      // } catch (shareError: any) {
+      //   if (shareError?.message !== "User did not share") {
+      //     throw shareError;
+      //   }
+      // }
+    } catch (error: any) {
+      console.log("Excel Generation Error:", error);
+      Alert.alert("Error", error?.message || "Failed to generate Excel file");
+    } finally {
+      setExportingExcel(false);
+    }
+  };
+
   const getCalculatedPrice = (item: any) => {
     let currentPrice = item.price;
     const currentQty = item.qty || 0;
@@ -268,7 +573,7 @@ const CartScreen: React.FC = ({ navigation }: any) => {
 
                       <TouchableOpacity
                         onPress={() => {
-                          Vibration.vibrate(10);
+                          Vibration.vibrate(60);
                           updateQty(item.product_id, "set", tier.qty);
                         }}
                       >
@@ -323,7 +628,7 @@ const CartScreen: React.FC = ({ navigation }: any) => {
                   <TouchableOpacity
                     style={styles.qtyBtn}
                     onPress={() => {
-                      Vibration.vibrate(10);
+                      Vibration.vibrate(60);
                       updateQty(item.product_id, "dec");
                     }}
                   >
@@ -356,7 +661,7 @@ const CartScreen: React.FC = ({ navigation }: any) => {
                   <TouchableOpacity
                     style={styles.qtyBtn}
                     onPress={() => {
-                      Vibration.vibrate(10);
+                      Vibration.vibrate(60);
                       updateQty(item.product_id, "inc");
                     }}
                   >
@@ -380,32 +685,60 @@ const CartScreen: React.FC = ({ navigation }: any) => {
         containerStyle={{ paddingHorizontal: 8 }}
         rightComponent={
           <View style={{ flexDirection: "row" }}>
-            <TouchableOpacity style={styles.headerBtn}>
-              <Text style={styles.headerBtnText}>Export Excel</Text>
-              <Image
-                source={require("../assets/Common/excel.png")}
-                style={{
-                  height: 12,
-                  width: 12,
-                  tintColor: "#fff",
-                  marginLeft: 5,
-                }}
-                resizeMode="contain"
-              />
+            <TouchableOpacity
+              style={[styles.headerBtn, exportingExcel && { opacity: 0.7 }]}
+              onPress={generateExcel}
+              disabled={exportingExcel}
+            >
+              {exportingExcel ? (
+                <ActivityIndicator
+                  size="small"
+                  color="#fff"
+                  style={{ marginRight: 5 }}
+                />
+              ) : (
+                <Text style={styles.headerBtnText}>Export Excel</Text>
+              )}
+              {!exportingExcel && (
+                <Image
+                  source={require("../assets/Common/excel.png")}
+                  style={{
+                    height: 12,
+                    width: 12,
+                    tintColor: "#fff",
+                    marginLeft: 5,
+                  }}
+                  resizeMode="contain"
+                />
+              )}
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.headerBtn}>
-              <Text style={styles.headerBtnText}>Save PDF</Text>
-              <Image
-                source={require("../assets/Common/SavePdf.png")}
-                style={{
-                  height: 12,
-                  width: 12,
-                  tintColor: "#fff",
-                  marginLeft: 5,
-                }}
-                resizeMode="contain"
-              />
+            <TouchableOpacity
+              style={[styles.headerBtn, exportingPDF && { opacity: 0.7 }]}
+              onPress={generatePDF}
+              disabled={exportingPDF}
+            >
+              {exportingPDF ? (
+                <ActivityIndicator
+                  size="small"
+                  color="#fff"
+                  style={{ marginRight: 5 }}
+                />
+              ) : (
+                <Text style={styles.headerBtnText}>Save PDF</Text>
+              )}
+              {!exportingPDF && (
+                <Image
+                  source={require("../assets/Common/SavePdf.png")}
+                  style={{
+                    height: 12,
+                    width: 12,
+                    tintColor: "#fff",
+                    marginLeft: 5,
+                  }}
+                  resizeMode="contain"
+                />
+              )}
             </TouchableOpacity>
           </View>
         }
@@ -478,16 +811,12 @@ const CartScreen: React.FC = ({ navigation }: any) => {
                 </Text>
               </View>
 
-              {orderSummary?.gstBifurcation?.map((gst: any, index: number) => (
-                <View key={index} style={styles.summaryRow}>
-                  <Text style={styles.summaryText}>
-                    GST ({gst.percentage}%)
-                  </Text>
-                  <Text style={{ fontSize: 12, fontFamily: "DMSans-Regular" }}>
-                    ₹{formatPrice(gst.price)}
-                  </Text>
-                </View>
-              ))}
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryText}>GST</Text>
+                <Text style={{ fontSize: 12, fontFamily: "DMSans-Regular" }}>
+                  ₹{formatPrice(orderSummary.gst)}
+                </Text>
+              </View>
 
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryText}>Total</Text>
