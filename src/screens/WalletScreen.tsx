@@ -125,7 +125,7 @@ export default function WalletScreen({ navigation }: any) {
           <Text style={styles.balanceAmount}>₹{Number(amount).toFixed(2)}</Text>
 
           <View style={styles.buttonRow}>
-            <TouchableOpacity
+            {/* <TouchableOpacity
               style={styles.withdrawBtn}
               onPress={() => navigation.navigate("WithdrawMoney")}
             >
@@ -134,7 +134,7 @@ export default function WalletScreen({ navigation }: any) {
                 style={{ height: 16, width: 16 }}
               />
               <Text style={styles.withdrawText}>Withdraw</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
 
             <TouchableOpacity
               onPress={() => navigation.navigate("AddMoney")}
@@ -144,6 +144,8 @@ export default function WalletScreen({ navigation }: any) {
                 borderRadius: 10,
                 flexDirection: "row",
                 alignItems: "center",
+                width: "40%",
+                justifyContent: "center",
               }}
             >
               <View

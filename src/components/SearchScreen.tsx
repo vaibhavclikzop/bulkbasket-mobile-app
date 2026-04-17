@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,26 +10,26 @@ import {
   Image,
   ActivityIndicator,
   useWindowDimensions,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   searchProductsApi,
   addToCartApi,
   updateCartQuantityApi,
   addToWishlistApi,
   updateWishlistQtyApi,
-} from "../services/api";
-import { debounce } from "lodash";
-import ProductCard from "./ProductCard";
+} from '../services/api';
+import { debounce } from 'lodash';
+import ProductCard from './ProductCard';
 
-const suggestions = ["Sugar", "Brown Sugar", "Sugar Powder", "Sugar Cosmetics"];
-const recent = ["Spices", "Haldi", "Garam Masala", "Seeds", "Chilli Powder"];
+const suggestions = ['Sugar', 'Brown Sugar', 'Sugar Powder', 'Sugar Cosmetics'];
+const recent = ['Spices', 'Haldi', 'Garam Masala', 'Seeds', 'Chilli Powder'];
 
 const SearchScreen = ({ navigation }: any) => {
   const { width } = useWindowDimensions();
-  const cardWidth = (width - 32 - 8) / 2;
+  const cardWidth = (width - 32 - 12) / 2;
 
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState('');
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [addingToCartId, setAddingToCartId] = useState<number | null>(null);
@@ -42,7 +42,7 @@ const SearchScreen = ({ navigation }: any) => {
       const res = await searchProductsApi(text);
       setResults(res?.data || []);
     } catch (err) {
-      console.log("Search Error:", err);
+      console.log('Search Error:', err);
     } finally {
       setLoading(false);
     }
@@ -61,6 +61,12 @@ const SearchScreen = ({ navigation }: any) => {
 
   const onChangeText = (text: string) => {
     setQuery(text);
+    if (text.trim().length > 0) {
+      setLoading(true);
+    } else {
+      setLoading(false);
+      setResults([]);
+    }
     debouncedSearch(text);
   };
 
@@ -69,8 +75,8 @@ const SearchScreen = ({ navigation }: any) => {
       const newStatus = !product.wishlist_status;
 
       // Optimistic UI update
-      setResults((prev) =>
-        prev.map((p) =>
+      setResults(prev =>
+        prev.map(p =>
           p.id === product.id ? { ...p, wishlist_status: newStatus } : p,
         ),
       );
@@ -81,10 +87,10 @@ const SearchScreen = ({ navigation }: any) => {
         await updateWishlistQtyApi(product.id, 0);
       }
     } catch (error) {
-      console.log("Wishlist Toggle Error:", error);
+      console.log('Wishlist Toggle Error:', error);
       // Revert on error
-      setResults((prev) =>
-        prev.map((p) =>
+      setResults(prev =>
+        prev.map(p =>
           p.id === product.id
             ? { ...p, wishlist_status: product.wishlist_status }
             : p,
@@ -98,15 +104,15 @@ const SearchScreen = ({ navigation }: any) => {
     try {
       setAddingToCartId(productId);
       await addToCartApi(productId, quantity);
-      setResults((prev) =>
-        prev.map((p) =>
+      setResults(prev =>
+        prev.map(p =>
           p.id === productId
             ? { ...p, cart_status: true, cart: { qty: quantity } }
             : p,
         ),
       );
     } catch (error) {
-      console.log("Add to Cart Error:", error);
+      console.log('Add to Cart Error:', error);
     } finally {
       setAddingToCartId(null);
     }
@@ -118,7 +124,7 @@ const SearchScreen = ({ navigation }: any) => {
         setUpdatingQtyId(productId);
         await updateCartQuantityApi(productId, newQty);
       } catch (error) {
-        console.log("Update Qty Error:", error);
+        console.log('Update Qty Error:', error);
       } finally {
         setUpdatingQtyId(null);
       }
@@ -127,12 +133,12 @@ const SearchScreen = ({ navigation }: any) => {
   );
 
   const updateQty = (productId: number, newQty: number | string) => {
-    const isEmpty = newQty === "" || Number.isNaN(Number(newQty));
+    const isEmpty = newQty === '' || Number.isNaN(Number(newQty));
     const finalQty = isEmpty ? 0 : Number(newQty);
     if (finalQty < 0) return;
 
-    setResults((prev) =>
-      prev.map((p) =>
+    setResults(prev =>
+      prev.map(p =>
         p.id === productId
           ? {
               ...p,
@@ -148,11 +154,11 @@ const SearchScreen = ({ navigation }: any) => {
   return (
     <>
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.searchHeader}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Image
-              source={require("../assets/Common/Back.png")}
+              source={require('../assets/Common/Back.png')}
               style={{ height: 14, width: 14 }}
               resizeMode="contain"
             />
@@ -169,7 +175,7 @@ const SearchScreen = ({ navigation }: any) => {
           {query.length > 0 && (
             <TouchableOpacity
               onPress={() => {
-                setQuery("");
+                setQuery('');
                 setResults([]);
               }}
             >
@@ -181,120 +187,145 @@ const SearchScreen = ({ navigation }: any) => {
             </TouchableOpacity>
           )}
         </View>
-
-        {/* LOADER */}
-        {loading && (
-          <ActivityIndicator
-            size="small"
-            color="#487D44"
-            style={{ marginBottom: 10 }}
-          />
-        )}
-
         {/* SEARCH RESULTS */}
-        {query.length > 0 && results.length > 0 ? (
-          <FlatList
-            key="results-list"
-            data={results}
-            keyExtractor={(item) => item.id.toString()}
-            showsVerticalScrollIndicator={false}
-            numColumns={2}
-            columnWrapperStyle={{ justifyContent: "space-between" }}
-            contentContainerStyle={{ paddingBottom: 20 }}
-            ListEmptyComponent={
-              !loading ? (
-                <Text style={styles.emptyText}>No results found</Text>
-              ) : null
-            }
-            renderItem={({ item }) => (
-              <View style={{ width: cardWidth, marginBottom: 16 }}>
-                <ProductCard
-                  containerStyle={{ width: "100%", margin: 0 }}
-                  image={
-                    typeof item.image === "string"
-                      ? { uri: item.image }
-                      : item.image
-                  }
-                  title={item.name}
-                  packSize={""}
-                  price={item.base_price}
-                  oldPrice={item.mrp}
-                  discount={Number(item.discount).toFixed(0)}
-                  isOrganic={false}
-                  onAddPress={() => handleAddToCart(item.id, 1)}
-                  onPress={() =>
-                    navigation.navigate("ProductDetail", {
-                      productId: item.id,
-                    })
-                  }
-                  bestRate={item.bestRate || ""}
-                  tiers={item.tiers}
-                  cart_status={item.cart_status}
-                  cartQty={item.cart?.qty}
-                  onUpdateQty={(newQty) => updateQty(item.id, newQty)}
-                  updatingQty={updatingQtyId === item.id}
-                  wishlist_status={item.wishlist_status} // ✅ ADD THIS
-                  onWishlistPress={() => toggleWishlist(item)}
-                  onTierAddPress={(tierQty: number) => {
-                    if (item.cart_status) {
-                      updateQty(item.id, tierQty);
-                    } else {
-                      handleAddToCart(item.id, tierQty);
-                    }
+        <View style={{ flex: 1, paddingHorizontal: 10 }}>
+          {loading ? (
+            <View
+              style={{
+                flex: 1,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
+              <ActivityIndicator size="large" color="#487D44" />
+            </View>
+          ) : query.length > 0 && results.length > 0 ? (
+            <FlatList
+              key="results-list"
+              data={results}
+              keyExtractor={item => item.id.toString()}
+              showsVerticalScrollIndicator={false}
+              numColumns={2}
+              columnWrapperStyle={{ justifyContent: 'space-between' }}
+              contentContainerStyle={{ paddingBottom: 20 }}
+              ListEmptyComponent={
+                !loading ? (
+                  <Text style={styles.emptyText}>No results found</Text>
+                ) : null
+              }
+              renderItem={({ item }) => (
+                <View
+                  style={{
+                    width: cardWidth,
+                    marginBottom: 16,
+                    marginHorizontal: 4,
                   }}
-                />
-              </View>
-            )}
-          />
-        ) : query.length > 0 && !loading ? (
-          <Text style={styles.emptyText}>No results found for "{query}"</Text>
-        ) : (
-          /* SUGGESTIONS + RECENT */
-          <FlatList
-            key="suggestions-list"
-            data={suggestions}
-            keyExtractor={(item, index) => index.toString()}
-            showsVerticalScrollIndicator={false}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.suggestionItem}
-                onPress={() => {
-                  setQuery(item);
-                  handleSearch(item);
-                }}
-              >
-                <Image
-                  source={require("../assets/icons/sicon1.png")}
-                  style={styles.suggestionImage}
-                />
-                <Text style={styles.suggestionText}>{item}</Text>
-              </TouchableOpacity>
-            )}
-            ListFooterComponent={
-              <>
-                <Text style={styles.recentTitle}>RECENT SEARCHES</Text>
-                <View style={styles.recentContainer}>
-                  {recent.map((item, index) => (
-                    <TouchableOpacity
-                      key={index}
-                      style={styles.recentChip}
-                      onPress={() => {
-                        setQuery(item);
-                        handleSearch(item);
-                      }}
-                    >
-                      <Image
-                        source={require("../assets/icons/sicon1.png")}
-                        style={styles.recentImage}
-                      />
-                      <Text style={styles.recentText}>{item}</Text>
-                    </TouchableOpacity>
-                  ))}
+                >
+                  <ProductCard
+                    containerStyle={{
+                      width: '99%',
+                      marginHorizontal: 0,
+                    }}
+                    image={
+                      typeof item.image === 'string'
+                        ? { uri: item.image }
+                        : item.image
+                    }
+                    title={item.name}
+                    packSize={''}
+                    price={item.base_price}
+                    mrp={item.mrp}
+                    discount={Number(item.discount).toFixed(0)}
+                    isOrganic={item.product_type === 'Organic'}
+                    onAddPress={() => handleAddToCart(item.id, 1)}
+                    uom_name={item.uom_name}
+                    onPress={() =>
+                      navigation.navigate('ProductDetail', {
+                        productId: item.id,
+                      })
+                    }
+                    bestRate={item.bestRate || ''}
+                    tiers={item.tiers}
+                    // product_type={item.product_type}
+                    current_stock={item.current_stock}
+                    cart_status={item.cart_status}
+                    cartQty={item.cart?.qty}
+                    onUpdateQty={newQty => updateQty(item.id, newQty)}
+                    updatingQty={updatingQtyId === item.id}
+                    wishlist_status={item.wishlist_status} // ✅ ADD THIS
+                    onWishlistPress={() => toggleWishlist(item)}
+                    onTierAddPress={(tierQty: number) => {
+                      if (item.cart_status) {
+                        updateQty(item.id, tierQty);
+                      } else {
+                        handleAddToCart(item.id, tierQty);
+                      }
+                    }}
+                  />
                 </View>
-              </>
-            }
-          />
-        )}
+              )}
+            />
+          ) : query.length > 0 ? (
+            <Text style={styles.emptyText}>No results found for "{query}"</Text>
+          ) : (
+            /* SUGGESTIONS + RECENT */
+            // <FlatList
+            //   key="suggestions-list"
+            //   data={suggestions}
+            //   keyExtractor={(item, index) => index.toString()}
+            //   showsVerticalScrollIndicator={false}
+            //   renderItem={({ item }) => (
+            //     <TouchableOpacity
+            //       style={styles.suggestionItem}
+            //       onPress={() => {
+            //         setQuery(item);
+            //         handleSearch(item);
+            //       }}
+            //     >
+            //       <Image
+            //         source={require("../assets/icons/sicon1.png")}
+            //         style={styles.suggestionImage}
+            //       />
+            //       <Text style={styles.suggestionText}>{item}</Text>
+            //     </TouchableOpacity>
+            //   )}
+            //   ListFooterComponent={
+            //     <>
+            //       <Text style={styles.recentTitle}>RECENT SEARCHES</Text>
+            //       <View style={styles.recentContainer}>
+            //         {recent.map((item, index) => (
+            //           <TouchableOpacity
+            //             key={index}
+            //             style={styles.recentChip}
+            //             onPress={() => {
+            //               setQuery(item);
+            //               handleSearch(item);
+            //             }}
+            //           >
+            //             <Image
+            //               source={require("../assets/icons/sicon1.png")}
+            //               style={styles.recentImage}
+            //             />
+            //             <Text style={styles.recentText}>{item}</Text>
+            //           </TouchableOpacity>
+            //         ))}
+            //       </View>
+            //     </>
+            //   }
+            // />
+            <View
+              style={{
+                flex: 1,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
+              <Text style={styles.emptyText}>
+                Start typing to search products
+              </Text>
+            </View>
+          )}
+        </View>
       </SafeAreaView>
     </>
   );
@@ -305,28 +336,29 @@ export default SearchScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
-    paddingHorizontal: 16,
+    backgroundColor: '#fff',
+    // paddingHorizontal: 12,
   },
   searchHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#f2f2f2",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f2f2f2',
     borderRadius: 30,
     paddingHorizontal: 15,
     marginBottom: 20,
+    marginHorizontal: 12,
   },
   searchInput: {
     flex: 1,
     marginLeft: 10,
     height: 45,
     fontSize: 13,
-    fontFamily: "DMSans-Regular",
-    color: "#000000",
+    fontFamily: 'DMSans-Regular',
+    color: '#000000',
   },
   suggestionItem: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 15,
   },
   suggestionImage: {
@@ -343,24 +375,24 @@ const styles = StyleSheet.create({
   },
   suggestionText: {
     fontSize: 14,
-    fontFamily: "DMSans-Regular",
+    fontFamily: 'DMSans-Regular',
   },
   recentTitle: {
     marginTop: 20,
-    color: "#5F6C7B",
-    fontFamily: "DMSans-Medium",
+    color: '#5F6C7B',
+    fontFamily: 'DMSans-Medium',
     marginBottom: 10,
   },
   recentContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     marginTop: 10,
   },
   recentChip: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: '#ddd',
     borderRadius: 20,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -369,13 +401,13 @@ const styles = StyleSheet.create({
   },
   recentText: {
     fontSize: 13,
-    fontFamily: "DMSans-Regular",
+    fontFamily: 'DMSans-Regular',
   },
   emptyText: {
-    textAlign: "center",
+    textAlign: 'center',
     marginTop: 40,
-    color: "#64748B",
-    fontFamily: "DMSans-Regular",
+    color: '#64748B',
+    fontFamily: 'DMSans-Regular',
     fontSize: 14,
   },
 });

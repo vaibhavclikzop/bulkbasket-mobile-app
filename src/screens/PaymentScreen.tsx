@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,10 +8,10 @@ import {
   Image,
   Alert,
   ActivityIndicator,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { getCartApi, saveOrderApi } from "../services/api";
-import Styles from "../components/Styles";
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { getCartApi, getWalletLedgerApi, saveOrderApi } from '../services/api';
+import Styles from '../components/Styles';
 
 const PaymentScreen = ({ navigation, route }: any) => {
   const {
@@ -24,7 +24,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
     pincode,
   } = route?.params || {};
 
-  console.log("PaymentScreen params:", {
+  console.log('PaymentScreen params:', {
     delivery_date,
     delivery_instruction,
     address_id,
@@ -34,12 +34,13 @@ const PaymentScreen = ({ navigation, route }: any) => {
     pincode,
   });
 
-  const [selected, setSelected] = useState("wallet");
+  const [selected, setSelected] = useState('wallet');
   const [orderSummary, setOrderSummary] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [amount, setAmount] = useState('');
 
   const formatPrice = (price: number) => {
-    if (price === undefined || price === null) return "0.00";
+    if (price === undefined || price === null) return '0.00';
     return Number(price).toFixed(2);
   };
 
@@ -50,15 +51,34 @@ const PaymentScreen = ({ navigation, route }: any) => {
       const data = await getCartApi();
 
       setOrderSummary(data?.orderSummary || {});
-      console.log("Order Summary:123", data.orderSummary);
+      console.log('Order Summary:123', data.orderSummary);
     } catch (error) {
       console.log(error);
     } finally {
       setLoading(false);
     }
   };
+  const getWalletData = async () => {
+    try {
+      setLoading(true);
+      const res = await getWalletLedgerApi();
+
+      console.log('Wallet Data:', res);
+
+      const walletAmount = Number(res?.company?.wallet) || 0;
+      const usedWallet = Number(res?.company?.used_wallet) || 0;
+      setAmount(String(Number(walletAmount) - Number(usedWallet)));
+      // setHistory(res?.data || []);
+    } catch (error) {
+      console.log('Wallet Error:', error);
+    } finally {
+      setLoading(false); // Stop loader
+    }
+  };
+
   useEffect(() => {
     fetchCart();
+    getWalletData();
   }, []);
 
   const handleOrder = async () => {
@@ -70,18 +90,18 @@ const PaymentScreen = ({ navigation, route }: any) => {
         district,
         city,
         pincode,
-        pay_mode: "wallet",
+        // pay_mode: "wallet",
+        pay_mode: selected === 'upi' ? 'online' : 'wallet',
         remarks: delivery_instruction,
       };
-
+      console.log('🚀 ~ handleOrder ~ payload:', payload);
       const res = await saveOrderApi(payload);
-
-      console.log("Order Success:", res);
-      Alert.alert("Success", "Order placed successfully");
-      navigation.navigate("OrderConfirmScreen");
+      console.log('Order Success:', res);
+      Alert.alert('Success', 'Order placed successfully');
+      navigation.navigate('OrderConfirmScreen');
     } catch (error: any) {
-      console.log("Order Failed:", error);
-      Alert.alert("Error", error.message);
+      console.log('Order Failed:', error);
+      Alert.alert('Error', error.message);
     }
   };
 
@@ -134,7 +154,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
   );
 
   return (
-    <SafeAreaView edges={["top"]} style={styles.safeArea}>
+    <SafeAreaView edges={['top']} style={styles.safeArea}>
       <View style={styles.container}>
         {loading && (
           <View style={styles.loaderOverlay}>
@@ -146,7 +166,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
           onPress={() => navigation.goBack()}
         >
           <Image
-            source={require("../assets/Common/Back.png")}
+            source={require('../assets/Common/Back.png')}
             style={[Styles.headerImage, { marginTop: 2 }]}
           />
         </TouchableOpacity>
@@ -176,7 +196,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
 
           <View style={[styles.summaryRow, { marginTop: 10 }]}>
             <Text style={styles.summaryText}>Taxable Value</Text>
-            <Text style={{ fontSize: 12, fontFamily: "DMSans-Regular" }}>
+            <Text style={{ fontSize: 12, fontFamily: 'DMSans-Regular' }}>
               ₹{orderSummary?.taxable}
             </Text>
           </View>
@@ -184,7 +204,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
           {orderSummary?.gstBifurcation?.map((gst: any, index: number) => (
             <View key={index} style={styles.summaryRow}>
               <Text style={styles.summaryText}>GST ({gst.percentage}%)</Text>
-              <Text style={{ fontSize: 12, fontFamily: "DMSans-Regular" }}>
+              <Text style={{ fontSize: 12, fontFamily: 'DMSans-Regular' }}>
                 ₹{formatPrice(gst.price)}
               </Text>
             </View>
@@ -200,12 +220,12 @@ const PaymentScreen = ({ navigation, route }: any) => {
 
           <TouchableOpacity style={styles.promoBox}>
             <Image
-              source={require("../assets/Common/Discount.png")}
+              source={require('../assets/Common/Discount.png')}
               style={{ height: 18, width: 18 }}
             />
             <Text style={styles.promoText}>Apply promos before you order</Text>
             <Image
-              source={require("../assets/Common/ArrowRight.png")}
+              source={require('../assets/Common/ArrowRight.png')}
               style={{ height: 10, width: 10 }}
               resizeMode="contain"
             />
@@ -217,8 +237,8 @@ const PaymentScreen = ({ navigation, route }: any) => {
           <PaymentOption
             id="credit"
             title="Pay Later / Credit Line"
-            subtitle="Available limit: ₹2,00,000 | 0% Interest"
-            icon={require("../assets/icons/wallet.png")}
+            subtitle={`Available limit: ₹${amount} `}
+            icon={require('../assets/icons/wallet.png')}
           />
 
           {/* Other Methods */}
@@ -229,8 +249,8 @@ const PaymentScreen = ({ navigation, route }: any) => {
             id="upi"
             title="Online Payment"
             subtitle="GPay, PhonePe, Paytm & Others"
-            icon={require("../assets/icons/upi.png")}
-            disabled={true}
+            icon={require('../assets/icons/upi.png')}
+            // disabled={true}
           />
           {/* <PaymentOption
             id="card"
@@ -261,7 +281,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
           <TouchableOpacity
             style={styles.payBtn}
             onPress={() => {
-              console.log("BUTTON PRESSED");
+              console.log('BUTTON PRESSED');
               handleOrder();
             }}
           >
@@ -280,7 +300,7 @@ export default PaymentScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F5F6F8",
+    backgroundColor: '#F5F6F8',
     // ,
   },
   scrollview: {
@@ -288,41 +308,41 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    backgroundColor: "#F5F6F8",
+    backgroundColor: '#F5F6F8',
   },
   title: {
     fontSize: 18,
     marginTop: 10,
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
     marginBottom: 13,
     marginHorizontal: 16,
   },
 
   amountCard: {
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     padding: 20,
     borderRadius: 14,
-    borderColor: "#d0cfcf99",
+    borderColor: '#d0cfcf99',
     borderWidth: 1,
-    alignItems: "center",
+    alignItems: 'center',
     marginBottom: 20,
   },
 
   totalLabel: {
-    color: "#777",
-    fontFamily: "DMSans-Regular",
+    color: '#777',
+    fontFamily: 'DMSans-Regular',
   },
 
   amount: {
     fontSize: 24,
-    fontFamily: "DMSans-Bold",
+    fontFamily: 'DMSans-Bold',
     marginVertical: 6,
   },
 
   challan: {
-    backgroundColor: "#E7F3E7",
+    backgroundColor: '#E7F3E7',
     paddingHorizontal: 12,
-    borderColor: "#57E24D1F",
+    borderColor: '#57E24D1F',
     borderWidth: 1,
     paddingVertical: 4,
     borderRadius: 20,
@@ -330,60 +350,60 @@ const styles = StyleSheet.create({
 
   summaryText: {
     fontSize: 13,
-    fontFamily: "DMSans-Regular",
+    fontFamily: 'DMSans-Regular',
   },
 
   challanText: {
-    color: "#487D44",
+    color: '#487D44',
     fontSize: 9,
-    fontFamily: "DMSans-SemiBold",
+    fontFamily: 'DMSans-SemiBold',
   },
 
   section: {
     fontSize: 18,
-    fontFamily: "DMSans-SemiBold",
+    fontFamily: 'DMSans-SemiBold',
     marginBottom: 10,
     // marginTop: 10
   },
 
   summaryRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginBottom: 6,
   },
 
   promoBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#E7F3E7",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E7F3E7',
     padding: 14,
     borderRadius: 10,
     marginVertical: 15,
   },
   loaderOverlay: {
-    position: "absolute",
+    position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.2)",
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.2)',
     zIndex: 999,
   },
 
   promoText: {
     flex: 1,
     marginLeft: 10,
-    color: "#64748B",
+    color: '#64748B',
     fontSize: 12,
-    fontFamily: "DMSans-Regular",
+    fontFamily: 'DMSans-Regular',
   },
 
   paymentCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
     padding: 15,
     borderRadius: 14,
     marginBottom: 12,
@@ -391,15 +411,15 @@ const styles = StyleSheet.create({
 
   activeCard: {
     borderWidth: 2,
-    borderColor: "#487D44",
+    borderColor: '#487D44',
   },
 
   iconBox: {
     width: 40,
     height: 40,
-    backgroundColor: "#F3F4F6",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
+    alignItems: 'center',
     borderRadius: 8,
     marginRight: 10,
   },
@@ -407,85 +427,85 @@ const styles = StyleSheet.create({
   icon: {
     width: 22,
     height: 22,
-    resizeMode: "contain",
+    resizeMode: 'contain',
   },
 
   paymentTitle: {
     fontSize: 16,
-    fontWeight: "600",
-    fontFamily: "DMSans-SemiBold",
+    fontWeight: '600',
+    fontFamily: 'DMSans-SemiBold',
   },
 
   paymentSub: {
     fontSize: 12,
-    color: "#777",
-    fontFamily: "DMSans-Regular",
+    color: '#777',
+    fontFamily: 'DMSans-Regular',
   },
 
   bottomBox: {
     padding: 16,
     // backgroundColor: "#fff",
     // borderTopWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: '#E5E7EB',
   },
 
   amountRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginBottom: 10,
   },
 
   amountDue: {
-    color: "#777",
+    color: '#777',
     fontSize: 12,
-    fontFamily: "DMSans-Regular",
+    fontFamily: 'DMSans-Regular',
   },
 
   amountValue: {
     // fontWeight: '700',s
     fontSize: 16,
-    fontFamily: "DMSans-Bold",
+    fontFamily: 'DMSans-Bold',
   },
 
   payBtn: {
-    backgroundColor: "#487D44",
+    backgroundColor: '#487D44',
     padding: 16,
     borderRadius: 12,
-    alignItems: "center",
+    alignItems: 'center',
   },
 
   payText: {
-    color: "#fff",
+    color: '#fff',
     fontSize: 16,
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
   },
   radioOuter: {
     width: 18,
     height: 18,
     borderRadius: 9,
     borderWidth: 1.5,
-    borderColor: "#D1D5DB",
-    justifyContent: "center",
-    alignItems: "center",
+    borderColor: '#D1D5DB',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   radioOuterActive: {
-    borderColor: "#487D44",
+    borderColor: '#487D44',
   },
 
   radioInner: {
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: "#487D44",
+    backgroundColor: '#487D44',
   },
 
   iconBoxActive: {
-    backgroundColor: "#487D44",
+    backgroundColor: '#487D44',
   },
 
   iconActive: {
-    tintColor: "#fff",
+    tintColor: '#fff',
   },
 
   disabledCard: {
@@ -493,14 +513,14 @@ const styles = StyleSheet.create({
   },
 
   disabledText: {
-    color: "#A1A1AA",
+    color: '#A1A1AA',
   },
 
   disabledIconBox: {
-    backgroundColor: "#E5E7EB",
+    backgroundColor: '#E5E7EB',
   },
 
   disabledIcon: {
-    tintColor: "#9CA3AF",
+    tintColor: '#9CA3AF',
   },
 });

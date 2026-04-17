@@ -218,7 +218,7 @@ export default function ProfileScreen({ navigation }: any) {
               </View>
             </TouchableOpacity>
 
-            <Text style={styles.name}>{name ? name : "The Bulk Basket"}</Text>
+            <Text style={styles.name}>{name}</Text>
           </View>
 
           {/* Menu Card */}

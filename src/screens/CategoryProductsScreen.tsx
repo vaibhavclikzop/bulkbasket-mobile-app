@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useRef, useEffect } from "react";
-import { debounce } from "lodash";
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { debounce } from 'lodash';
 import {
   View,
   Text,
@@ -15,12 +15,12 @@ import {
   RefreshControl,
   Alert,
   Vibration,
-} from "react-native";
-import LinearGradient from "react-native-linear-gradient";
+} from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 // import ProductCard from "../components/ProductCard";
-import Styles from "../components/Styles";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useIsFocused, useFocusEffect } from "@react-navigation/native";
+import Styles from '../components/Styles';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useIsFocused, useFocusEffect } from '@react-navigation/native';
 import {
   addToCartApi,
   addToWishlistApi,
@@ -29,37 +29,37 @@ import {
   getProductsApi,
   updateCartQuantityApi,
   updateWishlistQtyApi,
-} from "../services/api";
+} from '../services/api';
 
 const packingItems = [
   {
-    id: "1",
-    image: require("../assets/product/product1-.png"),
-    title: "Disposables & Packaging Material",
-    packSize: "Pack of 10",
-    price: "640",
-    oldPrice: "₹660",
-    discount: "33",
+    id: '1',
+    image: require('../assets/product/product1-.png'),
+    title: 'Disposables & Packaging Material',
+    packSize: 'Pack of 10',
+    price: '640',
+    oldPrice: '₹660',
+    discount: '33',
     isOrganic: true,
   },
   {
-    id: "2",
-    image: require("../assets/product/product1-.png"),
-    title: "Cello Tape - Transparent W: 1 Inch, L: 55 m",
-    packSize: "Pack of 20",
-    price: "820",
-    oldPrice: "₹900",
-    discount: "10",
+    id: '2',
+    image: require('../assets/product/product1-.png'),
+    title: 'Cello Tape - Transparent W: 1 Inch, L: 55 m',
+    packSize: 'Pack of 20',
+    price: '820',
+    oldPrice: '₹900',
+    discount: '10',
     isOrganic: true,
   },
   {
-    id: "3",
-    image: require("../assets/product/product1-.png"),
-    title: "Disposables & Packaging",
-    packSize: "Pack of 20",
-    price: "820",
-    oldPrice: "₹900",
-    discount: "10",
+    id: '3',
+    image: require('../assets/product/product1-.png'),
+    title: 'Disposables & Packaging',
+    packSize: 'Pack of 20',
+    price: '820',
+    oldPrice: '₹900',
+    discount: '10',
     isOrganic: false,
   },
 ];
@@ -86,6 +86,8 @@ interface Product {
   product_sub_sub_category?: number | string;
   current_stock?: number | string;
   uom_name?: string;
+  brand_id?: number | string;
+  brand_name?: string;
   // bestRate: number;
 }
 
@@ -108,13 +110,15 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
   const isFocused = useIsFocused();
   // const [qty, setQty] = useState(0);
   const { categoryId, catname } = route.params;
-  console.log("category Id", categoryId);
+  console.log('category Id', categoryId);
   const [selectedCategoryId, setSelectedCategoryId] = useState(categoryId);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
   const [allCategories, setAllCategories] = useState([]);
   const [selectedSubSubCats, setSelectedSubSubCats] = useState<number[]>([]);
+  const [selectedBrandIds, setSelectedBrandIds] = useState<any[]>([]);
+  const [showBrandModal, setShowBrandModal] = useState(false);
   const [currentCatName, setCurrentCatName] = useState(catname);
   const [loading, setLoading] = useState(true);
   const [addingToCartId, setAddingToCartId] = useState<number | null>(null);
@@ -125,14 +129,14 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
   const productListRef = useRef<FlatList>(null);
   const isFirstLoad = useRef(true);
   const [showSortModal, setShowSortModal] = useState(false);
-  const [selectedSort, setSelectedSort] = useState("relevance");
-  const [appliedSort, setAppliedSort] = useState("relevance");
+  const [selectedSort, setSelectedSort] = useState('relevance');
+  const [appliedSort, setAppliedSort] = useState('relevance');
 
   const SORT_OPTIONS = [
-    { key: "relevance", label: "Relevance" },
-    { key: "price_low_high", label: "Price - low to high" },
-    { key: "price_high_low", label: "Price - high to low" },
-    { key: "alphabetical_a_to_z", label: "Alphabetical (A to Z)" },
+    { key: 'relevance', label: 'Relevance' },
+    { key: 'price_low_high', label: 'Price - low to high' },
+    { key: 'price_high_low', label: 'Price - high to low' },
+    { key: 'alphabetical_a_to_z', label: 'Alphabetical (A to Z)' },
   ];
 
   const fetchCart = async () => {
@@ -142,7 +146,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
       const data = await getCartApi();
       setCartItems(data.data || []);
     } catch (error) {
-      console.log("Cart fetch error:", error);
+      console.log('Cart fetch error:', error);
     } finally {
       setCartLoading(false);
     }
@@ -152,20 +156,20 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
     text
       ? text
           .toLowerCase()
-          .replace(/[_-]/g, " ")
-          .split(" ")
+          .replace(/[_-]/g, ' ')
+          .split(' ')
           .filter(Boolean)
-          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(" ")
-      : "";
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ')
+      : '';
 
   const fetchCategories = async () => {
     try {
       const data = await getCategoriesApi();
-      console.log("Cat Data", data);
+      console.log('Cat Data', data);
       setAllCategories(data.data);
     } catch (error) {
-      console.log("error CAat", error);
+      console.log('error CAat', error);
     }
   };
 
@@ -203,23 +207,33 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
       const resolvedId = id ?? selectedCategoryId;
 
       if (resolvedId) {
+        const apiSubcatId = subcatId === 'all' ? undefined : subcatId;
         const data = await getProductsApi(
           resolvedId,
-          subcatId as any,
+          apiSubcatId as any,
           subsubcats,
         );
 
-        console.log("Products API:", data.data);
+        console.log('Products API:', data.data);
 
-        if (!subcatId || subcatId === "all") {
-          const allProducts = data.data.flatMap(
+        if (!subcatId || subcatId === 'all') {
+          const allProductsRaw = data.data.flatMap(
             (cat: Category) => cat.products || [],
           );
+
+          // Deduplicate products by id
+          const productMap = new Map();
+          allProductsRaw.forEach((p: Product) => {
+            if (!productMap.has(p.id)) {
+              productMap.set(p.id, p);
+            }
+          });
+          const allProducts = Array.from(productMap.values());
 
           const allSubSubCatsMap = new Map();
           data.data.forEach((cat: Category) => {
             if (cat.subSubCategory) {
-              cat.subSubCategory.forEach((subSub) => {
+              cat.subSubCategory.forEach(subSub => {
                 if (!allSubSubCatsMap.has(subSub.id)) {
                   allSubSubCatsMap.set(subSub.id, subSub);
                 }
@@ -229,9 +243,9 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
           const allSubSubCategories = Array.from(allSubSubCatsMap.values());
 
           const allCategory: Category = {
-            sub_category_id: "all",
-            sub_category: "All",
-            image: "local_all_icon",
+            sub_category_id: 'all',
+            sub_category: 'All',
+            image: 'local_all_icon',
             subSubCategory: allSubSubCategories,
             products: allProducts,
           };
@@ -240,11 +254,11 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
           // If no products exist across all subcategories, alert and go back
           if (allProducts.length === 0) {
             Alert.alert(
-              "No Products",
-              "There are no products available in this category right now.",
+              'No Products',
+              'There are no products available in this category right now.',
               [
                 {
-                  text: "OK",
+                  text: 'OK',
                   onPress: () => navigation.goBack(),
                 },
               ],
@@ -256,7 +270,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
           let newProducts: any[] = [];
           if (Array.isArray(data.data)) {
             // Check if data is directly an array of products
-            if (data.data.length > 0 && !("sub_category_id" in data.data[0])) {
+            if (data.data.length > 0 && !('sub_category_id' in data.data[0])) {
               newProducts = data.data;
             } else {
               // It's an array of categories, find the matching one
@@ -269,8 +283,8 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
             }
           }
 
-          setCategories((prev) =>
-            prev.map((cat) =>
+          setCategories(prev =>
+            prev.map(cat =>
               String(cat.sub_category_id) === String(subcatId)
                 ? { ...cat, products: newProducts }
                 : cat,
@@ -289,12 +303,12 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
     try {
       setAddingToCartId(productId);
       const res = await addToCartApi(productId, quantity);
-      console.log("Add to Cart Responce", res.data);
+      console.log('Add to Cart Responce', res.data);
 
-      setCategories((prev) =>
-        prev.map((cat) => ({
+      setCategories(prev =>
+        prev.map(cat => ({
           ...cat,
-          products: cat.products.map((p) =>
+          products: cat.products.map(p =>
             p.id === productId
               ? { ...p, cart_status: true, cart: { qty: quantity } }
               : p,
@@ -332,10 +346,10 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
           // We will update it so it does get removed from backend if they leave it at 0.
         }
         const res = await updateCartQuantityApi(productId, newQty);
-        console.log("res", res);
+        console.log('res', res);
         // Alert.alert("Success", "Quantity updated successfully");
       } catch (error) {
-        console.log("Update Qty Error:", error);
+        console.log('Update Qty Error:', error);
       } finally {
         setUpdatingQtyId(null);
       }
@@ -346,20 +360,20 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
   const updateQty = async (productId: number, newQty: number | string) => {
     // If user cleared the input manually, we store 0 (or a temporary state) but
     // keep cart_status true so the input box doesn't vanish while typing.
-    const isTextInputEmpty = newQty === "" || Number.isNaN(Number(newQty));
+    const isTextInputEmpty = newQty === '' || Number.isNaN(Number(newQty));
     const finalQty = isTextInputEmpty ? 0 : Number(newQty);
 
     if (finalQty < 0) return;
 
     // 1. Update UI Locally Immediately
-    setCategories((prev) =>
-      prev.map((cat) => ({
+    setCategories(prev =>
+      prev.map(cat => ({
         ...cat,
-        products: cat.products.map((p) =>
+        products: cat.products.map(p =>
           p.id === productId
             ? {
                 ...p,
-                cart: { qty: isTextInputEmpty ? ("" as any) : finalQty },
+                cart: { qty: isTextInputEmpty ? ('' as any) : finalQty },
                 // If it's a manual minus button to 0, it removes.
                 // If it's text input to empty string "", we keep it visible briefly.
                 cart_status: newQty === 0 ? false : true,
@@ -376,10 +390,10 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
     try {
       const newStatus = !product.wishlist_status;
 
-      setCategories((prev) =>
-        prev.map((cat) => ({
+      setCategories(prev =>
+        prev.map(cat => ({
           ...cat,
-          products: cat.products.map((p) =>
+          products: cat.products.map(p =>
             p.id === product.id ? { ...p, wishlist_status: newStatus } : p,
           ),
         })),
@@ -394,12 +408,12 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
         // Alert.alert("Success", "Item removed from wishlist");
       }
     } catch (error) {
-      console.log("Wishlist Toggle Error:", error);
+      console.log('Wishlist Toggle Error:', error);
       // Revert if API fails
-      setCategories((prev) =>
-        prev.map((cat) => ({
+      setCategories(prev =>
+        prev.map(cat => ({
           ...cat,
-          products: cat.products.map((p) =>
+          products: cat.products.map(p =>
             p.id === product.id
               ? { ...p, wishlist_status: product.wishlist_status }
               : p,
@@ -419,26 +433,49 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
   // );
 
   const filteredProducts = (() => {
-    const base = (categories[selectedIndex]?.products || []).filter((p) => {
-      if (selectedSubSubCats.length === 0) return true;
-      return selectedSubSubCats
-        .map(String)
-        .includes(String(p.product_sub_sub_category));
+    let base = (categories[selectedIndex]?.products || []).filter(p => {
+      // Sub-subcategory filter
+      if (selectedSubSubCats.length > 0) {
+        if (!selectedSubSubCats.map(String).includes(String(p.product_sub_sub_category))) {
+          return false;
+        }
+      }
+      // Brand filter
+      if (selectedBrandIds.length > 0) {
+        if (!selectedBrandIds.map(String).includes(String(p.brand_id))) {
+          return false;
+        }
+      }
+      return true;
     });
 
     switch (appliedSort) {
-      case "price_low_high":
+      case 'price_low_high':
         return [...base].sort((a, b) => Number(a.price) - Number(b.price));
-      case "price_high_low":
+      case 'price_high_low':
         return [...base].sort((a, b) => Number(b.price) - Number(a.price));
-      case "alphabetical_a_to_z":
+      case 'alphabetical_a_to_z':
         return [...base].sort((a, b) =>
-          (a.name || "").localeCompare(b.name || ""),
+          (a.name || '').localeCompare(b.name || ''),
         );
       default:
         return base;
     }
   })();
+
+  const currentBrands = React.useMemo(() => {
+    const brandsMap = new Map();
+    (categories[selectedIndex]?.products || []).forEach(p => {
+      if (p.brand_id && p.brand_name) {
+        if (!brandsMap.has(p.brand_id)) {
+          brandsMap.set(p.brand_id, { id: p.brand_id, name: p.brand_name });
+        }
+      }
+    });
+    return Array.from(brandsMap.values()).sort((a, b) =>
+      a.name.localeCompare(b.name),
+    );
+  }, [categories, selectedIndex]);
 
   useEffect(() => {
     if (productListRef.current) {
@@ -457,7 +494,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
         true,
       );
     } catch (err) {
-      console.log("Refresh error:", err);
+      console.log('Refresh error:', err);
     } finally {
       setRefreshing(false);
     }
@@ -472,21 +509,21 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
           translucent={true}
         />
       )}
-      <SafeAreaView style={styles.container} edges={["top"]}>
+      <SafeAreaView style={styles.container} edges={['top']}>
         <View
           style={[
             styles.header,
             {
-              alignItems: "center",
-              justifyContent: "center",
+              alignItems: 'center',
+              justifyContent: 'center',
             },
           ]}
         >
           <View
             style={{
-              flexDirection: "row",
+              flexDirection: 'row',
               flex: 1,
-              alignItems: "flex-start",
+              alignItems: 'flex-start',
             }}
           >
             <TouchableOpacity
@@ -494,11 +531,11 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
               style={{ marginTop: 5 }}
             >
               <Image
-                source={require("../assets/Common/Back.png")}
+                source={require('../assets/Common/Back.png')}
                 style={{
                   height: 16,
                   width: 16,
-                  resizeMode: "contain",
+                  resizeMode: 'contain',
                 }}
               />
             </TouchableOpacity>
@@ -512,7 +549,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
               <Text
                 style={[
                   Styles.headerText,
-                  { fontSize: 14, fontFamily: "DMSans-Bold" },
+                  { fontSize: 14, fontFamily: 'DMSans-Bold' },
                 ]}
                 numberOfLines={1}
               >
@@ -521,20 +558,20 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
 
               <TouchableOpacity
                 onPress={() => setShowDropdown(true)}
-                style={{ flexDirection: "row", alignItems: "center" }}
+                style={{ flexDirection: 'row', alignItems: 'center' }}
               >
                 <Text
-                  style={[Styles.SubTitle, { fontSize: 10, color: "#64748B" }]}
+                  style={[Styles.SubTitle, { fontSize: 10, color: '#64748B' }]}
                 >
                   Change category
                 </Text>
                 <Image
-                  source={require("../assets/Common/ArrowDown.png")}
+                  source={require('../assets/Common/ArrowDown.png')}
                   style={{
                     height: 6,
                     width: 8,
                     marginLeft: 5,
-                    tintColor: "#64748B",
+                    tintColor: '#64748B',
                   }}
                   resizeMode="contain"
                 />
@@ -544,14 +581,14 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
           <View style={styles.headerRight}>
             <TouchableOpacity
               style={styles.iconCircle}
-              onPress={() => navigation.navigate("Search")}
+              onPress={() => navigation.navigate('Search')}
             >
               <Image
-                source={require("../assets/Common/search.png")}
+                source={require('../assets/Common/search.png')}
                 style={{
                   height: 20,
                   width: 20,
-                  tintColor: "#487D44",
+                  tintColor: '#487D44',
                 }}
                 resizeMode="contain"
               />
@@ -560,15 +597,15 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
             <TouchableOpacity
               style={styles.iconCircle}
               onPress={() =>
-                navigation.navigate("Cart", { screen: "CartMain" })
+                navigation.navigate('Cart', { screen: 'CartMain' })
               }
             >
               <Image
-                source={require("../assets/Common/cart.png")}
+                source={require('../assets/Common/cart.png')}
                 style={{
                   height: 20,
                   width: 20,
-                  tintColor: "#487D44",
+                  tintColor: '#487D44',
                 }}
                 resizeMode="contain"
               />
@@ -587,31 +624,32 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
 
         {loading ? (
           <View
-            style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+            style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
           >
             <ActivityIndicator size="large" color="#487D44" />
           </View>
         ) : (
-          <View style={{ flex: 1, flexDirection: "row", zIndex: 1 }}>
+          <View style={{ flex: 1, flexDirection: 'row', zIndex: 1 }}>
             {/* SIDEBAR */}
 
             <View style={[styles.sidebar]}>
               <FlatList
                 // data={categories}
                 data={categories.filter(
-                  (cat) => cat.products && cat.products.length > 0,
+                  cat => cat.products && cat.products.length > 0,
                 )}
-                keyExtractor={(item) => item.sub_category_id.toString()}
+                keyExtractor={item => item.sub_category_id.toString()}
                 showsVerticalScrollIndicator={false}
                 renderItem={({ item }) => (
                   <TouchableOpacity
                     onPress={() => {
                       const actualIndex = categories.findIndex(
-                        (c) => c.sub_category_id === item.sub_category_id,
+                        c => c.sub_category_id === item.sub_category_id,
                       );
                       setSelectedIndex(actualIndex !== -1 ? actualIndex : 0);
                       setSelectedSubSubCats([]);
-                      if (item.sub_category_id !== "all") {
+                      setSelectedBrandIds([]);
+                      if (item.sub_category_id !== 'all') {
                         fetchProducts(
                           selectedCategoryId,
                           item.sub_category_id,
@@ -625,24 +663,24 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                         item.sub_category_id && styles.activeCategory,
                     ]}
                   >
-                    {item.image === "local_all_icon" ? (
+                    {item.image === 'local_all_icon' ? (
                       <View
                         style={[
                           styles.categoryImage,
                           {
-                            backgroundColor: "#487D44",
-                            justifyContent: "center",
-                            alignItems: "center",
+                            backgroundColor: '#487D44',
+                            justifyContent: 'center',
+                            alignItems: 'center',
                           },
                         ]}
                       >
                         <Image
-                          source={require("../assets/Common/all.png")}
+                          source={require('../assets/Common/all.png')}
                           style={{
                             width: 20,
                             height: 20,
-                            resizeMode: "contain",
-                            tintColor: "#fff",
+                            resizeMode: 'contain',
+                            tintColor: '#fff',
                           }}
                         />
                       </View>
@@ -651,7 +689,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                         source={
                           item.image
                             ? { uri: item.image }
-                            : require("../assets/productimg.jpg")
+                            : require('../assets/productimg.jpg')
                         }
                         style={styles.categoryImage}
                       />
@@ -661,7 +699,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                 )}
               />
             </View>
-            <View style={{ flex: 1, backgroundColor: "#F1F2F6" }}>
+            <View style={{ flex: 1, backgroundColor: '#F1F2F6' }}>
               {/* SORT ROW */}
               <View style={styles.sortRowWrapper}>
                 {/* Sort Button */}
@@ -673,30 +711,64 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                   }}
                 >
                   <Image
-                    source={require("../assets/Common/filter.png")}
+                    source={require('../assets/Common/filter.png')}
                     style={{
                       height: 11,
                       width: 11,
                       tintColor:
-                        appliedSort !== "relevance" ? "#487D44" : "#333",
+                        appliedSort !== 'relevance' ? '#487D44' : '#333',
                     }}
                     resizeMode="contain"
                   />
                   <Text
                     style={[
                       styles.sortButtonText,
-                      appliedSort !== "relevance" && { color: "#487D44" },
+                      appliedSort !== 'relevance' && { color: '#487D44' },
                     ]}
                   >
                     Sort
                   </Text>
                   <Image
-                    source={require("../assets/Common/ArrowDown.png")}
+                    source={require('../assets/Common/ArrowDown.png')}
                     style={{
                       height: 5,
                       width: 7,
                       tintColor:
-                        appliedSort !== "relevance" ? "#487D44" : "#333",
+                        appliedSort !== 'relevance' ? '#487D44' : '#333',
+                      marginLeft: 2,
+                    }}
+                    resizeMode="contain"
+                  />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingHorizontal: 12,
+                    paddingVertical: 4,
+                    gap: 4,
+                    borderRadius: 1,
+                  }}
+                  onPress={() => {
+                    setShowBrandModal(true);
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.sortButtonText,
+                      selectedBrandIds.length > 0 && { color: '#487D44' },
+                    ]}
+                  >
+                    Brand
+                  </Text>
+                  <Image
+                    source={require('../assets/Common/ArrowDown.png')}
+                    style={{
+                      height: 5,
+                      width: 7,
+                      tintColor:
+                        selectedBrandIds.length > 0 ? '#487D44' : '#333',
                       marginLeft: 2,
                     }}
                     resizeMode="contain"
@@ -712,17 +784,17 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                     <FlatList
                       data={(
                         categories[selectedIndex]?.subSubCategory || []
-                      ).filter((subSub) => {
+                      ).filter(subSub => {
                         if (subSub.isSort) return false; // hide old isSort items
                         return (categories[selectedIndex]?.products || []).some(
-                          (p) =>
+                          p =>
                             String(p.product_sub_sub_category) ===
                             String(subSub.id),
                         );
                       })}
                       horizontal
                       showsHorizontalScrollIndicator={false}
-                      keyExtractor={(item) => item.id}
+                      keyExtractor={item => item.id}
                       contentContainerStyle={styles.sortRowContent}
                       style={{ flex: 1 }}
                       renderItem={({ item }) => (
@@ -730,18 +802,18 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                           style={[
                             styles.filterChip,
                             selectedSubSubCats.includes(Number(item.id)) && {
-                              backgroundColor: "#487D44",
-                              borderColor: "#487D44",
+                              backgroundColor: '#487D44',
+                              borderColor: '#487D44',
                             },
                           ]}
                           onPress={() => {
                             const subSubCatId = Number(item?.id);
                             if (selectedSubSubCats.includes(subSubCatId)) {
-                              setSelectedSubSubCats((prev) =>
-                                prev.filter((id) => id !== subSubCatId),
+                              setSelectedSubSubCats(prev =>
+                                prev.filter(id => id !== subSubCatId),
                               );
                             } else {
-                              setSelectedSubSubCats((prev) => [
+                              setSelectedSubSubCats(prev => [
                                 ...prev,
                                 subSubCatId,
                               ]);
@@ -752,11 +824,11 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                             style={[
                               styles.sortText,
                               selectedSubSubCats.includes(Number(item.id)) && {
-                                color: "#fff",
+                                color: '#fff',
                               },
                             ]}
                           >
-                            {capitalizeWords(item.name || "")}
+                            {capitalizeWords(item.name || '')}
                           </Text>
                         </TouchableOpacity>
                       )}
@@ -766,12 +838,12 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
               <FlatList
                 ref={productListRef}
                 data={filteredProducts}
-                keyExtractor={(item) => item.id.toString()}
+                keyExtractor={item => item.id.toString()}
                 refreshControl={
                   <RefreshControl
                     refreshing={refreshing}
                     onRefresh={onRefresh}
-                    colors={["#487D44"]}
+                    colors={['#487D44']}
                   />
                 }
                 style={styles.productSection}
@@ -784,19 +856,19 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                   </View>
                 )}
                 renderItem={({ item }) => (
-                  <View style={styles.card}>
+                  <View
+                    style={[
+                      styles.card,
+                      Number(item.current_stock) === 0 && { opacity: 0.5 },
+                    ]}
+                  >
                     {/* Organic Ribbon - Only show if product is organic */}
                     {/* {item.product_type === "Organic" && ( */}
-                    <LinearGradient
+                    {/* <LinearGradient
                       colors={["#487D44", "#12FF00"]}
                       start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={styles.organicRibbon}
-                    >
-                      <Text style={styles.organicRibbonText}>
-                        {item.product_type}
-                      </Text>
-                    </LinearGradient>
+                      end={{ x: 0, y: 1 }} */}
+
                     {/* )} */}
 
                     {/* Discount Badge - Positioned at top right of image area */}
@@ -813,19 +885,49 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                       </LinearGradient>
                     ) : null} */}
 
-                    <View style={{ flexDirection: "row" }}>
+                    <View style={{ flexDirection: 'row' }}>
                       <TouchableOpacity
                         onPress={() =>
-                          navigation.navigate("ProductDetail", {
+                          navigation.navigate('ProductDetail', {
                             productId: item.id,
                           })
                         }
                         style={[
                           styles.productImageBg,
-                          { width: "38%", backgroundColor: "" },
+                          { width: '38%', backgroundColor: '' },
                         ]}
                         activeOpacity={0.9}
                       >
+                        {item.product_type ? (
+                          <View
+                            style={{
+                              position: 'absolute',
+                              top: 0,
+                              width: '100%',
+                              height: 18,
+                              overflow: 'hidden',
+                              alignSelf: 'center',
+                              borderBottomLeftRadius: 10,
+                              borderBottomRightRadius: 10,
+                              backgroundColor: '#6B7280',
+                              justifyContent: 'center',
+                              alignItems: 'center',
+                              zIndex: 11,
+                              minWidth: '50%',
+                            }}
+                          >
+                            <Text
+                              style={{
+                                color: '#FFFFFF',
+                                fontSize: 7,
+                                fontFamily: 'DMSans-SemiBold',
+                                textAlign: 'center',
+                              }}
+                            >
+                              {item.product_type}
+                            </Text>
+                          </View>
+                        ) : null}
                         {/* {Platform.OS === "ios" ? (
                           Number(item.discount) > 0 ? (
                             <View
@@ -868,20 +970,19 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                           </LinearGradient>
                         ) : null} */}
                         {Number(item.discount) > 0 &&
-                          (Platform.OS === "ios" ? (
+                          (Platform.OS === 'ios' ? (
                             <View
                               style={{
-                                backgroundColor: "#FAAF20",
-                                position: "absolute",
-                                top: 0,
-                                right: 0,
+                                backgroundColor: '#FAAF20',
+                                position: 'absolute',
+                                bottom: 0,
+                                left: 0,
                                 paddingLeft: 10,
                                 paddingRight: 12,
                                 height: 24,
-                                justifyContent: "center",
-                                alignItems: "center",
-                                borderTopRightRadius: 20,
-                                borderBottomLeftRadius: 8,
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                borderTopRightRadius: 8,
                                 zIndex: 10,
                               }}
                             >
@@ -889,37 +990,47 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                                 numberOfLines={1}
                                 style={{
                                   fontSize: 8,
-                                  fontWeight: "600",
-                                  fontFamily: "DMSans-Medium",
+                                  fontWeight: '600',
+                                  fontFamily: 'DMSans-Medium',
                                 }}
                               >
                                 {item.discount}% OFF
                               </Text>
                             </View>
                           ) : (
-                            <LinearGradient
-                              colors={["#FFDC61", "#FAAF20"]}
-                              start={{ x: 0, y: 0 }}
-                              end={{ x: 1, y: 0 }}
-                              style={styles.discountBadge}
+                            <View
+                              // colors={["#FFDC61", "#FAAF20"]}
+                              // start={{ x: 0, y: 0 }}
+                              // end={{ x: 1, y: 0 }}
+                              style={[
+                                styles.discountBadge,
+                                {
+                                  top: undefined,
+                                  right: undefined,
+                                  bottom: 0,
+                                  left: 0,
+                                  borderBottomLeftRadius: 0,
+                                  borderTopRightRadius: 8,
+                                },
+                              ]}
                             >
                               <Text style={styles.discountText}>
                                 {Number(item.discount).toFixed(1)}% OFF
                               </Text>
-                            </LinearGradient>
+                            </View>
                           ))}
                         <Image
                           source={
-                            item?.image && item.image.trim() !== ""
+                            item?.image && item.image.trim() !== ''
                               ? { uri: item.image }
-                              : require("../assets/icons/sicon2.png")
+                              : require('../assets/icons/sicon2.png')
                           }
                           style={styles.productImage}
                         />
                         <TouchableOpacity
                           onPress={() => toggleWishlist(item)}
                           style={{
-                            position: "absolute",
+                            position: 'absolute',
                             bottom: 10,
                             left: 70,
                             padding: 4,
@@ -928,13 +1039,13 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                           <Image
                             source={
                               item.wishlist_status
-                                ? require("../assets/Common/fillheart.png")
-                                : require("../assets/Common/heart.png")
+                                ? require('../assets/Common/fillheart.png')
+                                : require('../assets/Common/heart.png')
                             }
                             style={{
                               height: 18,
                               width: 18,
-                              resizeMode: "contain",
+                              resizeMode: 'contain',
                             }}
                           />
                         </TouchableOpacity>
@@ -943,14 +1054,14 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                       <View style={[styles.details]}>
                         <TouchableOpacity
                           onPress={() =>
-                            navigation.navigate("ProductDetail", {
+                            navigation.navigate('ProductDetail', {
                               productId: item.id,
                             })
                           }
                           activeOpacity={0.9}
                         >
                           <Text style={styles.productTitle}>
-                            {capitalizeWords(item.name || "")}
+                            {capitalizeWords(item.name || '')}
                           </Text>
                           <Text
                             style={[
@@ -959,8 +1070,8 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                                 marginBottom: 6,
                                 paddingBottom: 6,
                                 borderBottomWidth: 1,
-                                borderBottomColor: "#E6E7EE80",
-                                color: "#64748B",
+                                borderBottomColor: '#E6E7EE80',
+                                color: '#64748B',
                                 fontSize: 10,
                               },
                             ]}
@@ -973,7 +1084,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                             style={[
                               styles.variantBox,
                               {
-                                backgroundColor: "#F4F4F4",
+                                backgroundColor: '#F4F4F4',
                               },
                             ]}
                           >
@@ -988,7 +1099,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                                   style={[
                                     styles.variantRow,
                                     !isLast && {
-                                      borderBottomColor: "#E6E7EE80",
+                                      borderBottomColor: '#E6E7EE80',
                                       borderBottomWidth: 1,
                                       paddingBottom: 5,
                                       marginBottom: 4,
@@ -1012,11 +1123,11 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                                   >
                                     {currentQty >= tier.qty ? (
                                       <Image
-                                        source={require("../assets/check.png")}
+                                        source={require('../assets/check.png')}
                                         style={{
                                           height: 16,
                                           width: 16,
-                                          tintColor: "#487D44",
+                                          tintColor: '#487D44',
                                         }}
                                       />
                                     ) : (
@@ -1024,7 +1135,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                                         style={[
                                           styles.addSmall,
                                           Number(item.current_stock) === 0 && {
-                                            color: "#A0A0A0",
+                                            color: '#A0A0A0',
                                           },
                                         ]}
                                       >
@@ -1049,8 +1160,8 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                           <View style={styles.priceContainer}>
                             <View
                               style={{
-                                flexDirection: "row",
-                                alignItems: "center",
+                                flexDirection: 'row',
+                                alignItems: 'center',
                               }}
                             >
                               <Text style={styles.price}>
@@ -1093,19 +1204,19 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                                   item.cart?.qty !== undefined &&
                                   item.cart?.qty !== null
                                     ? String(item.cart.qty)
-                                    : ""
+                                    : ''
                                 }
-                                onChangeText={(text) => {
-                                  const val = text.replace(/[^0-9]/g, "");
-                                  if (val === "") {
-                                    updateQty(item.id, "");
+                                onChangeText={text => {
+                                  const val = text.replace(/[^0-9]/g, '');
+                                  if (val === '') {
+                                    updateQty(item.id, '');
                                   } else {
                                     updateQty(item.id, Number(val));
                                   }
                                 }}
                                 onBlur={() => {
                                   if (
-                                    String(item.cart?.qty) === "" ||
+                                    String(item.cart?.qty) === '' ||
                                     item.cart?.qty === 0
                                   ) {
                                     updateQty(item.id, 0);
@@ -1118,7 +1229,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                                 style={[
                                   styles.qtyBtn,
                                   Number(item.current_stock) === 0 && {
-                                    backgroundColor: "#A0A0A0",
+                                    backgroundColor: '#A0A0A0',
                                   },
                                 ]}
                                 onPress={() => {
@@ -1138,34 +1249,49 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                               style={[
                                 styles.addButton,
                                 Number(item.current_stock) === 0 && {
-                                  backgroundColor: "#A0A0A0",
+                                  backgroundColor: 'transparent',
+                                  borderWidth: 1,
+                                  borderColor: '#EF4444',
                                 },
                               ]}
                               onPress={() => {
-                                Vibration.vibrate(60);
-                                handleAddToCart(item.id);
+                                if (Number(item.current_stock) === 0) {
+                                  navigation.navigate('ProductDetail', {
+                                    productId: item.id,
+                                  });
+                                } else {
+                                  Vibration.vibrate(60);
+                                  handleAddToCart(item.id);
+                                }
                               }}
                               disabled={
-                                addingToCartId === item.id ||
-                                Number(item.current_stock) === 0
+                                Number(item.current_stock) !== 0 &&
+                                addingToCartId === item.id
                               }
                             >
                               {addingToCartId === item.id ? (
                                 <ActivityIndicator size="small" color="#fff" />
                               ) : (
                                 <>
-                                  <Text style={styles.addText}>
+                                  <Text
+                                    style={[
+                                      styles.addText,
+                                      Number(item.current_stock) === 0 && {
+                                        color: '#EF4444',
+                                      },
+                                    ]}
+                                  >
                                     {Number(item.current_stock) === 0
-                                      ? "Out of Stock"
-                                      : "Add"}
+                                      ? 'Out Of Stock'
+                                      : 'Add'}
                                   </Text>
                                   {Number(item.current_stock) !== 0 && (
                                     <Image
-                                      source={require("../assets/Common/cart.png")}
+                                      source={require('../assets/Common/cart.png')}
                                       style={{
                                         height: 12,
                                         width: 12,
-                                        tintColor: "#fff",
+                                        tintColor: '#fff',
                                       }}
                                       resizeMode="contain"
                                     />
@@ -1236,7 +1362,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
             </View>
 
             {/* Options */}
-            {SORT_OPTIONS.map((option) => (
+            {SORT_OPTIONS.map(option => (
               <TouchableOpacity
                 key={option.key}
                 style={styles.sortOption}
@@ -1278,8 +1404,8 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
               <TouchableOpacity
                 style={[
                   styles.sortApplyBtn,
-                  selectedSort !== "relevance" && {
-                    backgroundColor: "#487D44",
+                  selectedSort !== 'relevance' && {
+                    backgroundColor: '#487D44',
                   },
                 ]}
                 onPress={() => {
@@ -1334,6 +1460,101 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
             </View>
           </View>
         </Modal>
+
+        {/* Brand modal */}
+        <Modal
+          visible={showBrandModal}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setShowBrandModal(false)}
+        >
+          <TouchableOpacity
+            style={styles.sortModalOverlay}
+            activeOpacity={1}
+            onPress={() => setShowBrandModal(false)}
+          />
+          <View style={styles.sortModalSheet}>
+            <View style={styles.sortModalHeader}>
+              <Text style={styles.sortModalTitle}>Filter by Brand</Text>
+              <TouchableOpacity onPress={() => setShowBrandModal(false)}>
+                <Text style={styles.sortModalClose}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <FlatList
+              data={currentBrands}
+              keyExtractor={item => String(item.id)}
+              style={{ maxHeight: 400 }}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.sortOption}
+                  onPress={() => {
+                    const brandId = String(item.id);
+                    if (selectedBrandIds.includes(brandId)) {
+                      setSelectedBrandIds(prev =>
+                        prev.filter(id => id !== brandId),
+                      );
+                    } else {
+                      setSelectedBrandIds(prev => [...prev, brandId]);
+                    }
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.sortOptionText,
+                      selectedBrandIds.includes(String(item.id)) &&
+                        styles.sortOptionTextActive,
+                    ]}
+                  >
+                    {item.name}
+                  </Text>
+                  <View
+                    style={[
+                      styles.sortRadio,
+                      selectedBrandIds.includes(String(item.id)) &&
+                        styles.sortRadioActive,
+                      { borderRadius: 4 }, // Checkbox style instead of radio
+                    ]}
+                  >
+                    {selectedBrandIds.includes(String(item.id)) && (
+                      <View
+                        style={[styles.sortRadioDot, { borderRadius: 2 }]}
+                      />
+                    )}
+                  </View>
+                </TouchableOpacity>
+              )}
+              ListEmptyComponent={
+                <View style={{ padding: 20, alignItems: 'center' }}>
+                  <Text style={styles.emptyText}>No brands available</Text>
+                </View>
+              }
+            />
+
+            <View style={styles.sortModalFooter}>
+              <TouchableOpacity
+                style={styles.sortClearBtn}
+                onPress={() => {
+                  setSelectedBrandIds([]);
+                  setShowBrandModal(false);
+                }}
+              >
+                <Text style={styles.sortClearText}>Clear all</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.sortApplyBtn,
+                  { backgroundColor: '#487D44' },
+                ]}
+                onPress={() => {
+                  setShowBrandModal(false);
+                }}
+              >
+                <Text style={styles.sortApplyText}>Apply</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </SafeAreaView>
     </>
   );
@@ -1341,52 +1562,52 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
 
 export default CategoryProductsScreen;
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
+  container: { flex: 1, backgroundColor: '#fff' },
 
   headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 16,
     marginBottom: 10,
   },
 
   dealTitle: {
     fontSize: 13,
-    fontWeight: "600",
-    fontFamily: "DMSans-Medium",
+    fontWeight: '600',
+    fontFamily: 'DMSans-Medium',
   },
 
   /* HEADER */
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 15,
     paddingVertical: 12,
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
   },
 
   headerRight: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 
   iconCircle: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "#F4F4F4",
-    borderColor: "#a5a4a4c7",
+    backgroundColor: '#F4F4F4',
+    borderColor: '#a5a4a4c7',
     borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     marginLeft: 10,
   },
 
   /* SORT ROW */
 
   sortRow: {
-    backgroundColor: "#F5F6F8",
+    backgroundColor: '#F5F6F8',
     paddingVertical: 10,
     maxHeight: 45,
   },
@@ -1398,22 +1619,22 @@ const styles = StyleSheet.create({
 
   sortText: {
     fontSize: 12,
-    fontFamily: "DMSans-Regular",
+    fontFamily: 'DMSans-Regular',
     paddingHorizontal: 5,
   },
   dividerPrice: {
     height: 1,
-    backgroundColor: "#b2b3b880",
+    backgroundColor: '#b2b3b880',
     marginVertical: 6,
   },
 
   sortChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#ffff",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffff',
     paddingHorizontal: 14,
     paddingVertical: 3,
-    borderColor: "#a5a4a4c7",
+    borderColor: '#a5a4a4c7',
     borderWidth: 1,
     borderRadius: 20,
     marginRight: 8,
@@ -1421,18 +1642,18 @@ const styles = StyleSheet.create({
 
   filterChip: {
     // backgroundColor: "#ffff",
-    borderColor: "#a5a4a4c7",
+    borderColor: '#a5a4a4c7',
     borderWidth: 1,
     borderRadius: 15,
     marginRight: 8,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   /* SIDEBAR */
-  sidebar: { width: 75, backgroundColor: "#fff" },
-  categoryItem: { alignItems: "center", paddingVertical: 15 },
-  activeCategory: { backgroundColor: "#E8F3E8" },
+  sidebar: { width: 75, backgroundColor: '#fff' },
+  categoryItem: { alignItems: 'center', paddingVertical: 15 },
+  activeCategory: { backgroundColor: '#E8F3E8' },
   categoryImage: {
     width: 45,
     height: 45,
@@ -1441,88 +1662,88 @@ const styles = StyleSheet.create({
   },
   categoryText: {
     fontSize: 10,
-    textAlign: "center",
-    fontFamily: "DMSans-Regular",
+    textAlign: 'center',
+    fontFamily: 'DMSans-Regular',
     paddingHorizontal: 5,
-    color: "#64748B",
+    color: '#64748B',
   },
 
   /* PRODUCTS */
   productSection: { flex: 1, padding: 2 },
 
   card: {
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     borderRadius: 15,
     marginBottom: 15,
     margin: 10,
-    overflow: "hidden",
+    overflow: 'hidden',
   },
   productImageBg: {
-    backgroundColor: "#e5e7eb",
+    backgroundColor: '#e5e7eb',
     width: 118,
     height: 184,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   productImage: {
     width: 100,
     height: 95,
     borderRadius: 15,
-    resizeMode: "contain",
+    resizeMode: 'contain',
   },
 
   details: {
     flex: 1,
     padding: 7,
     borderLeftWidth: 1,
-    borderLeftColor: "#F4F4F4",
-    justifyContent: "space-between",
+    borderLeftColor: '#F4F4F4',
+    justifyContent: 'space-between',
   },
   productTitle: {
     fontSize: 12,
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
 
-    width: "100%",
+    width: '100%',
   },
   pack: {
     fontSize: 10,
-    color: "#777",
+    color: '#777',
     marginVertical: 4,
-    fontFamily: "DMSans-Regular",
-    textAlign: "left",
-    width: "100%",
+    fontFamily: 'DMSans-Regular',
+    textAlign: 'left',
+    width: '100%',
   },
   priceRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginTop: 10,
-    width: "100%",
+    width: '100%',
   },
 
   priceContainer: {
-    flexDirection: "column",
+    flexDirection: 'column',
   },
 
   bestRate: {
     fontSize: 9,
-    color: "#487D44",
-    fontFamily: "DMSans-Regular",
+    color: '#487D44',
+    fontFamily: 'DMSans-Regular',
   },
 
-  price: { fontSize: 13, fontFamily: "DMSans-SemiBold" },
+  price: { fontSize: 13, fontFamily: 'DMSans-SemiBold' },
   oldPrice: {
-    textDecorationLine: "line-through",
+    textDecorationLine: 'line-through',
     fontSize: 12,
-    fontFamily: "DMSans-Regular",
-    color: "#FF7878",
+    fontFamily: 'DMSans-Regular',
+    color: '#FF7878',
   },
 
   /* Quantity */
   qtyRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#E8F3E8",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E8F3E8',
     borderRadius: 8,
     paddingHorizontal: 4,
   },
@@ -1530,113 +1751,113 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: "#487D44",
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: '#487D44',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   qtyText: {
-    color: "#fff",
+    color: '#fff',
     fontSize: 12,
-    fontFamily: "DMSans-Regular",
+    fontFamily: 'DMSans-Regular',
   },
   qtyNumber: {
     marginHorizontal: 6,
-    fontWeight: "600",
+    fontWeight: '600',
     fontSize: 13,
-    fontFamily: "DMSans-Regular",
-    color: "#487D44",
+    fontFamily: 'DMSans-Regular',
+    color: '#487D44',
   },
 
   /* Discount */
   discountBadge: {
-    position: "absolute",
+    position: 'absolute',
     top: 0,
     right: 0,
     paddingHorizontal: 6,
     paddingVertical: 3,
     borderBottomLeftRadius: 6,
     zIndex: 5,
-    maxWidth: "100%",
+    maxWidth: '100%',
   },
   discountText: {
     fontSize: 8,
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
   },
 
   ribbon: {
-    position: "absolute",
+    position: 'absolute',
     top: 10,
     left: -38,
     width: 130,
-    transform: [{ rotate: "-45deg" }],
-    justifyContent: "center",
-    alignItems: "center",
+    transform: [{ rotate: '-45deg' }],
+    justifyContent: 'center',
+    alignItems: 'center',
     zIndex: 10,
   },
   ribbonText: {
-    color: "#fff",
+    color: '#fff',
     fontSize: 8,
-    textAlign: "center",
-    fontFamily: "DMSans-Regular",
+    textAlign: 'center',
+    fontFamily: 'DMSans-Regular',
   },
 
   slabPrice: {
     fontSize: 12,
-    fontFamily: "DMSans-Regular",
+    fontFamily: 'DMSans-Regular',
   },
 
   variantBox: {
-    borderColor: "#b2b3b880",
+    borderColor: '#b2b3b880',
     borderRadius: 8,
     padding: 6,
-    width: "100%",
+    width: '100%',
     gap: 2,
   },
 
   variantRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
 
   addSmall: {
     fontSize: 12,
-    color: "green",
-    fontWeight: "600",
-    fontFamily: "DMSans-Medium",
+    color: 'green',
+    fontWeight: '600',
+    fontFamily: 'DMSans-Medium',
   },
   addButton: {
-    backgroundColor: "#487D44",
-    flexDirection: "row",
-    alignItems: "center",
+    backgroundColor: '#487D44',
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 8,
     paddingVertical: 6,
     borderRadius: 8,
   },
 
   addText: {
-    color: "#fff",
+    color: '#fff',
     marginRight: 4,
-    fontFamily: "DMSans-Regular",
+    fontFamily: 'DMSans-Regular',
     fontSize: 9,
   },
 
   dropdown: {
-    position: "absolute",
+    position: 'absolute',
     top: 60,
     left: 20,
     right: 20,
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     borderRadius: 10,
     elevation: 5,
     maxHeight: 300,
   },
 
   dropdownItem: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 10,
     borderBottomWidth: 0.5,
-    borderColor: "#ddd",
+    borderColor: '#ddd',
   },
 
   dropdownImage: {
@@ -1648,71 +1869,73 @@ const styles = StyleSheet.create({
 
   dropdownText: {
     fontSize: 14,
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
   },
   emptyContainer: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     marginVertical: 20,
   },
 
   emptyText: {
     fontSize: 14,
-    color: "#666",
-    fontFamily: "DMSans-Medium",
+    color: '#666',
+    fontFamily: 'DMSans-Medium',
   },
 
   organicRibbon: {
-    position: "absolute",
-    top: 15,
+    position: 'absolute',
+    top: 17,
     left: -35,
     width: 120,
     paddingVertical: 3,
-    transform: [{ rotate: "-45deg" }],
-    justifyContent: "center",
-    alignItems: "center",
+    // transform: [{ rotate: "-45deg" }],
+    justifyContent: 'center',
+    alignItems: 'center',
     zIndex: 10,
-    backgroundColor: "transparent",
+    backgroundColor: 'transparent',
+    alignSelf: 'center',
   },
   organicRibbonText: {
-    color: "#fff",
+    color: '#fff',
     fontSize: 7,
     // fontWeight: "600",
-    textAlign: "center",
-    fontFamily: "DMSans-SemiBold",
+    textAlign: 'center',
+    fontFamily: 'DMSans-SemiBold',
     // textTransform: "uppercase",
+    marginLeft: 25,
   },
   badgeCart: {
-    position: "absolute",
+    position: 'absolute',
     right: -5,
     top: -5,
-    backgroundColor: "#F59E0B",
+    backgroundColor: '#F59E0B',
     borderRadius: 50,
     width: 18,
     height: 18,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   badgeText: {
-    color: "#000",
+    color: '#000',
     fontSize: 8,
-    fontFamily: "DMSans-Regular",
+    fontFamily: 'DMSans-Regular',
   },
 
   /* ── SORT ROW ── */
   sortRowWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#F5F6F8",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F6F8',
     paddingVertical: 8,
     maxHeight: 45,
   },
 
   sortButtonFixed: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 4,
     gap: 4,
@@ -1722,25 +1945,25 @@ const styles = StyleSheet.create({
 
   sortButtonText: {
     fontSize: 12,
-    fontFamily: "DMSans-Medium",
-    color: "#333",
+    fontFamily: 'DMSans-Medium',
+    color: '#333',
   },
 
   sortDivider: {
     width: 1,
     height: 20,
-    backgroundColor: "#ccc",
+    backgroundColor: '#ccc',
     marginRight: 6,
   },
 
   /* ── SORT BY MODAL ── */
   sortModalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.35)",
+    backgroundColor: 'rgba(0,0,0,0.35)',
   },
 
   sortModalSheet: {
-    backgroundColor: "#F5F6FA",
+    backgroundColor: '#F5F6FA',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingHorizontal: 20,
@@ -1749,29 +1972,29 @@ const styles = StyleSheet.create({
   },
 
   sortModalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 16,
   },
 
   sortModalTitle: {
     fontSize: 18,
-    fontFamily: "DMSans-Bold",
-    color: "#111",
+    fontFamily: 'DMSans-Bold',
+    color: '#111',
   },
 
   sortModalClose: {
     fontSize: 18,
-    color: "#555",
+    color: '#555',
     paddingHorizontal: 4,
   },
 
   sortOption: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    backgroundColor: "#fff",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#fff',
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 10,
@@ -1780,13 +2003,13 @@ const styles = StyleSheet.create({
 
   sortOptionText: {
     fontSize: 14,
-    fontFamily: "DMSans-Regular",
-    color: "#333",
+    fontFamily: 'DMSans-Regular',
+    color: '#333',
   },
 
   sortOptionTextActive: {
-    fontFamily: "DMSans-Bold",
-    color: "#111",
+    fontFamily: 'DMSans-Bold',
+    color: '#111',
   },
 
   sortRadio: {
@@ -1794,26 +2017,26 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 11,
     borderWidth: 2,
-    borderColor: "#ccc",
-    alignItems: "center",
-    justifyContent: "center",
+    borderColor: '#ccc',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   sortRadioActive: {
-    borderColor: "#E53935",
+    borderColor: '#E53935',
   },
 
   sortRadioDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: "#E53935",
+    backgroundColor: '#E53935',
   },
 
   sortModalFooter: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginTop: 16,
   },
 
@@ -1824,22 +2047,22 @@ const styles = StyleSheet.create({
 
   sortClearText: {
     fontSize: 14,
-    fontFamily: "DMSans-Medium",
-    color: "#E53935",
+    fontFamily: 'DMSans-Medium',
+    color: '#E53935',
   },
 
   sortApplyBtn: {
     flex: 1,
-    backgroundColor: "#B0B0B0",
+    backgroundColor: '#B0B0B0',
     paddingVertical: 14,
     borderRadius: 10,
-    alignItems: "center",
+    alignItems: 'center',
     marginLeft: 12,
   },
 
   sortApplyText: {
     fontSize: 14,
-    fontFamily: "DMSans-SemiBold",
-    color: "#fff",
+    fontFamily: 'DMSans-SemiBold',
+    color: '#fff',
   },
 });

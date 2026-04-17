@@ -396,9 +396,9 @@ export const getStatesApi = async () => {
 
 // ---------------- GET DISTRICTS API ----------------
 
-export const getDistrictsApi = async (state) => {
+export const getDistrictsApi = async (stateId) => {
   try {
-    const response = await api.get(`/get-district/${state}`);
+    const response = await api.get(`/get-district/${stateId}`);
     console.log("Get Districts API Response:", response.data);
     return response.data;
   } catch (error) {
@@ -446,20 +446,24 @@ export const getBrandsApi = async () => {
 export const saveOrderApi = async (data) => {
   try {
     const formData = new FormData();
+
     formData.append("delivery_date", data.delivery_date);
-    formData.append("address", data.address);
+    formData.append("address", data.address); // address id
     formData.append("state", data.state);
     formData.append("district", data.district);
     formData.append("city", data.city);
     formData.append("pincode", data.pincode);
     formData.append("pay_mode", data.pay_mode);
     formData.append("remarks", data.remarks || "");
+
     const response = await api.post("/save-order", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
     });
+
     console.log("Save Order API Response:", response.data);
+
     return response.data;
   } catch (error) {
     console.log("Save Order API Error:", error.response?.data || error.message);
@@ -468,101 +472,17 @@ export const saveOrderApi = async (data) => {
 };
 
 // ---------------- GET WALLET LEDGER API ----------------
+
 export const getWalletLedgerApi = async () => {
   try {
     const response = await api.get("/get-wallet-ledger");
+
     console.log("Get Wallet Ledger API Response:", response.data);
+
     return response.data;
   } catch (error) {
     console.log(
       "Get Wallet Ledger API Error:",
-      error.response?.data || error.message,
-    );
-    throw error.response?.data || error.message;
-  }
-};
-
-// ---------------- GET ORDER API ----------------
-export const getOrderApi = async () => {
-  try {
-    const response = await api.get("/get-order");
-    console.log("Get Order API Response:", response.data);
-    return response.data;
-  } catch (error) {
-    console.log("Get Order API Error:", error.response?.data || error.message);
-    throw error.response?.data || error.message;
-  }
-};
-
-export const getEstimateApi = async () => {
-  try {
-    const response = await api.get("/get-estimate");
-    console.log("Get Estimate API Response:", response.data);
-    return response.data;
-  } catch (error) {
-    console.log(
-      "Get Estimate API Error:",
-      error.response?.data || error.message,
-    );
-    throw error.response?.data || error.message;
-  }
-};
-
-export const getEstimateDetailsApi = async (estimate_id) => {
-  try {
-    const response = await api.get(`/get-estimate-details/${estimate_id}`);
-    console.log("Get Estimate Details API Response:", response.data);
-    return response.data;
-  } catch (error) {
-    console.log(
-      "Get Estimate Details API Error:",
-      error.response?.data || error.message,
-    );
-    throw error.response?.data || error.message;
-  }
-};
-
-// ---------------- SEARCH PRODUCTS API ----------------
-
-export const searchProductsApi = async (query) => {
-  try {
-    const response = await api.get(`/search-products/${query}`);
-    console.log("Search Products API Response:", response.data);
-    return response.data;
-  } catch (error) {
-    console.log(
-      "Search Products API Error:",
-      error.response?.data || error.message,
-    );
-    throw error.response?.data || error.message;
-  }
-};
-
-// ---------------- GET ORDER DETAILS API ----------------
-
-export const getOrderDetailsApi = async (order_id) => {
-  try {
-    const response = await api.get(`/get-order-details/${order_id}`);
-    console.log("Get Order Details API Response:", response.data);
-    return response.data;
-  } catch (error) {
-    console.log(
-      "Get Order Details API Error:",
-      error.response?.data || error.message,
-    );
-    throw error.response?.data || error.message;
-  }
-};
-
-// ---------------- GET DEAL PRODUCTS API ----------------
-export const getDealProductsApi = async () => {
-  try {
-    const response = await api.get("/get-products-deal");
-    console.log("Get Deal Products API Response:", response.data);
-    return response.data;
-  } catch (error) {
-    console.log(
-      "Get Deal Products API Error:",
       error.response?.data || error.message,
     );
     throw error.response?.data || error.message;
@@ -583,6 +503,107 @@ export const addWalletAmountApi = async (customer_id, amount) => {
   } catch (error) {
     console.log(
       "Add Wallet Amount API Error:",
+      error.response?.data || error.message,
+    );
+    throw error.response?.data || error.message;
+  }
+};
+
+// ---------------- GET ORDER API ----------------
+
+export const getOrderApi = async () => {
+  try {
+    const response = await api.get("/get-order");
+
+    console.log("Get Order API Response:", response.data);
+
+    return response.data;
+  } catch (error) {
+    console.log("Get Order API Error:", error.response?.data || error.message);
+    throw error.response?.data || error.message;
+  }
+};
+
+export const getEstimateApi = async () => {
+  try {
+    const response = await api.get("/get-estimate");
+
+    console.log("Get Estimate API Response:", response.data);
+
+    return response.data;
+  } catch (error) {
+    console.log(
+      "Get Estimate API Error:",
+      error.response?.data || error.message,
+    );
+    throw error.response?.data || error.message;
+  }
+};
+
+export const getEstimateDetailsApi = async (estimate_id) => {
+  try {
+    const response = await api.get(`/get-estimate-details/${estimate_id}`);
+
+    console.log("Get Estimate Details API Response:", response.data);
+
+    return response.data;
+  } catch (error) {
+    console.log(
+      "Get Estimate Details API Error:",
+      error.response?.data || error.message,
+    );
+    throw error.response?.data || error.message;
+  }
+};
+
+// ---------------- SEARCH PRODUCTS API ----------------
+
+export const searchProductsApi = async (query) => {
+  try {
+    const response = await api.get(`/search-products/${query}`);
+
+    console.log("Search Products API Response:", response.data);
+
+    return response.data;
+  } catch (error) {
+    console.log(
+      "Search Products API Error:",
+      error.response?.data || error.message,
+    );
+    throw error.response?.data || error.message;
+  }
+};
+
+// ---------------- GET ORDER DETAILS API ----------------
+
+export const getOrderDetailsApi = async (order_id) => {
+  try {
+    const response = await api.get(`/get-order-details/${order_id}`);
+
+    console.log("Get Order Details API Response:", response.data);
+
+    return response.data;
+  } catch (error) {
+    console.log(
+      "Get Order Details API Error:",
+      error.response?.data || error.message,
+    );
+    throw error.response?.data || error.message;
+  }
+};
+
+// ---------------- GET DEAL PRODUCTS API ----------------
+
+export const getDealProductsApi = async () => {
+  try {
+    const response = await api.get("/get-products-deal");
+
+    console.log("Get Deal Products API Response:", response.data);
+
+    return response.data;
+  } catch (error) {
+    console.log(
+      "Get Deal Products API Error:",
       error.response?.data || error.message,
     );
     throw error.response?.data || error.message;

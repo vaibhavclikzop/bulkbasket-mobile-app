@@ -1,14 +1,14 @@
-import React from "react";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import CartScreen from "../../screens/CartScreen";
-import CheckoutScreen from "../../screens/CheckoutScreen";
-import PaymentScreen from "../../screens/PaymentScreen";
-import Addresses from "../../screens/Addresses";
-import OrderConfirmScreen from "../../screens/OrderConfirmScreen";
-import OrderSummery from "../../screens/OrderSummery";
-import CheckoutAddressScreen from "../../screens/CheckoutAddressScreen";
-import TrackOrder from "../../screens/TrackOrder";
-import AddressAddUpd from "../../screens/AddressAddUpd";
+import React from 'react';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import CartScreen from '../../screens/CartScreen';
+import CheckoutScreen from '../../screens/CheckoutScreen';
+import PaymentScreen from '../../screens/PaymentScreen';
+import Addresses from '../../screens/Addresses';
+import OrderConfirmScreen from '../../screens/OrderConfirmScreen';
+import OrderSummery from '../../screens/OrderSummery';
+import CheckoutAddressScreen from '../../screens/CheckoutAddressScreen';
+import TrackOrder from '../../screens/TrackOrder';
+import AddressAddUpd from '../../screens/AddressAddUpd';
 
 export type CartStackParamList = {
   CartMain: undefined;

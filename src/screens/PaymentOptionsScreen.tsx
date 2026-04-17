@@ -20,6 +20,7 @@ const PaymentOptionsScreen = ({ navigation }: any) => {
   const [cardNumber, setCardNumber] = useState("");
   const [expiry, setExpiry] = useState("");
   const [cvv, setCvv] = useState("");
+
   const cards = [
     {
       id: 1,
@@ -82,7 +83,9 @@ const PaymentOptionsScreen = ({ navigation }: any) => {
     }
 
     const current = new Date();
-    const exp = new Date(`20${year}`, Number(month) - 1);
+    // const exp = new Date(`20${year}`, Number(month) - 1);
+    const expYear = Number(`20${year}`);
+    const exp = new Date(expYear, Number(month) - 1);
 
     if (exp < current) {
       Alert.alert("Card expired");

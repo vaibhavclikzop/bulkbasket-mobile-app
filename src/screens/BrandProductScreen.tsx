@@ -13,6 +13,8 @@ import {
   Alert,
   TextInput,
   RefreshControl,
+  Vibration,
+  Platform,
 } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
 import ProductCard from "../components/ProductCard";
@@ -81,6 +83,8 @@ interface Product {
   };
   isOrganic?: boolean;
   bestRate?: string;
+  current_stock?: number;
+  product_type?: string;
 }
 
 interface SubSubCategory {
@@ -864,33 +868,12 @@ const BrandProductScreen = ({ navigation, route }: any) => {
                 //   </View>
                 // )}
                 renderItem={({ item }) => (
-                  <View style={styles.card}>
-                    {/* Organic Ribbon - Only show if product is organic */}
-                    {item.isOrganic && (
-                      <LinearGradient
-                        colors={["#487D44", "#12FF00"]}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                        style={styles.organicRibbon}
-                      >
-                        <Text style={styles.organicRibbonText}>Organic</Text>
-                      </LinearGradient>
-                    )}
-
-                    {/* Discount Badge - Positioned at top right of image area */}
-                    {/* {item.discount && Number(item.discount) > 0 ? ( */}
-                    {/* <LinearGradient
-                      colors={["#FFDC61", "#FAAF20"]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={styles.discountBadge}
-                    >
-                      <Text style={styles.discountText}>
-                        {item.discount}% OFF
-                      </Text>
-                    </LinearGradient> */}
-                    {/* ) : null} */}
-
+                  <View
+                    style={[
+                      styles.card,
+                      Number(item.current_stock) === 0 && { opacity: 0.5 },
+                    ]}
+                  >
                     <TouchableOpacity
                       onPress={() =>
                         navigation.navigate("ProductDetail", {
@@ -905,12 +888,51 @@ const BrandProductScreen = ({ navigation, route }: any) => {
                           { width: "38%", backgroundColor: "" },
                         ]}
                       >
+                        {item.product_type ? (
+                          <View
+                            style={{
+                              position: "absolute",
+                              top: 0,
+                              width: "100%",
+                              height: 18,
+                              overflow: "hidden",
+                              alignSelf: "center",
+                              borderBottomLeftRadius: 10,
+                              borderBottomRightRadius: 10,
+                              backgroundColor: "#6B7280",
+                              justifyContent: "center",
+                              alignItems: "center",
+                              zIndex: 11,
+                            }}
+                          >
+                            <Text
+                              style={{
+                                color: "#FFFFFF",
+                                fontSize: 7,
+                                fontFamily: "DMSans-SemiBold",
+                                textAlign: "center",
+                              }}
+                            >
+                              {item.product_type}
+                            </Text>
+                          </View>
+                        ) : null}
                         {Number(item.discount) > 0 && (
                           <LinearGradient
                             colors={["#FFDC61", "#FAAF20"]}
                             start={{ x: 0, y: 0 }}
                             end={{ x: 1, y: 0 }}
-                            style={styles.discountBadge}
+                            style={[
+                              styles.discountBadge,
+                              {
+                                top: undefined,
+                                right: undefined,
+                                bottom: 0,
+                                left: 0,
+                                borderBottomLeftRadius: 0,
+                                borderTopRightRadius: 8,
+                              },
+                            ]}
                           >
                             <Text style={styles.discountText} numberOfLines={1}>
                               {item.discount}% OFF
@@ -1079,24 +1101,56 @@ const BrandProductScreen = ({ navigation, route }: any) => {
                             </View>
                           ) : (
                             <TouchableOpacity
-                              style={styles.addButton}
-                              onPress={() => handleAddToCart(item.id)}
-                              disabled={addingToCartId === item.id}
+                              style={[
+                                styles.addButton,
+                                Number(item.current_stock) === 0 && {
+                                  backgroundColor: "transparent",
+                                  borderWidth: 1,
+                                  borderColor: "#EF4444",
+                                },
+                              ]}
+                              onPress={() => {
+                                if (Number(item.current_stock) === 0) {
+                                  navigation.navigate("ProductDetail", {
+                                    productId: item.id,
+                                  });
+                                } else {
+                                  Vibration.vibrate(60);
+                                  handleAddToCart(item.id);
+                                }
+                              }}
+                              disabled={
+                                Number(item.current_stock) !== 0 &&
+                                addingToCartId === item.id
+                              }
                             >
                               {addingToCartId === item.id ? (
                                 <ActivityIndicator size="small" color="#fff" />
                               ) : (
                                 <>
-                                  <Text style={styles.addText}>Add</Text>
-                                  <Image
-                                    source={require("../assets/Common/cart.png")}
-                                    style={{
-                                      height: 12,
-                                      width: 12,
-                                      tintColor: "#fff",
-                                    }}
-                                    resizeMode="contain"
-                                  />
+                                  <Text
+                                    style={[
+                                      styles.addText,
+                                      Number(item.current_stock) === 0 && {
+                                        color: "#EF4444",
+                                      },
+                                    ]}
+                                  >
+                                    {Number(item.current_stock) === 0
+                                      ? "View similar"
+                                      : "Add"}
+                                  </Text>
+                                  {Number(item.current_stock) !== 0 && (
+                                    <Image
+                                      source={require("../assets/Common/cart.png")}
+                                      style={{
+                                        height: 12,
+                                        width: 12,
+                                        tintColor: "#fff",
+                                      }}
+                                      resizeMode="contain"
+                                    />
+                                  )}
                                 </>
                               )}
                             </TouchableOpacity>
@@ -1130,6 +1184,7 @@ const BrandProductScreen = ({ navigation, route }: any) => {
                           oldPrice={item?.oldPrice}
                           discount={Number(item.discount).toFixed(0)}
                           isOrganic={item?.isOrganic}
+                          current_stock={item.current_stock}
                           // bestRate={item?.bestRate || ""}
                           onAddPress={() => console.log("Added")}
                         />

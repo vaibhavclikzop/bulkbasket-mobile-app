@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   Image,
 } from "react-native";
-import Feather from "@react-native-vector-icons/feather";
+// import Feather from "react-native-vector-icons/Feather";
 import { SafeAreaView } from "react-native-safe-area-context";
 const TrackOrder = ({ navigation }: any) => {
   const [isOpen, setIsOpen] = useState(true);
@@ -17,7 +17,6 @@ const TrackOrder = ({ navigation }: any) => {
   const Step = ({ title, location, time, icon, isLast, image }: any) => (
     <View style={styles.stepRow}>
       <View style={styles.stepLeft}>
-        {/* <Image source={icon} style={styles.stepIcon} /> */}
         <Image source={icon || image || pendingIcon} style={styles.stepIcon} />
         {!isLast && <View style={styles.line} />}
       </View>
@@ -152,7 +151,7 @@ const TrackOrder = ({ navigation }: any) => {
             onPress={() => navigation.navigate("OrderSummery")}
           >
             <Text style={styles.summaryText}>Order Summary</Text>
-            <Feather name="chevron-right" size={18} color="#64748B" />
+            {/* <Feather name="chevron-right" size={18} color="#64748B" /> */}
           </TouchableOpacity>
 
           {/* Download */}
@@ -186,12 +185,12 @@ const TrackOrder = ({ navigation }: any) => {
               </Text>
             </View>
 
-            <Feather
+            {/* <Feather
               name="chevron-right"
               size={18}
               color="#64748B"
               style={{ marginLeft: "auto" }}
-            />
+            /> */}
           </TouchableOpacity>
         </ScrollView>
       </View>

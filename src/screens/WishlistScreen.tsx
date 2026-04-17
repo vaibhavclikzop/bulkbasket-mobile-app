@@ -64,6 +64,7 @@ export default function WishlistScreen({ navigation }: any) {
           is_organic: item.product_type?.toLowerCase() === "organic",
           product_type: item.product_type,
           mrp: item.mrp || 0,
+          current_stock: item.current_stock || 0,
         };
       });
 

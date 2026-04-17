@@ -8,7 +8,7 @@ import {
   TextInput,
   Image,
 } from "react-native";
-import Feather from "@react-native-vector-icons/feather";
+// import Feather from "react-native-vector-icons/Feather";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Header from "../components/Header";
 import { getWalletLedgerApi } from "../services/api";

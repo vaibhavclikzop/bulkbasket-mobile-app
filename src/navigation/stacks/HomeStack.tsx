@@ -1,14 +1,13 @@
-import React from "react";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import HomeScreen from "../../screens/HomeScreen";
-import SearchScreen from "../../components/SearchScreen";
-import CategoryProductsScreen from "../../screens/CategoryProductsScreen";
-import ProductDetailScreen from "../../screens/ProductDetailScreen";
-import BrandProductScreen from "../../screens/BrandProductScreen";
-import NotificationScreen from "../../screens/NotificationScreen";
-import AddressAddUpd from "../../screens/AddressAddUpd";
-import Addresses from "../../screens/Addresses";
-import CompanyProfile from "../../screens/CompanyProfile";
+import React from 'react';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import HomeScreen from '../../screens/HomeScreen';
+import SearchScreen from '../../components/SearchScreen';
+import CategoryProductsScreen from '../../screens/CategoryProductsScreen';
+import ProductDetailScreen from '../../screens/ProductDetailScreen';
+import BrandProductScreen from '../../screens/BrandProductScreen';
+import NotificationScreen from '../../screens/NotificationScreen';
+import AddressAddUpd from '../../screens/DeliveryLocation';
+import Addresses from '../../screens/Addresses';
 
 export type HomeStackParamList = {
   HomeMain: undefined;
@@ -35,7 +34,6 @@ const HomeStack = () => {
       <Stack.Screen name="NotificationScreen" component={NotificationScreen} />
       <Stack.Screen name="AddressAddUpd" component={AddressAddUpd} />
       <Stack.Screen name="Addresses" component={Addresses} />
-      {/* <Stack.Screen name="CompanyProfile" component={CompanyProfile} /> */}
     </Stack.Navigator>
   );
 };

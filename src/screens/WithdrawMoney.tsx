@@ -9,7 +9,7 @@ import {
   Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Feather from "@react-native-vector-icons/feather";
+// import Feather from "react-native-vector-icons/Feather";
 import Styles from "../components/Styles";
 
 const WithdrawMoney = ({ navigation }: any) => {

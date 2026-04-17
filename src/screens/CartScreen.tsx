@@ -29,7 +29,8 @@ import { debounce } from "lodash";
 import { generatePDF as convertToPDF } from "react-native-html-to-pdf";
 import * as XLSX from "xlsx";
 import RNFS from "react-native-fs";
-import Share from "react-native-share";
+// import Share from "react-native-share";
+import notifee from "@notifee/react-native";
 
 const CartScreen: React.FC = ({ navigation }: any) => {
   const [cartItems, setCartItems] = useState<any[]>([]);
@@ -214,42 +215,127 @@ const CartScreen: React.FC = ({ navigation }: any) => {
   //   }
   // };
 
+  const displayDownloadNotification = async (
+    filePath: string,
+    fileName: string,
+    fileType: string,
+  ) => {
+    try {
+      await notifee.requestPermission();
+      const channelId = await notifee.createChannel({
+        id: "downloads",
+        name: "Downloads",
+      });
+
+      await notifee.displayNotification({
+        title: `${fileType} Download Complete`,
+        body: `Tap to open ${fileName}`,
+        data: { filePath },
+        android: {
+          channelId,
+          pressAction: {
+            id: "default",
+          },
+        },
+      });
+    } catch (error) {
+      console.log("Error displaying notification:", error);
+    }
+  };
+
   const saveToDownloads = async (
     base64Data: string,
     fileName: string,
     fileType: string,
   ) => {
+    let notificationId;
+
     try {
+      await notifee.requestPermission();
+
+      const channelId = await notifee.createChannel({
+        id: "downloads",
+        name: "Downloads",
+      });
+
+      // ✅ 1. Show START notification
+      notificationId = await notifee.displayNotification({
+        title: `Downloading ${fileType}...`,
+        body: fileName,
+        android: {
+          channelId,
+          progress: {
+            max: 100,
+            current: 0,
+            indeterminate: true, // loader style
+          },
+          ongoing: true,
+        },
+      });
+
+      let finalPath = "";
+
       if (Platform.OS === "android") {
         if (Number(Platform.Version) < 33) {
           const granted = await PermissionsAndroid.request(
             PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
           );
           if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-            Alert.alert(
-              "Permission Required",
-              "Storage permission is needed to download files.",
-            );
+            Alert.alert("Permission Required");
             return false;
           }
         }
+
         const downloadPath = RNFS.DownloadDirectoryPath + "/" + fileName;
+
+        // ✅ simulate progress (optional but nice UX)
+        for (let i = 10; i <= 90; i += 20) {
+          await new Promise((res: any) => setTimeout(res, 100));
+          await notifee.displayNotification({
+            id: notificationId,
+            title: `Downloading ${fileType}...`,
+            body: fileName,
+            android: {
+              channelId,
+              progress: {
+                max: 100,
+                current: i,
+              },
+              ongoing: true,
+            },
+          });
+        }
+
         await RNFS.writeFile(downloadPath, base64Data, "base64");
         await RNFS.scanFile(downloadPath);
-        ToastAndroid.show(
-          `${fileType} saved to Downloads!`,
-          ToastAndroid.SHORT,
-        );
-        return true;
+
+        finalPath = downloadPath;
       } else {
         const iosPath = RNFS.DocumentDirectoryPath + "/" + fileName;
         await RNFS.writeFile(iosPath, base64Data, "base64");
-        Alert.alert("Success", "File saved to your app's Documents folder.");
-        return true;
+        finalPath = iosPath;
       }
-    } catch (e: any) {
-      console.log("Error saving to downloads:", e);
-      Alert.alert(`Failed to Download ${fileType}`, e?.message || String(e));
+
+      await notifee.displayNotification({
+        id: notificationId,
+        title: `${fileType} Download Complete`,
+        body: `Tap to open ${fileName}`,
+        data: { filePath: finalPath },
+        android: {
+          channelId,
+          pressAction: {
+            id: "default",
+          },
+          progress: undefined,
+          ongoing: false,
+          autoCancel: true,
+        },
+      });
+
+      return true;
+    } catch (e) {
+      console.log("Download error:", e);
+      Alert.alert("Error", "Download failed");
       return false;
     }
   };
@@ -291,14 +377,22 @@ const CartScreen: React.FC = ({ navigation }: any) => {
 
       cartItems.forEach((item: any) => {
         htmlContent += `
-                <tr>
-                  <td>${item.name}</td>
-                  <td style="text-align: center;">${item.qty || 0}</td>
-                  <td style="text-align: right;">₹${formatPriceClean(
-                    getCalculatedPrice(item),
-                  )}</td>
-                </tr>
-        `;
+    <tr>
+      <td>
+        <div style="display: flex; align-items: center;">
+          <img 
+            src="${item.image || "https://via.placeholder.com/50"}" 
+            style="width:40px; height:40px; object-fit:contain; margin-right:8px;"
+          />
+          <span>${item.name}</span>
+        </div>
+      </td>
+      <td style="text-align: center;">${item.qty || 0}</td>
+      <td style="text-align: right;">₹${formatPriceClean(
+        getCalculatedPrice(item),
+      )}</td>
+    </tr>
+  `;
       });
 
       htmlContent += `
@@ -355,7 +449,6 @@ const CartScreen: React.FC = ({ navigation }: any) => {
 
       // 1. Download to device storage directly
       await saveToDownloads(file.base64, fileName, "PDF");
-      Alert.alert("Success", "PDF downloaded successfully!"); // ← ADD THIS LINE
 
       // 2. Safely write to Cache for Share Provider to avoid Null URI scheme error
       const path = RNFS.CachesDirectoryPath + "/" + fileName;
@@ -445,7 +538,6 @@ const CartScreen: React.FC = ({ navigation }: any) => {
       const path = RNFS.CachesDirectoryPath + "/" + fileName;
       await RNFS.writeFile(path, wbout, "base64");
       await saveToDownloads(wbout, fileName, "Excel");
-      Alert.alert("Success", "Excel downloaded successfully to Downloads!");
 
       let filePath = path;
       if (!filePath.startsWith("file://")) {
@@ -509,7 +601,12 @@ const CartScreen: React.FC = ({ navigation }: any) => {
 
   const CartItem = ({ item }: { item: any }) => {
     return (
-      <View style={styles.card}>
+      <View
+        style={[
+          styles.card,
+          Number(item.current_stock) === 0 && { opacity: 0.5 },
+        ]}
+      >
         <View
           style={{
             alignItems: "center",
@@ -687,7 +784,10 @@ const CartScreen: React.FC = ({ navigation }: any) => {
           <View style={{ flexDirection: "row" }}>
             <TouchableOpacity
               style={[styles.headerBtn, exportingExcel && { opacity: 0.7 }]}
-              onPress={generateExcel}
+              onPress={() => {
+                console.log('Export Excel button pressed');
+                generateExcel();
+              }}
               disabled={exportingExcel}
             >
               {exportingExcel ? (

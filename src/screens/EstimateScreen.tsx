@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Feather from "@react-native-vector-icons/feather";
+// import Feather from "react-native-vector-icons/Feather";
 import { getEstimateApi } from "../services/api";
 import Styles from "../components/Styles";
 import Header from "../components/Header";
