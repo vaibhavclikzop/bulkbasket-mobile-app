@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,21 +11,21 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import Styles from "../components/Styles";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
-import { BASE_URL, getCompanyProfileApi } from "../services/api";
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Styles from '../components/Styles';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
+import { BASE_URL, getCompanyProfileApi } from '../services/api';
 
 const CompanyProfile = ({ navigation }: any) => {
-  const [brandName, setBrandName] = useState("");
-  const [legalName, setLegalName] = useState("");
-  const [gstin, setGstin] = useState("");
+  const [brandName, setBrandName] = useState('');
+  const [legalName, setLegalName] = useState('');
+  const [gstin, setGstin] = useState('');
   // const [fssai, setFssai] = useState("");
   // const [image, setImage] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [address, setAddress] = useState("");
+  const [address, setAddress] = useState('');
   const [gstVerified, setGstVerified] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
 
@@ -36,7 +36,7 @@ const CompanyProfile = ({ navigation }: any) => {
       const response = await getCompanyProfileApi();
 
       const data = response?.data;
-      console.log("Get Company Api Data :-------->", data);
+      console.log('Get Company Api Data :-------->', data);
 
       if (data?.gst && data.gst.length === 15) {
         setGstVerified(true);
@@ -44,13 +44,13 @@ const CompanyProfile = ({ navigation }: any) => {
         setGstVerified(false);
       }
 
-      setBrandName(data?.company_name || "");
-      setLegalName(data?.company_name || "");
-      setGstin(data?.gst || "");
+      setBrandName(data?.company_name || '');
+      setLegalName(data?.company_name || '');
+      setGstin(data?.gst || '');
       // setFssai(data?.fssai || "");
       setAddress(data?.company_address);
     } catch (error) {
-      console.log("Get Profile Error:", error);
+      console.log('Get Profile Error:', error);
     } finally {
       setInitialLoading(false);
     }
@@ -74,7 +74,7 @@ const CompanyProfile = ({ navigation }: any) => {
     //   return;
     // }
     if (!gstin) {
-      Alert.alert("Error", "Please enter GST number");
+      Alert.alert('Error', 'Please enter GST number');
       return;
     }
 
@@ -82,7 +82,7 @@ const CompanyProfile = ({ navigation }: any) => {
 
     if (cleanGstin.length !== 15) {
       Alert.alert(
-        "Invalid GST",
+        'Invalid GST',
         `GST number must be 15 characters. You have entered ${cleanGstin.length} characters.`,
       );
       return;
@@ -93,12 +93,12 @@ const CompanyProfile = ({ navigation }: any) => {
     //   return;
     // }
 
-    console.log("asdjsdkjasdklj", gstin);
+    console.log('asdjsdkjasdklj', gstin);
 
     try {
       setLoading(true);
 
-      const token = await AsyncStorage.getItem("userToken");
+      const token = await AsyncStorage.getItem('userToken');
 
       const response = await axios.post(
         `${BASE_URL}/check-gst`,
@@ -108,7 +108,7 @@ const CompanyProfile = ({ navigation }: any) => {
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            Accept: "application/json",
+            Accept: 'application/json',
           },
         },
       );
@@ -116,13 +116,13 @@ const CompanyProfile = ({ navigation }: any) => {
       const gstLegalName = response.data?.data?.data?.lgnm;
       const addr = response.data?.data?.data?.pradr?.addr;
 
-      const fullAddress = `${addr?.bno || ""}, ${addr?.flno || ""}, ${
-        addr?.st || ""
-      }, ${addr?.loc || ""}, ${addr?.dst || ""}, ${addr?.stcd || ""} - ${
-        addr?.pncd || ""
+      const fullAddress = `${addr?.bno || ''}, ${addr?.flno || ''}, ${
+        addr?.st || ''
+      }, ${addr?.loc || ''}, ${addr?.dst || ''}, ${addr?.stcd || ''} - ${
+        addr?.pncd || ''
       }`;
 
-      console.log("Full Address:", fullAddress);
+      console.log('Full Address:', fullAddress);
 
       setAddress(fullAddress);
 
@@ -131,11 +131,11 @@ const CompanyProfile = ({ navigation }: any) => {
         setBrandName(gstLegalName);
         setGstVerified(true);
       }
-      console.log("GST API Response:", response.data);
+      console.log('GST API Response:', response.data);
       // console.log("GST API Response Data:", response.data.data.data.lgnm);
     } catch (error: any) {
-      console.log("GST API Error:", error.response?.data || error.message);
-      Alert.alert("Error", error.message);
+      console.log('GST API Error:', error.response?.data || error.message);
+      Alert.alert('Error', error.message);
     } finally {
       setLoading(false);
     }
@@ -143,20 +143,20 @@ const CompanyProfile = ({ navigation }: any) => {
 
   const handleUpdateProfile = async () => {
     if (!gstVerified) {
-      Alert.alert("GST Required", "Please verify GST number first");
+      Alert.alert('GST Required', 'Please verify GST number first');
       return;
     }
 
     try {
       setLoading(true);
 
-      const token = await AsyncStorage.getItem("userToken");
+      const token = await AsyncStorage.getItem('userToken');
       // console.log("token", token);
       const formData = new FormData();
-      if (brandName) formData.append("name", brandName);
-      if (legalName) formData.append("brand_name", legalName);
-      if (gstin) formData.append("gst", gstin);
-      if (address) formData.append("address", address);
+      if (brandName) formData.append('name', brandName);
+      if (legalName) formData.append('brand_name', legalName);
+      if (gstin) formData.append('gst', gstin);
+      if (address) formData.append('address', address);
 
       const response = await axios.post(
         `${BASE_URL}/update-company`,
@@ -164,46 +164,46 @@ const CompanyProfile = ({ navigation }: any) => {
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-            "Content-Type": "multipart/form-data",
+            Accept: 'application/json',
+            'Content-Type': 'multipart/form-data',
           },
         },
       );
 
-      console.log("Update Profile Response:", response.data);
+      console.log('Update Profile Response:', response.data);
       getCompanyProfile();
       if (response.data.error === false) {
-        console.log("Profile Updated", response.data);
+        console.log('Profile Updated', response.data);
       } else {
-        console.log("Profile Update Failed", response.data);
+        console.log('Profile Update Failed', response.data);
       }
     } catch (error) {
-      console.log("Update Profile Error:", error);
+      console.log('Update Profile Error:', error);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top"]}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 20 : 0}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 20 : 0}
       >
         {/* Header */}
         <View
           style={[
             Styles.header,
             {
-              backgroundColor: "#fff",
+              backgroundColor: '#fff',
               padding: 16,
             },
           ]}
         >
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Image
-              source={require("../assets/Common/Back.png")}
+              source={require('../assets/Common/Back.png')}
               style={Styles.headerImage}
             />
           </TouchableOpacity>
@@ -219,7 +219,7 @@ const CompanyProfile = ({ navigation }: any) => {
           {/* Form */}
           <View style={styles.form}>
             <Text style={styles.menuText}>
-              {legalName ? legalName : "Enter the GST number for verification"}
+              {legalName ? legalName : 'Enter the GST number for verification'}
             </Text>
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Brand Name</Text>
@@ -237,7 +237,7 @@ const CompanyProfile = ({ navigation }: any) => {
               <TextInput
                 style={styles.input}
                 placeholder="The Gourmet Bistro"
-                placeholderTextColor="#64748B"
+                placeholderTextColor="#fff"
                 value={legalName}
                 onChangeText={setLegalName}
                 editable={false}
@@ -253,8 +253,8 @@ const CompanyProfile = ({ navigation }: any) => {
                   placeholder="07AAAZ9999A1Z5"
                   placeholderTextColor="#64748B"
                   value={gstin}
-                  onChangeText={(text) =>
-                    setGstin(text.replace(/\s/g, "").toUpperCase())
+                  onChangeText={text =>
+                    setGstin(text.replace(/\s/g, '').toUpperCase())
                   }
                   maxLength={15}
                   editable={!gstVerified}
@@ -262,7 +262,7 @@ const CompanyProfile = ({ navigation }: any) => {
                 {gstVerified && (
                   <View style={styles.verifiedBadge}>
                     <Image
-                      source={require("../assets/Verified.png")}
+                      source={require('../assets/Verified.png')}
                       style={{ height: 10, width: 10 }}
                       resizeMode="contain"
                     />
@@ -277,18 +277,18 @@ const CompanyProfile = ({ navigation }: any) => {
               <View
                 style={{
                   borderWidth: 1,
-                  borderColor: "#E5E7EB",
+                  borderColor: '#E5E7EB',
                   borderRadius: 10,
                   paddingHorizontal: 12,
-                  backgroundColor: "#FFF",
+                  backgroundColor: '#FFF',
                   padding: 14,
                 }}
               >
                 <Text
                   style={{
                     fontSize: 14,
-                    fontFamily: "DMSans-Regular",
-                    color: "#64748B",
+                    fontFamily: 'DMSans-Regular',
+                    color: '#64748B',
                   }}
                 >
                   {address}
@@ -303,18 +303,18 @@ const CompanyProfile = ({ navigation }: any) => {
             <TouchableOpacity
               style={[
                 styles.saveBtn,
-                (gstVerified || loading) && { backgroundColor: "#A0AEC0" },
+                // loading && { backgroundColor: '#A0AEC0' },
               ]}
               onPress={
                 gstVerified ? () => handleUpdateProfile() : handleVerifyGst
               }
-              disabled={loading || gstVerified}
+              disabled={loading}
             >
               {loading ? (
                 <ActivityIndicator color="#fff" size="small" />
               ) : (
                 <Text style={styles.saveText}>
-                  {gstVerified ? "Update GST" : "Add GST Number To Verify"}
+                  {gstVerified ? 'Update GST' : 'Add GST Number To Verify'}
                 </Text>
               )}
             </TouchableOpacity>
@@ -330,37 +330,37 @@ export default CompanyProfile;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F8FAFC",
+    backgroundColor: '#F8FAFC',
   },
   safeArea: {
     flex: 1,
-    backgroundColor: "#F8FAFC",
+    backgroundColor: '#F8FAFC',
   },
 
   subtitle: {
     fontSize: 13,
-    color: "#6B7280",
+    color: '#6B7280',
     marginTop: 4,
-    fontFamily: "DMSans-Regular",
+    fontFamily: 'DMSans-Regular',
   },
 
   member: {
     fontSize: 12,
-    color: "#487D44",
+    color: '#487D44',
     marginTop: 4,
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
   },
 
   /* Form */
   menuText: {
     fontSize: 16,
-    fontFamily: "DMSans-Bold",
-    color: "green",
-    alignSelf: "center",
-    width: "80%",
-    textAlign: "center",
+    fontFamily: 'DMSans-Bold',
+    color: 'green',
+    alignSelf: 'center',
+    width: '80%',
+    textAlign: 'center',
     marginVertical: 10,
-    textDecorationLine: "underline",
+    textDecorationLine: 'underline',
   },
 
   form: {
@@ -370,12 +370,12 @@ const styles = StyleSheet.create({
   },
 
   row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
 
   inputHalf: {
-    width: "48%",
+    width: '48%',
   },
 
   inputGroup: {
@@ -385,43 +385,43 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     marginBottom: 7,
-    color: "#374151",
-    fontFamily: "DMSans-Medium",
+    color: '#374151',
+    fontFamily: 'DMSans-Medium',
   },
 
   input: {
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: '#E5E7EB',
     borderRadius: 10,
     paddingHorizontal: 12,
     height: 44,
     fontSize: 14,
-    fontFamily: "DMSans-Regular",
-    backgroundColor: "#FFF",
+    fontFamily: 'DMSans-Regular',
+    backgroundColor: '#FFF',
   },
 
   verifiedInput: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: '#E5E7EB',
     borderRadius: 10,
     paddingHorizontal: 12,
     height: 44,
-    justifyContent: "space-between",
-    backgroundColor: "#F9FAFB",
+    justifyContent: 'space-between',
+    backgroundColor: '#F9FAFB',
   },
 
   flexInput: {
     flex: 1,
     fontSize: 13,
-    fontFamily: "DMSans-Regular",
+    fontFamily: 'DMSans-Regular',
   },
 
   verifiedBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#E6F4EA",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E6F4EA',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
@@ -429,51 +429,51 @@ const styles = StyleSheet.create({
 
   verifiedText: {
     fontSize: 11,
-    color: "#2E7D32",
+    color: '#2E7D32',
     marginLeft: 4,
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
   },
 
   note: {
     fontSize: 12,
-    color: "#000000",
+    color: '#000000',
     marginTop: 6,
-    fontFamily: "DMSans-Regular",
+    fontFamily: 'DMSans-Regular',
   },
 
   /* Save Button */
   saveBtn: {
-    backgroundColor: "#487D44",
+    backgroundColor: '#487D44',
     marginTop: 22,
     paddingVertical: 14,
     borderRadius: 10,
-    alignItems: "center",
+    alignItems: 'center',
   },
 
   saveText: {
-    color: "#fff",
+    color: '#fff',
     fontSize: 15,
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
   },
   loaderContainer: {
-    position: "absolute",
+    position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.3)",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
     zIndex: 999,
   },
   imageLoader: {
-    position: "absolute",
+    position: 'absolute',
     width: 80,
     height: 80,
     borderRadius: 40,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#F3F4F6",
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F3F4F6',
     zIndex: 1,
   },
 });

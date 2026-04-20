@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -8,53 +8,53 @@ import {
   Image,
   TextInput,
   Alert,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import Styles from "../components/Styles";
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Styles from '../components/Styles';
 
 const PaymentOptionsScreen = ({ navigation }: any) => {
   const [selectedCard, setSelectedCard] = useState(1);
   const [showAddCard, setShowAddCard] = useState(true);
   const [saveCard, setSaveCard] = useState(false);
-  const [selectedMethod, setSelectedMethod] = useState("");
-  const [cardNumber, setCardNumber] = useState("");
-  const [expiry, setExpiry] = useState("");
-  const [cvv, setCvv] = useState("");
+  const [selectedMethod, setSelectedMethod] = useState('');
+  const [cardNumber, setCardNumber] = useState('');
+  const [expiry, setExpiry] = useState('');
+  const [cvv, setCvv] = useState('');
 
   const cards = [
     {
       id: 1,
-      bank: "Axis Bank Ltd.",
-      number: "**** 5674",
-      offer: "10% Instant Discount",
-      brand: require("../assets/Payment/visa.png"),
+      bank: 'Axis Bank Ltd.',
+      number: '**** 5674',
+      offer: '10% Instant Discount',
+      brand: require('../assets/Payment/visa.png'),
     },
     {
       id: 2,
-      bank: "CitiBank",
-      number: "**** 2980",
-      brand: require("../assets/Payment/mastercard.png"),
-      offer: " ",
+      bank: 'CitiBank',
+      number: '**** 2980',
+      brand: require('../assets/Payment/mastercard.png'),
+      offer: ' ',
     },
     {
       id: 3,
-      bank: "State Bank of India",
-      number: "**** 2652",
-      brand: require("../assets/Payment/rupay.png"),
-      offer: " ",
+      bank: 'State Bank of India',
+      number: '**** 2652',
+      brand: require('../assets/Payment/rupay.png'),
+      offer: ' ',
     },
   ];
 
   const formatCardNumber = (text: string) => {
     return text
-      .replace(/\D/g, "")
+      .replace(/\D/g, '')
       .slice(0, 16)
-      .replace(/(.{4})/g, "$1 ")
+      .replace(/(.{4})/g, '$1 ')
       .trim();
   };
 
   const formatExpiry = (text: string) => {
-    const clean = text.replace(/\D/g, "").slice(0, 4);
+    const clean = text.replace(/\D/g, '').slice(0, 4);
 
     if (clean.length >= 3) {
       return `${clean.slice(0, 2)}/${clean.slice(2)}`;
@@ -63,22 +63,22 @@ const PaymentOptionsScreen = ({ navigation }: any) => {
   };
 
   const validateCard = () => {
-    const cleanCard = cardNumber.replace(/\s/g, "");
+    const cleanCard = cardNumber.replace(/\s/g, '');
 
     if (cleanCard.length !== 16) {
-      Alert.alert("Enter valid 16-digit card number");
+      Alert.alert('Enter valid 16-digit card number');
       return false;
     }
 
-    if (!expiry.includes("/")) {
-      Alert.alert("Enter valid expiry (MM/YY)");
+    if (!expiry.includes('/')) {
+      Alert.alert('Enter valid expiry (MM/YY)');
       return false;
     }
 
-    const [month, year] = expiry.split("/");
+    const [month, year] = expiry.split('/');
 
     if (Number(month) < 1 || Number(month) > 12) {
-      Alert.alert("Invalid month");
+      Alert.alert('Invalid month');
       return false;
     }
 
@@ -88,12 +88,12 @@ const PaymentOptionsScreen = ({ navigation }: any) => {
     const exp = new Date(expYear, Number(month) - 1);
 
     if (exp < current) {
-      Alert.alert("Card expired");
+      Alert.alert('Card expired');
       return false;
     }
 
     if (cvv.length < 3) {
-      Alert.alert("Invalid CVV");
+      Alert.alert('Invalid CVV');
       return false;
     }
 
@@ -109,7 +109,7 @@ const PaymentOptionsScreen = ({ navigation }: any) => {
         style={[styles.methodCard, selected && styles.activeCard]}
         onPress={() => setSelectedMethod(title)}
       >
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           {/* <View style={styles.methodIcon}> */}
           <View style={[styles.iconBox, selected && styles.iconActive]}>
             <Image
@@ -117,8 +117,8 @@ const PaymentOptionsScreen = ({ navigation }: any) => {
               style={{
                 height: 20,
                 width: 20,
-                resizeMode: "contain",
-                tintColor: selected ? "#fff" : "#000",
+                resizeMode: 'contain',
+                tintColor: selected ? '#fff' : '#000',
               }}
             />
           </View>
@@ -137,13 +137,13 @@ const PaymentOptionsScreen = ({ navigation }: any) => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top"]}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.container}>
         {/* Header */}
-        <View style={[Styles.header, { padding: 16, backgroundColor: "#fff" }]}>
+        <View style={[Styles.header, { padding: 16, backgroundColor: '#fff' }]}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Image
-              source={require("../assets/Common/Back.png")}
+              source={require('../assets/Common/Back.png')}
               style={Styles.headerImage}
             />
           </TouchableOpacity>
@@ -155,7 +155,7 @@ const PaymentOptionsScreen = ({ navigation }: any) => {
           {/* Saved Cards */}
           <Text style={styles.sectionTitle}>Saved Cards</Text>
 
-          {cards.map((item) => {
+          {cards.map(item => {
             const selected = selectedCard === item.id;
 
             return (
@@ -164,7 +164,7 @@ const PaymentOptionsScreen = ({ navigation }: any) => {
                 style={[styles.cardItem, selected && styles.activeCard]}
                 onPress={() => setSelectedCard(item.id)}
               >
-                <View style={{ flexDirection: "row" }}>
+                <View style={{ flexDirection: 'row' }}>
                   <View
                     style={[
                       styles.radioOuter,
@@ -186,7 +186,7 @@ const PaymentOptionsScreen = ({ navigation }: any) => {
                     )}
                   </View>
                 </View>
-                <View style={{ alignItems: "flex-end" }}>
+                <View style={{ alignItems: 'flex-end' }}>
                   <Text style={styles.offerText}>1 Offer</Text>
                   <Image source={item.brand} style={styles.brand} />
                 </View>
@@ -200,8 +200,8 @@ const PaymentOptionsScreen = ({ navigation }: any) => {
             style={styles.addCardBtn}
           >
             <Image
-              source={require("../assets/Common/plus.png")}
-              style={[Styles.headerImage, { marginTop: 2, tintColor: "#fff" }]}
+              source={require('../assets/Common/plus.png')}
+              style={[Styles.headerImage, { marginTop: 2, tintColor: '#fff' }]}
             />
             <Text style={styles.addCardText}>Add New Card</Text>
           </TouchableOpacity>
@@ -210,7 +210,7 @@ const PaymentOptionsScreen = ({ navigation }: any) => {
             <View style={styles.addCardContainer}>
               <View style={styles.cardHeader}>
                 <Image
-                  source={require("../assets/icons/card.png")}
+                  source={require('../assets/icons/card.png')}
                   style={{ marginTop: 2, height: 18, width: 18 }}
                 />
                 <Text style={styles.cardHeaderText}>Credit/Debit Card</Text>
@@ -223,36 +223,36 @@ const PaymentOptionsScreen = ({ navigation }: any) => {
                   style={styles.input}
                   placeholderTextColor="#94A3B8"
                   value={cardNumber}
-                  onChangeText={(text) => setCardNumber(formatCardNumber(text))}
+                  onChangeText={text => setCardNumber(formatCardNumber(text))}
                   keyboardType="numeric"
                   maxLength={19}
                 />
                 <Image
-                  source={require("../assets/Payment/visa.png")}
+                  source={require('../assets/Payment/visa.png')}
                   style={styles.brand}
                 />
               </View>
 
               <View
                 style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
                 }}
               >
-                <View style={{ width: "48%" }}>
+                <View style={{ width: '48%' }}>
                   <Text style={styles.inputLabel}>Expiry</Text>
                   <TextInput
                     placeholder="09/32"
                     style={styles.inputField}
                     placeholderTextColor="#94A3B8"
                     value={expiry}
-                    onChangeText={(text) => setExpiry(formatExpiry(text))}
+                    onChangeText={text => setExpiry(formatExpiry(text))}
                     keyboardType="numeric"
                     maxLength={5}
                   />
                 </View>
 
-                <View style={{ width: "48%" }}>
+                <View style={{ width: '48%' }}>
                   <Text style={styles.inputLabel}>CVV</Text>
                   <TextInput
                     placeholder="***"
@@ -271,7 +271,7 @@ const PaymentOptionsScreen = ({ navigation }: any) => {
                 <TouchableOpacity onPress={() => setSaveCard(!saveCard)}>
                   {saveCard ? (
                     <Image
-                      source={require("../assets/Common/Tick.png")}
+                      source={require('../assets/Common/Tick.png')}
                       style={styles.checkIcon}
                     />
                   ) : (
@@ -293,19 +293,19 @@ const PaymentOptionsScreen = ({ navigation }: any) => {
           <Text style={styles.sectionTitle}>Other Payment Methods</Text>
 
           <PaymentMethod
-            image={require("../assets/AddWithdrawMony/upi.png")}
+            image={require('../assets/AddWithdrawMony/upi.png')}
             title="UPI"
             desc="GPay, PhonePe, Paytm & Others"
           />
 
           <PaymentMethod
-            image={require("../assets/AddWithdrawMony/card.png")}
+            image={require('../assets/AddWithdrawMony/card.png')}
             title="Business Cards"
             desc="Visa, Mastercard, Amex"
           />
 
           <PaymentMethod
-            image={require("../assets/AddWithdrawMony/bank.png")}
+            image={require('../assets/AddWithdrawMony/bank.png')}
             title="Net Banking"
             desc="All Major Indian Banks"
           />
@@ -320,7 +320,7 @@ export default PaymentOptionsScreen;
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F5F6F8",
+    backgroundColor: '#F5F6F8',
   },
 
   container: {
@@ -328,47 +328,47 @@ const styles = StyleSheet.create({
   },
   offerText: {
     fontSize: 10,
-    fontFamily: "DMSans-Regular",
+    fontFamily: 'DMSans-Regular',
   },
   sectionTitle: {
     fontSize: 18,
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
     marginTop: 16,
     marginBottom: 10,
     paddingHorizontal: 16,
   },
 
   cardItem: {
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     marginHorizontal: 16,
     padding: 14,
     borderRadius: 12,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    borderColor: '#E5E7EB',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   radioOuter: {
     width: 18,
     height: 18,
     borderRadius: 9,
     borderWidth: 1.5,
-    borderColor: "#D1D5DB",
-    justifyContent: "center",
-    alignItems: "center",
+    borderColor: '#D1D5DB',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   radioOuterActive: {
-    borderColor: "#487D44",
+    borderColor: '#487D44',
   },
 
   radioInner: {
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: "#487D44",
+    backgroundColor: '#487D44',
   },
 
   // activeCard: {
@@ -378,26 +378,26 @@ const styles = StyleSheet.create({
 
   bank: {
     fontSize: 15,
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
   },
 
   account: {
     fontSize: 13,
-    color: "#64748B",
-    fontFamily: "DMSans-Regular",
+    color: '#64748B',
+    fontFamily: 'DMSans-Regular',
   },
 
   offer: {
     fontSize: 12,
-    color: "#16A34A",
+    color: '#16A34A',
     marginTop: 4,
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
   },
 
   brand: {
     width: 22,
     height: 22,
-    resizeMode: "contain",
+    resizeMode: 'contain',
   },
 
   radio: {
@@ -405,26 +405,26 @@ const styles = StyleSheet.create({
     height: 18,
     borderRadius: 10,
     borderWidth: 1.5,
-    borderColor: "#CBD5E1",
+    borderColor: '#CBD5E1',
     marginTop: 2,
   },
 
   radioActive: {
-    backgroundColor: "#487D44",
-    borderColor: "#487D44",
+    backgroundColor: '#487D44',
+    borderColor: '#487D44',
     marginTop: 2,
   },
 
   addCardBtn: {
-    backgroundColor: "#487D44",
+    backgroundColor: '#487D44',
     marginHorizontal: 16,
     borderRadius: 12,
     paddingVertical: 14,
     marginTop: 10,
     marginBottom: 20,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   checkIcon: {
     height: 16,
@@ -436,13 +436,13 @@ const styles = StyleSheet.create({
     width: 20,
     borderRadius: 5,
     borderWidth: 1,
-    borderColor: "#ADAEBC",
+    borderColor: '#ADAEBC',
   },
   addCardText: {
-    color: "#fff",
+    color: '#fff',
     marginLeft: 8,
     fontSize: 16,
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
   },
 
   // methodCard: {
@@ -463,67 +463,67 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 8,
-    backgroundColor: "#F1F5F9",
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginRight: 10,
   },
   iconBox: {
     width: 40,
     height: 40,
     borderRadius: 10,
-    backgroundColor: "#F1F5F9",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: '#F1F5F9',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   iconActive: {
-    backgroundColor: "#487D44",
+    backgroundColor: '#487D44',
   },
 
   methodTitle: {
     fontSize: 16,
-    fontFamily: "DMSans-SemiBold",
+    fontFamily: 'DMSans-SemiBold',
   },
 
   methodDesc: {
     fontSize: 12,
-    color: "#64748B",
-    fontFamily: "DMSans-Regular",
+    color: '#64748B',
+    fontFamily: 'DMSans-Regular',
   },
   addCardContainer: {
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     marginHorizontal: 16,
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: '#E5E7EB',
     marginBottom: 20,
   },
 
   cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 14,
   },
 
   cardHeaderText: {
     marginLeft: 8,
     fontSize: 16,
-    fontFamily: "DMSans-SemiBold",
+    fontFamily: 'DMSans-SemiBold',
   },
 
   inputLabel: {
     fontSize: 14,
     marginBottom: 6,
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
   },
 
   inputBox: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: '#E5E7EB',
     borderRadius: 8,
     paddingHorizontal: 10,
     marginBottom: 12,
@@ -532,59 +532,59 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     height: 44,
-    fontFamily: "DMSans-Regular",
+    fontFamily: 'DMSans-Regular',
   },
 
   inputField: {
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: '#E5E7EB',
     borderRadius: 8,
     height: 44,
     paddingHorizontal: 10,
-    fontFamily: "DMSans-Regular",
+    fontFamily: 'DMSans-Regular',
     marginBottom: 12,
   },
 
   checkboxRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 14,
   },
 
   checkboxText: {
     marginLeft: 6,
     fontSize: 12,
-    color: "#64748B",
-    fontFamily: "DMSans-Regular",
+    color: '#64748B',
+    fontFamily: 'DMSans-Regular',
   },
 
   saveCardBtn: {
-    backgroundColor: "#487D44",
+    backgroundColor: '#487D44',
     borderRadius: 10,
     paddingVertical: 14,
-    alignItems: "center",
+    alignItems: 'center',
   },
 
   saveCardText: {
-    color: "#fff",
+    color: '#fff',
     fontSize: 16,
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
   },
   methodCard: {
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     marginHorizontal: 16,
     marginBottom: 12,
     padding: 16,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    borderColor: '#E5E7EB',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
 
   activeCard: {
-    borderColor: "#487D44",
-    backgroundColor: "#F6FBF6",
+    borderColor: '#487D44',
+    backgroundColor: '#F6FBF6',
   },
 });

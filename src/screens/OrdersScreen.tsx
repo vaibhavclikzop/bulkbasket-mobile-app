@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -7,9 +7,9 @@ import {
   Image,
   ActivityIndicator,
   FlatList,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { getOrderApi } from "../services/api";
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { getOrderApi } from '../services/api';
 
 /* ================= TYPES ================= */
 
@@ -22,25 +22,26 @@ type Order = {
   order_status: string;
   payment_status: string;
   image?: string; // optional image from API
+  order_id: string;
 };
 
 /* ================= COMPONENT ================= */
 
 const OrdersScreen = ({ navigation }: any) => {
-  const fallbackImg = require("../assets/Common/Order.png");
+  const fallbackImg = require('../assets/Common/Order.png');
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   const formatDateTime = (dateString: string) => {
-    const safeDate = dateString.replace(" ", "T");
+    const safeDate = dateString.replace(' ', 'T');
     const date = new Date(safeDate);
 
-    return date.toLocaleString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      hour: "numeric",
-      minute: "2-digit",
+    return date.toLocaleString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      hour: 'numeric',
+      minute: '2-digit',
       hour12: true,
     });
   };
@@ -50,13 +51,11 @@ const OrdersScreen = ({ navigation }: any) => {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-
       const res = await getOrderApi();
-      console.log("Orders:", res);
-
+      console.log('Orders:', res);
       setOrders(res?.data || []);
     } catch (error) {
-      console.log("Order Error:", error);
+      console.log('Order Error:', error);
     } finally {
       setLoading(false);
     }
@@ -69,15 +68,15 @@ const OrdersScreen = ({ navigation }: any) => {
   /* ================= HELPERS ================= */
 
   const getStatusText = (status: string) => {
-    if (status === "pending") return "Order Pending";
-    if (status === "complete") return "Order Delivered";
+    if (status === 'pending') return 'Order Pending';
+    if (status === 'complete') return 'Order Delivered';
     return status;
   };
 
   const getStatusColor = (status: string) => {
-    if (status === "pending") return "#FF9933";
-    if (status === "complete") return "#2E7D32";
-    return "#64748B";
+    if (status === 'pending') return '#FF9933';
+    if (status === 'complete') return '#2E7D32';
+    return '#64748B';
   };
 
   /* ================= IMAGE COMPONENT ================= */
@@ -105,8 +104,8 @@ const OrdersScreen = ({ navigation }: any) => {
       <TouchableOpacity
         activeOpacity={0.85}
         onPress={() =>
-          navigation.navigate("OrdersDetailScreen", {
-            order_id: item.id,
+          navigation.navigate('OrdersDetailScreen', {
+            order_idd: item.id,
           })
         }
       >
@@ -124,11 +123,11 @@ const OrdersScreen = ({ navigation }: any) => {
                 {getStatusText(item.order_status)}
               </Text>
 
-              <Text style={styles.invoice}>Invoice: {item.invoice_no}</Text>
+              <Text style={styles.invoice}>Order Id :- {item.order_id}</Text>
               <View
                 style={{
                   height: 1,
-                  backgroundColor: "#E5E7EB",
+                  backgroundColor: '#E5E7EB',
                   marginVertical: 6,
                 }}
               />
@@ -147,12 +146,12 @@ const OrdersScreen = ({ navigation }: any) => {
   /* ================= UI ================= */
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top"]}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.container}>
         {/* Header */}
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Image
-            source={require("../assets/Common/Back.png")}
+            source={require('../assets/Common/Back.png')}
             style={styles.backIcon}
             resizeMode="contain"
           />
@@ -170,7 +169,7 @@ const OrdersScreen = ({ navigation }: any) => {
         ) : (
           <FlatList
             data={orders}
-            keyExtractor={(item) => String(item.id)}
+            keyExtractor={item => String(item.id)}
             renderItem={({ item }) => <OrderCard item={item} />}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: 30 }}
@@ -180,7 +179,6 @@ const OrdersScreen = ({ navigation }: any) => {
           />
         )}
 
-        {/* HELP */}
         {/* {!loading && orders.length > 0 && (
           <>
             <Text style={styles.sectionTitle}>Need help with your order?</Text>
@@ -220,7 +218,7 @@ export default OrdersScreen;
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F5F6F8",
+    backgroundColor: '#F5F6F8',
   },
 
   container: {
@@ -236,96 +234,95 @@ const styles = StyleSheet.create({
 
   title: {
     fontSize: 18,
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
     marginVertical: 15,
   },
 
   card: {
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     borderRadius: 14,
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: '#E5E7EB',
   },
 
   cardHeader: {
-    flexDirection: "row",
+    flexDirection: 'row',
     padding: 14,
-    alignItems: "center",
+    alignItems: 'center',
   },
 
   productImg: {
     width: 65,
     height: 65,
     borderRadius: 8,
-    backgroundColor: "#F3F4F6",
+    backgroundColor: '#F3F4F6',
   },
 
   status: {
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
     fontSize: 15,
   },
 
   invoice: {
     fontSize: 12,
-    color: "#374151",
+    color: '#374151',
     marginTop: 2,
-    fontFamily: "DMSans-Regular",
+    fontFamily: 'DMSans-Regular',
   },
 
   date: {
     fontSize: 11,
-    color: "#64748B",
+    color: '#64748B',
     marginVertical: 2,
-    fontFamily: "DMSans-Regular",
+    fontFamily: 'DMSans-Regular',
   },
 
   price: {
-    fontFamily: "DMSans-SemiBold",
-    // marginTop: 4,
+    fontFamily: 'DMSans-SemiBold',
     fontSize: 14,
   },
 
   sectionTitle: {
     fontSize: 16,
-    fontFamily: "DMSans-SemiBold",
+    fontFamily: 'DMSans-SemiBold',
     marginTop: 10,
   },
 
   chatBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
     padding: 14,
     borderRadius: 10,
     marginTop: 10,
   },
 
   chatIcon: {
-    backgroundColor: "#F8F9FD",
+    backgroundColor: '#F8F9FD',
     padding: 10,
     borderRadius: 10,
   },
 
   chatTitle: {
-    fontFamily: "DMSans-SemiBold",
+    fontFamily: 'DMSans-SemiBold',
   },
 
   chatSub: {
     fontSize: 12,
-    color: "#777",
+    color: '#777',
   },
 
   arrow: {
     height: 9,
     width: 9,
-    marginLeft: "auto",
+    marginLeft: 'auto',
   },
 
   emptyText: {
-    textAlign: "center",
+    textAlign: 'center',
     marginTop: 40,
-    color: "#64748B",
-    fontFamily: "DMSans-Regular",
+    color: '#64748B',
+    fontFamily: 'DMSans-Regular',
   },
 });

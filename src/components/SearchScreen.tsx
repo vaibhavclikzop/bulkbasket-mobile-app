@@ -151,6 +151,7 @@ const SearchScreen = ({ navigation }: any) => {
     debouncedUpdateCartApi(productId, finalQty);
   };
 
+
   return (
     <>
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
@@ -251,8 +252,8 @@ const SearchScreen = ({ navigation }: any) => {
                     cart_status={item.cart_status}
                     cartQty={item.cart?.qty}
                     onUpdateQty={newQty => updateQty(item.id, newQty)}
-                    updatingQty={updatingQtyId === item.id}
-                    wishlist_status={item.wishlist_status} // ✅ ADD THIS
+                    updatingQty={updatingQtyId === item.id || addingToCartId === item.id}
+                    wishlist_status={item.wishlist_status}
                     onWishlistPress={() => toggleWishlist(item)}
                     onTierAddPress={(tierQty: number) => {
                       if (item.cart_status) {

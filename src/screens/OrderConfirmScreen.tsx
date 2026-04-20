@@ -1,6 +1,6 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function OrderConfirmScreen({ navigation }: any) {
   const [showDownload, setShowDownload] = useState(false);
@@ -13,11 +13,11 @@ export default function OrderConfirmScreen({ navigation }: any) {
         onPress={() => navigation.goBack()}
       >
         <Image
-          source={require("../assets/Common/Back.png")}
+          source={require('../assets/Common/Back.png')}
           style={{
             height: 16,
             width: 16,
-            resizeMode: "contain",
+            resizeMode: 'contain',
           }}
         />
         <Text style={styles.headerTitle}>Payment Success</Text>
@@ -37,8 +37,8 @@ export default function OrderConfirmScreen({ navigation }: any) {
                 </View>
             </View> */}
       <Image
-        source={require("../assets/Common/TickFill.png")}
-        style={{ height: 140, width: 140, alignSelf: "center" }}
+        source={require('../assets/Common/TickFill.png')}
+        style={{ height: 140, width: 140, alignSelf: 'center' }}
       />
 
       {/* Title */}
@@ -70,16 +70,16 @@ export default function OrderConfirmScreen({ navigation }: any) {
       {/* Buttons */}
       <View style={styles.topButtons}>
         <TouchableOpacity
-          onPress={() => navigation.navigate("OrderSummery")}
+          onPress={() => navigation.navigate('OrderSummery')}
           style={styles.outlineBtn}
         >
           <Text style={styles.outlineText}>Order Summary</Text>
           <Image
-            source={require("../assets/Common/ArrowRight.png")}
+            source={require('../assets/Common/ArrowRight.png')}
             style={{
               height: 10,
               width: 10,
-              resizeMode: "contain",
+              resizeMode: 'contain',
             }}
           />
         </TouchableOpacity>
@@ -90,11 +90,11 @@ export default function OrderConfirmScreen({ navigation }: any) {
         >
           <Text style={styles.outlineText}>Download Challan</Text>
           <Image
-            source={require("../assets/Common/download.png")}
+            source={require('../assets/Common/download.png')}
             style={{
               height: 14,
               width: 14,
-              resizeMode: "contain",
+              resizeMode: 'contain',
             }}
           />
         </TouchableOpacity>
@@ -108,13 +108,13 @@ export default function OrderConfirmScreen({ navigation }: any) {
               styles.dropdownItem,
               {
                 borderBottomWidth: 1,
-                borderBottomColor: "#E5E7EB",
+                borderBottomColor: '#E5E7EB',
                 marginBottom: 2,
               },
             ]}
           >
             <Image
-              source={require("../assets/Common/SavePdf.png")}
+              source={require('../assets/Common/SavePdf.png')}
               style={{ height: 18, width: 18 }}
               resizeMode="contain"
             />
@@ -123,7 +123,7 @@ export default function OrderConfirmScreen({ navigation }: any) {
 
           <TouchableOpacity style={[styles.dropdownItem, {}]}>
             <Image
-              source={require("../assets/Common/Export.png")}
+              source={require('../assets/Common/Export.png')}
               style={{ height: 18, width: 18 }}
             />
             <Text style={styles.dropdownText}>Export Excel</Text>
@@ -134,7 +134,7 @@ export default function OrderConfirmScreen({ navigation }: any) {
       {/* Bottom Buttons */}
       <View style={styles.bottomButtons}>
         <TouchableOpacity
-          onPress={() => navigation.navigate("TrackOrder")}
+          onPress={() => navigation.navigate('TrackOrder')}
           style={styles.trackBtn}
         >
           <Text numberOfLines={1} style={styles.trackText}>
@@ -142,7 +142,10 @@ export default function OrderConfirmScreen({ navigation }: any) {
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.shopBtn}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Home')}
+          style={styles.shopBtn}
+        >
           <Text numberOfLines={1} style={styles.shopText}>
             Continue Shopping
           </Text>
@@ -155,146 +158,146 @@ export default function OrderConfirmScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F8F9FD",
+    backgroundColor: '#F8F9FD',
     paddingHorizontal: 20,
   },
 
   header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     // marginTop: 20,
     marginBottom: 20,
   },
 
   headerTitle: {
     fontSize: 18,
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
   },
 
   title: {
     fontSize: 22,
-    fontFamily: "DMSans-SemiBold",
-    textAlign: "center",
+    fontFamily: 'DMSans-SemiBold',
+    textAlign: 'center',
     marginTop: 10,
   },
 
   subtitle: {
-    textAlign: "center",
-    color: "#6B7280",
-    fontFamily: "DMSans-Regular",
+    textAlign: 'center',
+    color: '#6B7280',
+    fontFamily: 'DMSans-Regular',
     marginTop: 8,
     lineHeight: 20,
   },
 
   card: {
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     borderRadius: 12,
     padding: 18,
     marginTop: 25,
     borderWidth: 1,
-    borderColor: "#D2D6DB",
+    borderColor: '#D2D6DB',
   },
 
   row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginBottom: 12,
   },
 
   label: {
-    color: "#6B7280",
-    fontFamily: "DMSans-Medium",
+    color: '#6B7280',
+    fontFamily: 'DMSans-Medium',
     fontSize: 14,
   },
 
   value: {
-    color: "#64748B",
+    color: '#64748B',
     fontSize: 12,
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
   },
 
   topButtons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginTop: 20,
   },
 
   outlineBtn: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: '#E5E7EB',
     padding: 14,
 
     borderRadius: 10,
-    width: "48%",
-    justifyContent: "space-between",
-    backgroundColor: "#FFFFFF",
+    width: '48%',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
   },
 
   outlineText: {
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
     fontSize: 12,
   },
 
   dropdown: {
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     borderRadius: 10,
     marginTop: 10,
     padding: 10,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
-    width: "50%",
-    alignSelf: "flex-end",
+    borderColor: '#E5E7EB',
+    width: '50%',
+    alignSelf: 'flex-end',
   },
 
   dropdownItem: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: 7,
     gap: 9,
   },
 
   dropdownText: {
     marginLeft: 10,
-    fontFamily: "DMSans-Light",
+    fontFamily: 'DMSans-Light',
     fontSize: 13,
   },
 
   bottomButtons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginTop: 30,
   },
 
   trackBtn: {
-    width: "48%",
+    width: '48%',
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: '#E5E7EB',
     padding: 14,
     borderRadius: 10,
-    alignItems: "center",
-    backgroundColor: "#fff",
+    alignItems: 'center',
+    backgroundColor: '#fff',
     height: 48,
   },
 
   trackText: {
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
     fontSize: 12,
   },
 
   shopBtn: {
-    width: "48%",
-    backgroundColor: "#2E7D32",
+    width: '48%',
+    backgroundColor: '#2E7D32',
     padding: 14,
     borderRadius: 10,
-    alignItems: "center",
+    alignItems: 'center',
   },
 
   shopText: {
-    color: "#fff",
-    fontFamily: "DMSans-Medium",
+    color: '#fff',
+    fontFamily: 'DMSans-Medium',
     fontSize: 12,
   },
 });

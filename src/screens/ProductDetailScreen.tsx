@@ -13,6 +13,8 @@ import {
   Modal,
   Platform,
   Vibration,
+  ToastAndroid,
+  Alert,
 } from 'react-native';
 import { debounce } from 'lodash';
 import Carousel from 'react-native-reanimated-carousel';
@@ -30,7 +32,7 @@ import {
 } from '../services/api';
 
 const ProductDetailScreen = ({ navigation, route }: any) => {
-  const [quantity, setQuantity] = React.useState(0);
+  const [quantity, setQuantity] = React.useState<number | string>(0);
   const [liked, setLiked] = useState(false);
   const [productDetail, setProductDetail] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -378,22 +380,19 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
           }
         >
           {/* PRODUCT IMAGE */}
-          <View style={[styles.imageSection, stock === 0 && { opacity: 0.5 }]}>
+          <View style={styles.imageSection}>
             <View>
               <Carousel
                 width={width}
                 height={250}
                 data={imagesData}
                 loop={hasMultipleImages}
-                scrollEnabled={hasMultipleImages}
+                enabled={hasMultipleImages}
                 pagingEnabled={hasMultipleImages}
                 autoPlay={hasMultipleImages}
                 autoPlayInterval={3000}
                 scrollAnimationDuration={800}
                 onSnapToItem={index => setActiveIndex(index)}
-                panGestureHandlerProps={{
-                  activeOffsetX: [-10, 10],
-                }}
                 renderItem={({ item }: { item: any }) => (
                   <TouchableOpacity
                     activeOpacity={0.9}
@@ -409,7 +408,7 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
                           ? { uri: item.image }
                           : require('../assets/icons/sicon2.png')
                       }
-                      style={styles.productImage}
+                      style={[styles.productImage, stock === 0 && { opacity: 0.5 }]}
                       resizeMode="contain"
                     />
                   </TouchableOpacity>
@@ -447,8 +446,8 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
             </TouchableOpacity>
           </View>
 
-          <View style={[styles.infoCard, stock === 0 && { opacity: 0.5 }]}>
-            <View style={styles.productRow}>
+          <View style={styles.infoCard}>
+            <View style={[styles.productRow, stock === 0 && { opacity: 0.6 }]}>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.title, { width: '90%' }]}>
                   {capitalizeWords(productDetail?.product?.name || '')}
@@ -501,7 +500,7 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
                               disabled={stock === 0}
                               onPress={() => {
                                 Vibration.vibrate(60);
-                                if (quantity > 0) {
+                                if (Number(quantity) > 0) {
                                   updateQty(tier.qty);
                                 } else {
                                   handleAddToCart(tier.qty);
@@ -591,6 +590,7 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
                     <TextInput
                       style={styles.qtyNumber}
                       keyboardType="numeric"
+                      maxLength={5}
                       value={
                         quantity !== undefined && quantity !== null
                           ? String(quantity)
@@ -599,10 +599,35 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
                       editable={!updatingQty}
                       onChangeText={text => {
                         const val = text.replace(/[^0-9]/g, '');
-                        if (val === '') {
-                          updateQty('');
+                        if (val !== '') {
+                          let num = Number(val);
+                          if (num > 10000) {
+                            num = 10000;
+                            if (Platform.OS === 'android') {
+                              ToastAndroid.show(
+                                'Maximum quantity is 10,000',
+                                ToastAndroid.SHORT,
+                              );
+                            } else {
+                              Alert.alert(
+                                'Maximum Limit',
+                                'Maximum quantity is 10,000',
+                              );
+                            }
+                          }
+                          updateQty(num);
                         } else {
-                          updateQty(Number(val));
+                          updateQty('');
+                        }
+                      }}
+                      onBlur={() => {
+                        if (
+                          quantity === undefined ||
+                          quantity === null ||
+                          quantity === '' ||
+                          Number(quantity) === 0
+                        ) {
+                          updateQty(1);
                         }
                       }}
                     />
@@ -789,7 +814,7 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
               defaultIndex={activeIndex}
               loop={hasMultipleImages}
               pagingEnabled={true}
-              scrollEnabled={true}
+              enabled={true}
               onSnapToItem={index => setActiveIndex(index)}
               renderItem={({ item }: { item: any }) => (
                 <View

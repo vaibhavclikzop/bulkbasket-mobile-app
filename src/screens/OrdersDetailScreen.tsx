@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -7,28 +7,28 @@ import {
   Image,
   ActivityIndicator,
   FlatList,
-} from "react-native";
+} from 'react-native';
 
-import { SafeAreaView } from "react-native-safe-area-context";
-import { getOrderDetailsApi } from "../services/api";
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { getOrderDetailsApi } from '../services/api';
 
 const OrdersDetailScreen = ({ navigation, route }: any) => {
-  const { order_id } = route.params;
+  const { order_idd } = route.params;
 
-  const fallbackImg = require("../assets/Common/Order.png");
+  const fallbackImg = require('../assets/Common/Order.png');
 
   const [loading, setLoading] = useState(true);
   const [order, setOrder] = useState<any>(null);
 
   const formatDateTime = (dateString: string) => {
-    const safeDate = dateString.replace(" ", "T");
+    const safeDate = dateString.replace(' ', 'T');
     const date = new Date(safeDate);
 
-    return date.toLocaleString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      hour: "numeric",
-      minute: "2-digit",
+    return date.toLocaleString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      hour: 'numeric',
+      minute: '2-digit',
       hour12: true,
     });
   };
@@ -37,24 +37,24 @@ const OrdersDetailScreen = ({ navigation, route }: any) => {
     text
       ? text
           .toLowerCase()
-          .replace(/[_-]/g, " ")
-          .split(" ")
+          .replace(/[_-]/g, ' ')
+          .split(' ')
           .filter(Boolean)
-          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(" ")
-      : "";
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ')
+      : '';
 
   /* ================= API ================= */
   const fetchOrderDetails = async () => {
     try {
       setLoading(true);
 
-      const res = await getOrderDetailsApi(order_id);
-      console.log("Order Details:", res);
+      const res = await getOrderDetailsApi(order_idd);
+      console.log('Order Details:', res);
 
       setOrder(res?.data?.[0] || null);
     } catch (error) {
-      console.log("Error:", error);
+      console.log('Error:', error);
     } finally {
       setLoading(false);
     }
@@ -67,9 +67,9 @@ const OrdersDetailScreen = ({ navigation, route }: any) => {
   /* ================= HELPERS ================= */
 
   const getStatusColor = (status: string) => {
-    if (status === "pending") return "#FF9933";
-    if (status === "complete") return "#2E7D32";
-    return "#64748B";
+    if (status === 'pending') return '#FF9933';
+    if (status === 'complete') return '#2E7D32';
+    return '#64748B';
   };
 
   /* ================= ITEM CARD ================= */
@@ -81,13 +81,13 @@ const OrdersDetailScreen = ({ navigation, route }: any) => {
     return (
       <View style={styles.itemCard}>
         <View
-          style={{ backgroundColor: "#F4F4F4", padding: 10, borderRadius: 10 }}
+          style={{ backgroundColor: '#F4F4F4', padding: 10, borderRadius: 10 }}
         >
           <Image
             source={
               imageUri && !imgError
                 ? { uri: imageUri }
-                : require("../assets/Common/Order.png")
+                : require('../assets/Common/Order.png')
             }
             resizeMode="contain"
             style={styles.productImg}
@@ -114,16 +114,16 @@ const OrdersDetailScreen = ({ navigation, route }: any) => {
   }
 
   if (!order) {
-    return <Text style={{ textAlign: "center" }}>No Data</Text>;
+    return <Text style={{ textAlign: 'center' }}>No Data</Text>;
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top"]}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.container}>
         {/* HEADER */}
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Image
-            source={require("../assets/Common/Back.png")}
+            source={require('../assets/Common/Back.png')}
             style={styles.backIcon}
             resizeMode="contain"
           />
@@ -133,7 +133,7 @@ const OrdersDetailScreen = ({ navigation, route }: any) => {
 
         {/* ORDER INFO */}
         <View style={styles.card}>
-          <Text style={styles.invoice}>Invoice No :- {order.invoice_no}</Text>
+          <Text style={styles.invoice}>Order Id :- {order.order_id}</Text>
 
           <Text
             style={[
@@ -156,7 +156,7 @@ const OrdersDetailScreen = ({ navigation, route }: any) => {
 
         <FlatList
           data={order.items}
-          keyExtractor={(item) => String(item.id)}
+          keyExtractor={item => String(item.id)}
           renderItem={({ item }) => <ItemCard item={item} />}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 20 }}
@@ -173,7 +173,7 @@ export default OrdersDetailScreen;
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F5F6F8",
+    backgroundColor: '#F5F6F8',
   },
 
   container: {
@@ -190,11 +190,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     marginVertical: 15,
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
   },
 
   card: {
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     padding: 14,
     borderRadius: 12,
     marginBottom: 15,
@@ -202,72 +202,72 @@ const styles = StyleSheet.create({
 
   invoice: {
     fontSize: 13,
-    color: "#374151",
-    fontFamily: "DMSans-Regular",
+    color: '#374151',
+    fontFamily: 'DMSans-Regular',
   },
 
   status: {
     fontSize: 14,
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
     marginTop: 4,
   },
 
   date: {
     fontSize: 11,
-    color: "#64748B",
+    color: '#64748B',
     marginTop: 4,
-    fontFamily: "DMSans-Regular",
+    fontFamily: 'DMSans-Regular',
   },
 
   total: {
     fontSize: 15,
     marginTop: 6,
-    fontFamily: "DMSans-SemiBold",
+    fontFamily: 'DMSans-SemiBold',
   },
 
   sectionTitle: {
     fontSize: 16,
     marginBottom: 10,
-    fontFamily: "DMSans-SemiBold",
+    fontFamily: 'DMSans-SemiBold',
   },
 
   itemCard: {
-    flexDirection: "row",
-    backgroundColor: "#fff",
+    flexDirection: 'row',
+    backgroundColor: '#fff',
     padding: 12,
     borderRadius: 10,
     marginBottom: 10,
-    alignItems: "center",
+    alignItems: 'center',
   },
 
   productImg: {
     width: 60,
     height: 60,
     borderRadius: 8,
-    backgroundColor: "#F3F4F6",
+    backgroundColor: '#F3F4F6',
   },
 
   productName: {
     fontSize: 13,
-    fontFamily: "DMSans-SemiBold",
+    fontFamily: 'DMSans-SemiBold',
   },
 
   qty: {
     fontSize: 12,
-    color: "#64748B",
+    color: '#64748B',
     marginTop: 2,
-    fontFamily: "DMSans-Regular",
+    fontFamily: 'DMSans-Regular',
   },
 
   price: {
     fontSize: 13,
     marginTop: 3,
-    fontFamily: "DMSans-SemiBold",
+    fontFamily: 'DMSans-SemiBold',
     // color: "#64748B",
   },
   loaderContainer: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

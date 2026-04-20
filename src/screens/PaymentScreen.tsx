@@ -8,6 +8,7 @@ import {
   Image,
   Alert,
   ActivityIndicator,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getCartApi, getWalletLedgerApi, saveOrderApi } from '../services/api';
@@ -38,6 +39,10 @@ const PaymentScreen = ({ navigation, route }: any) => {
   const [orderSummary, setOrderSummary] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [amount, setAmount] = useState('');
+
+  // Promo State
+  const [promoExpanded, setPromoExpanded] = useState(false);
+  const [promoCode, setPromoCode] = useState('');
 
   const formatPrice = (price: number) => {
     if (price === undefined || price === null) return '0.00';
@@ -218,24 +223,61 @@ const PaymentScreen = ({ navigation, route }: any) => {
 
           {/* Promo */}
 
-          <TouchableOpacity style={styles.promoBox}>
-            <Image
-              source={require('../assets/Common/Discount.png')}
-              style={{ height: 18, width: 18 }}
-            />
-            <Text style={styles.promoText}>Apply promos before you order</Text>
-            <Image
-              source={require('../assets/Common/ArrowRight.png')}
-              style={{ height: 10, width: 10 }}
-              resizeMode="contain"
-            />
-          </TouchableOpacity>
+          <View style={styles.promoContainer}>
+            <TouchableOpacity
+              style={styles.promoBox}
+              activeOpacity={0.7}
+              onPress={() => setPromoExpanded(!promoExpanded)}
+            >
+              <Image
+                source={require('../assets/Common/Discount.png')}
+                style={{ height: 18, width: 18 }}
+              />
+              <Text style={styles.promoText}>
+                Apply promos before you order
+              </Text>
+              <Image
+                source={
+                  promoExpanded
+                    ? require('../assets/Common/ArrowUp.png')
+                    : require('../assets/Common/ArrowRight.png')
+                }
+                style={{ height: 10, width: 10, tintColor: 'gray' }}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
+
+            {promoExpanded && (
+              <View style={styles.promoInputRow}>
+                <TextInput
+                  placeholder="Enter Promo Code"
+                  style={styles.promoInput}
+                  value={promoCode}
+                  onChangeText={setPromoCode}
+                  placeholderTextColor="#94A3B8"
+                  autoCapitalize="characters"
+                />
+                <TouchableOpacity
+                  style={styles.applyBtn}
+                  onPress={() => {
+                    if (!promoCode) {
+                      Alert.alert('Error', 'Please enter a promo code');
+                      return;
+                    }
+                    Alert.alert('Promo applied', `Code ${promoCode} applied!`);
+                  }}
+                >
+                  <Text style={styles.applyText}>Apply</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
 
           {/* Recommended */}
           <Text style={styles.section}>Recommended for Business</Text>
 
           <PaymentOption
-            id="credit"
+            id="wallet"
             title="Pay Later / Credit Line"
             subtitle={`Available limit: ₹${amount} `}
             icon={require('../assets/icons/wallet.png')}
@@ -372,13 +414,44 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
 
+  promoContainer: {
+    marginVertical: 15,
+  },
+
   promoBox: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#E7F3E7',
     padding: 14,
     borderRadius: 10,
-    marginVertical: 15,
+  },
+  promoInputRow: {
+    flexDirection: 'row',
+    marginTop: 10,
+    gap: 10,
+  },
+  promoInput: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    height: 44,
+    fontFamily: 'DMSans-Regular',
+    fontSize: 14,
+  },
+  applyBtn: {
+    backgroundColor: '#487D44',
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  applyText: {
+    color: '#fff',
+    fontFamily: 'DMSans-Bold',
+    fontSize: 14,
   },
   loaderOverlay: {
     position: 'absolute',

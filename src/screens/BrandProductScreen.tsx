@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { debounce } from "lodash";
+import React, { useEffect, useState, useCallback } from 'react';
+import { debounce } from 'lodash';
 import {
   View,
   Text,
@@ -15,12 +15,13 @@ import {
   RefreshControl,
   Vibration,
   Platform,
-} from "react-native";
-import LinearGradient from "react-native-linear-gradient";
-import ProductCard from "../components/ProductCard";
-import Styles from "../components/Styles";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useIsFocused, useFocusEffect } from "@react-navigation/native";
+  ToastAndroid,
+} from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
+import ProductCard from '../components/ProductCard';
+import Styles from '../components/Styles';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useIsFocused, useFocusEffect } from '@react-navigation/native';
 import {
   addToCartApi,
   addToWishlistApi,
@@ -28,37 +29,37 @@ import {
   getProductsByBrandApi,
   updateCartQuantityApi,
   updateWishlistQtyApi,
-} from "../services/api";
+} from '../services/api';
 
 const packingItems = [
   {
-    id: "1",
-    image: require("../assets/product/product1-.png"),
-    title: "Disposables & Packaging Material",
-    packSize: "Pack of 10",
-    price: "640",
-    oldPrice: "₹660",
-    discount: "33%",
+    id: '1',
+    image: require('../assets/product/product1-.png'),
+    title: 'Disposables & Packaging Material',
+    packSize: 'Pack of 10',
+    price: '640',
+    oldPrice: '₹660',
+    discount: '33%',
     isOrganic: true,
   },
   {
-    id: "2",
-    image: require("../assets/product/product1-.png"),
-    title: "Cello Tape - Transparent W: 1 Inch, L: 55 m",
-    packSize: "Pack of 20",
-    price: "820",
-    oldPrice: "₹900",
-    discount: "10%",
+    id: '2',
+    image: require('../assets/product/product1-.png'),
+    title: 'Cello Tape - Transparent W: 1 Inch, L: 55 m',
+    packSize: 'Pack of 20',
+    price: '820',
+    oldPrice: '₹900',
+    discount: '10%',
     isOrganic: true,
   },
   {
-    id: "3",
-    image: require("../assets/product/product1-.png"),
-    title: "Disposables & Packaging",
-    packSize: "Pack of 20",
-    price: "820",
-    oldPrice: "₹900",
-    discount: "10%",
+    id: '3',
+    image: require('../assets/product/product1-.png'),
+    title: 'Disposables & Packaging',
+    packSize: 'Pack of 20',
+    price: '820',
+    oldPrice: '₹900',
+    discount: '10%',
     isOrganic: false,
   },
 ];
@@ -110,7 +111,7 @@ const BrandProductScreen = ({ navigation, route }: any) => {
   const [selectedBrandId, setSelectedBrandId] = useState(brandId);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  console.log("Brand Name Id", brandId, brandName);
+  console.log('Brand Name Id', brandId, brandName);
   const [showDropdown, setShowDropdown] = useState(false);
   const [brandData, setBrandData] = useState([]);
   const [selectedSubSubCats, setSelectedSubSubCats] = useState<number[]>([]);
@@ -169,9 +170,9 @@ const BrandProductScreen = ({ navigation, route }: any) => {
           ssCategoryId as any,
         );
 
-        console.log("Products API:", data.data);
+        console.log('Products API:', data.data);
 
-        if (!catId || catId === "all") {
+        if (!catId || catId === 'all') {
           const allProducts = data.data.flatMap(
             (cat: Category) => cat.products || [],
           );
@@ -179,7 +180,7 @@ const BrandProductScreen = ({ navigation, route }: any) => {
           const allSubSubCatsMap = new Map();
           data.data.forEach((cat: Category) => {
             if (cat.subSubCategory) {
-              cat.subSubCategory.forEach((subSub) => {
+              cat.subSubCategory.forEach(subSub => {
                 if (!allSubSubCatsMap.has(subSub.id)) {
                   allSubSubCatsMap.set(subSub.id, subSub);
                 }
@@ -189,9 +190,9 @@ const BrandProductScreen = ({ navigation, route }: any) => {
           const allSubSubCategories = Array.from(allSubSubCatsMap.values());
 
           const allCategory: Category = {
-            sub_category_id: "all",
-            sub_category: "All",
-            image: "local_all_icon",
+            sub_category_id: 'all',
+            sub_category: 'All',
+            image: 'local_all_icon',
             subSubCategory: allSubSubCategories,
             products: allProducts,
           };
@@ -202,7 +203,7 @@ const BrandProductScreen = ({ navigation, route }: any) => {
           let newProducts: any[] = [];
           if (Array.isArray(data.data)) {
             // Check if data is directly an array of products
-            if (data.data.length > 0 && !("sub_category_id" in data.data[0])) {
+            if (data.data.length > 0 && !('sub_category_id' in data.data[0])) {
               newProducts = data.data;
             } else {
               // It's an array of categories, find the matching one
@@ -215,8 +216,8 @@ const BrandProductScreen = ({ navigation, route }: any) => {
             }
           }
 
-          setCategories((prev) =>
-            prev.map((cat) =>
+          setCategories(prev =>
+            prev.map(cat =>
               String(cat.sub_category_id) === String(catId)
                 ? { ...cat, products: newProducts }
                 : cat,
@@ -235,19 +236,19 @@ const BrandProductScreen = ({ navigation, route }: any) => {
     try {
       setAddingToCartId(productId);
       const res = await addToCartApi(productId, quantity);
-      console.log("Add to Cart Responce", res.data);
+      console.log('Add to Cart Responce', res.data);
 
-      setCategories((prev) =>
-        prev.map((cat) => ({
+      setCategories(prev =>
+        prev.map(cat => ({
           ...cat,
-          products: cat.products.map((p) =>
+          products: cat.products.map(p =>
             p.id === productId
               ? { ...p, cart_status: true, cart: { qty: quantity } }
               : p,
           ),
         })),
       );
-      Alert.alert("Success", "Successfully added to cart");
+      Alert.alert('Success', 'Successfully added to cart');
     } catch (error) {
       console.log(error);
     } finally {
@@ -280,10 +281,10 @@ const BrandProductScreen = ({ navigation, route }: any) => {
           // We will update it so it does get removed from backend if they leave it at 0.
         }
         const res = await updateCartQuantityApi(productId, newQty);
-        console.log("res", res);
+        console.log('res', res);
         // Alert.alert("Success", "Quantity updated successfully");
       } catch (error) {
-        console.log("Update Qty Error:", error);
+        console.log('Update Qty Error:', error);
       } finally {
         setUpdatingQtyId(null);
       }
@@ -294,20 +295,20 @@ const BrandProductScreen = ({ navigation, route }: any) => {
   const updateQty = async (productId: number, newQty: number | string) => {
     // If user cleared the input manually, we store 0 (or a temporary state) but
     // keep cart_status true so the input box doesn't vanish while typing.
-    const isTextInputEmpty = newQty === "" || Number.isNaN(Number(newQty));
+    const isTextInputEmpty = newQty === '' || Number.isNaN(Number(newQty));
     const finalQty = isTextInputEmpty ? 0 : Number(newQty);
 
     if (finalQty < 0) return;
 
     // 1. Update UI Locally Immediately
-    setCategories((prev) =>
-      prev.map((cat) => ({
+    setCategories(prev =>
+      prev.map(cat => ({
         ...cat,
-        products: cat.products.map((p) =>
+        products: cat.products.map(p =>
           p.id === productId
             ? {
                 ...p,
-                cart: { qty: isTextInputEmpty ? ("" as any) : finalQty },
+                cart: { qty: isTextInputEmpty ? ('' as any) : finalQty },
                 // If it's a manual minus button to 0, it removes.
                 // If it's text input to empty string "", we keep it visible briefly.
                 cart_status: newQty === 0 ? false : true,
@@ -326,10 +327,10 @@ const BrandProductScreen = ({ navigation, route }: any) => {
     try {
       const newStatus = !product.wishlist_status;
 
-      setCategories((prev) =>
-        prev.map((cat) => ({
+      setCategories(prev =>
+        prev.map(cat => ({
           ...cat,
-          products: cat.products.map((p) =>
+          products: cat.products.map(p =>
             p.id === product.id ? { ...p, wishlist_status: newStatus } : p,
           ),
         })),
@@ -341,15 +342,15 @@ const BrandProductScreen = ({ navigation, route }: any) => {
       } else {
         const res = await updateWishlistQtyApi(product.id, 0);
         // console.log("Wishlist Removed:", res);
-        Alert.alert("Success", "Item removed from wishlist");
+        Alert.alert('Success', 'Item removed from wishlist');
       }
     } catch (error) {
-      console.log("Wishlist Toggle Error:", error);
+      console.log('Wishlist Toggle Error:', error);
       // Revert if API fails
-      setCategories((prev) =>
-        prev.map((cat) => ({
+      setCategories(prev =>
+        prev.map(cat => ({
           ...cat,
-          products: cat.products.map((p) =>
+          products: cat.products.map(p =>
             p.id === product.id
               ? { ...p, wishlist_status: product.wishlist_status }
               : p,
@@ -365,15 +366,15 @@ const BrandProductScreen = ({ navigation, route }: any) => {
 
       const subCategoryId = categories[selectedIndex]?.sub_category_id;
       const validSubcatId =
-        subCategoryId === "all" ? "all" : Number(subCategoryId);
+        subCategoryId === 'all' ? 'all' : Number(subCategoryId);
 
       await fetchProducts(
         selectedBrandId,
         validSubcatId,
-        selectedSubSubCats.join(","),
+        selectedSubSubCats.join(','),
       );
     } catch (err) {
-      console.log("Refresh error:", err);
+      console.log('Refresh error:', err);
     } finally {
       setRefreshing(false);
     }
@@ -388,22 +389,22 @@ const BrandProductScreen = ({ navigation, route }: any) => {
           translucent={true}
         />
       )}
-      <SafeAreaView style={styles.container} edges={["top"]}>
+      <SafeAreaView style={styles.container} edges={['top']}>
         {/* HEADER */}
         <View
           style={[
             styles.header,
             {
-              alignItems: "center",
-              justifyContent: "center",
+              alignItems: 'center',
+              justifyContent: 'center',
             },
           ]}
         >
           <View
             style={{
-              flexDirection: "row",
+              flexDirection: 'row',
               flex: 1,
-              alignItems: "flex-start",
+              alignItems: 'flex-start',
             }}
           >
             <TouchableOpacity
@@ -411,11 +412,11 @@ const BrandProductScreen = ({ navigation, route }: any) => {
               style={{ marginTop: 5 }}
             >
               <Image
-                source={require("../assets/Common/Back.png")}
+                source={require('../assets/Common/Back.png')}
                 style={{
                   height: 10,
                   width: 13,
-                  resizeMode: "contain",
+                  resizeMode: 'contain',
                 }}
               />
             </TouchableOpacity>
@@ -429,7 +430,7 @@ const BrandProductScreen = ({ navigation, route }: any) => {
               <Text
                 style={[
                   Styles.headerText,
-                  { fontSize: 14, fontFamily: "DMSans-Bold" },
+                  { fontSize: 14, fontFamily: 'DMSans-Bold' },
                 ]}
                 numberOfLines={1}
               >
@@ -438,20 +439,20 @@ const BrandProductScreen = ({ navigation, route }: any) => {
 
               <TouchableOpacity
                 onPress={() => setShowDropdown(true)}
-                style={{ flexDirection: "row", alignItems: "center" }}
+                style={{ flexDirection: 'row', alignItems: 'center' }}
               >
                 <Text
-                  style={[Styles.SubTitle, { fontSize: 10, color: "#64748B" }]}
+                  style={[Styles.SubTitle, { fontSize: 10, color: '#64748B' }]}
                 >
                   Change Brand
                 </Text>
                 <Image
-                  source={require("../assets/Common/ArrowDown.png")}
+                  source={require('../assets/Common/ArrowDown.png')}
                   style={{
                     height: 6,
                     width: 8,
                     marginLeft: 5,
-                    tintColor: "#64748B",
+                    tintColor: '#64748B',
                   }}
                   resizeMode="contain"
                 />
@@ -461,14 +462,14 @@ const BrandProductScreen = ({ navigation, route }: any) => {
           <View style={styles.headerRight}>
             <TouchableOpacity
               style={styles.iconCircle}
-              onPress={() => navigation.navigate("Search")}
+              onPress={() => navigation.navigate('Search')}
             >
               <Image
-                source={require("../assets/Common/search.png")}
+                source={require('../assets/Common/search.png')}
                 style={{
                   height: 20,
                   width: 20,
-                  tintColor: "#487D44",
+                  tintColor: '#487D44',
                 }}
                 resizeMode="contain"
               />
@@ -490,18 +491,18 @@ const BrandProductScreen = ({ navigation, route }: any) => {
 
         {loading ? (
           <View
-            style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+            style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
           >
             <ActivityIndicator size="large" color="#487D44" />
           </View>
         ) : (
-          <View style={{ flex: 1, flexDirection: "row", zIndex: 1 }}>
+          <View style={{ flex: 1, flexDirection: 'row', zIndex: 1 }}>
             {/* SIDEBAR */}
 
             <View style={styles.sidebar}>
               <FlatList
                 data={categories}
-                keyExtractor={(item) => item.sub_category_id.toString()}
+                keyExtractor={item => item.sub_category_id.toString()}
                 showsVerticalScrollIndicator={false}
                 renderItem={({ item, index }) => (
                   <TouchableOpacity
@@ -511,24 +512,24 @@ const BrandProductScreen = ({ navigation, route }: any) => {
                       index === selectedIndex && styles.activeCategory,
                     ]}
                   >
-                    {item.image === "local_all_icon" ? (
+                    {item.image === 'local_all_icon' ? (
                       <View
                         style={[
                           styles.categoryImage,
                           {
-                            backgroundColor: "#487D44",
-                            justifyContent: "center",
-                            alignItems: "center",
+                            backgroundColor: '#487D44',
+                            justifyContent: 'center',
+                            alignItems: 'center',
                           },
                         ]}
                       >
                         <Image
-                          source={require("../assets/Common/all.png")}
+                          source={require('../assets/Common/all.png')}
                           style={{
                             width: 20,
                             height: 20,
-                            resizeMode: "contain",
-                            tintColor: "#fff",
+                            resizeMode: 'contain',
+                            tintColor: '#fff',
                           }}
                         />
                       </View>
@@ -537,7 +538,7 @@ const BrandProductScreen = ({ navigation, route }: any) => {
                         source={
                           item.image
                             ? { uri: item.image }
-                            : require("../assets/productimg.jpg")
+                            : require('../assets/productimg.jpg')
                         }
                         style={styles.categoryImage}
                       />
@@ -547,25 +548,25 @@ const BrandProductScreen = ({ navigation, route }: any) => {
                 )}
               />
             </View>
-            <View style={{ flex: 1, backgroundColor: "#F1F2F6" }}>
+            <View style={{ flex: 1, backgroundColor: '#F1F2F6' }}>
               {/* SORT ROW */}
               <FlatList
                 // data={categories[0]?.subSubCategory || []}
                 data={categories[selectedIndex]?.subSubCategory || []}
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                keyExtractor={(item) => item.id}
+                keyExtractor={item => item.id}
                 contentContainerStyle={styles.sortRowContent}
                 style={[styles.sortRow, {}]}
                 renderItem={({ item }) =>
                   item.isSort ? (
                     <TouchableOpacity style={styles.sortChip}>
                       <Image
-                        source={require("../assets/Common/filter.png")}
+                        source={require('../assets/Common/filter.png')}
                         style={{
                           height: 10,
                           width: 10,
-                          tintColor: "#000",
+                          tintColor: '#000',
                         }}
                         resizeMode="contain"
                       />
@@ -576,8 +577,8 @@ const BrandProductScreen = ({ navigation, route }: any) => {
                       style={[
                         styles.filterChip,
                         selectedSubSubCats.includes(Number(item.id)) && {
-                          backgroundColor: "#487D44",
-                          borderColor: "#487D44",
+                          backgroundColor: '#487D44',
+                          borderColor: '#487D44',
                         },
                       ]}
                       onPress={() => {
@@ -585,8 +586,8 @@ const BrandProductScreen = ({ navigation, route }: any) => {
                         const subCategoryId =
                           categories[selectedIndex]?.sub_category_id;
                         const validSubcatId =
-                          subCategoryId === "all"
-                            ? "all"
+                          subCategoryId === 'all'
+                            ? 'all'
                             : Number(subCategoryId);
                         const subSubCatId = Number(item?.id);
 
@@ -594,7 +595,7 @@ const BrandProductScreen = ({ navigation, route }: any) => {
 
                         if (selectedSubSubCats.includes(subSubCatId)) {
                           updated = selectedSubSubCats.filter(
-                            (id) => id !== subSubCatId,
+                            id => id !== subSubCatId,
                           );
                         } else {
                           updated = [...selectedSubSubCats, subSubCatId];
@@ -609,7 +610,7 @@ const BrandProductScreen = ({ navigation, route }: any) => {
                         fetchProducts(
                           undefined,
                           validSubcatId,
-                          updated.join(","),
+                          updated.join(','),
                         );
                       }}
                     >
@@ -617,7 +618,7 @@ const BrandProductScreen = ({ navigation, route }: any) => {
                         style={[
                           styles.sortText,
                           selectedSubSubCats.includes(Number(item.id)) && {
-                            color: "#fff",
+                            color: '#fff',
                           },
                         ]}
                       >
@@ -629,12 +630,12 @@ const BrandProductScreen = ({ navigation, route }: any) => {
               />
               <FlatList
                 data={categories[selectedIndex]?.products || []}
-                keyExtractor={(item) => item.id.toString()}
+                keyExtractor={item => item.id.toString()}
                 refreshControl={
                   <RefreshControl
                     refreshing={refreshing}
                     onRefresh={onRefresh}
-                    colors={["#487D44"]}
+                    colors={['#487D44']}
                   />
                 }
                 style={styles.productSection}
@@ -871,46 +872,45 @@ const BrandProductScreen = ({ navigation, route }: any) => {
                   <View
                     style={[
                       styles.card,
-                      Number(item.current_stock) === 0 && { opacity: 0.5 },
                     ]}
                   >
                     <TouchableOpacity
                       onPress={() =>
-                        navigation.navigate("ProductDetail", {
+                        navigation.navigate('ProductDetail', {
                           productId: item.id,
                         })
                       }
-                      style={{ flexDirection: "row" }}
+                      style={{ flexDirection: 'row' }}
                     >
                       <View
                         style={[
                           styles.productImageBg,
-                          { width: "38%", backgroundColor: "" },
+                          { width: '38%', backgroundColor: '' },
                         ]}
                       >
                         {item.product_type ? (
                           <View
                             style={{
-                              position: "absolute",
+                              position: 'absolute',
                               top: 0,
-                              width: "100%",
+                              width: '100%',
                               height: 18,
-                              overflow: "hidden",
-                              alignSelf: "center",
+                              overflow: 'hidden',
+                              alignSelf: 'center',
                               borderBottomLeftRadius: 10,
                               borderBottomRightRadius: 10,
-                              backgroundColor: "#6B7280",
-                              justifyContent: "center",
-                              alignItems: "center",
+                              backgroundColor: '#6B7280',
+                              justifyContent: 'center',
+                              alignItems: 'center',
                               zIndex: 11,
                             }}
                           >
                             <Text
                               style={{
-                                color: "#FFFFFF",
+                                color: '#FFFFFF',
                                 fontSize: 7,
-                                fontFamily: "DMSans-SemiBold",
-                                textAlign: "center",
+                                fontFamily: 'DMSans-SemiBold',
+                                textAlign: 'center',
                               }}
                             >
                               {item.product_type}
@@ -919,7 +919,7 @@ const BrandProductScreen = ({ navigation, route }: any) => {
                         ) : null}
                         {Number(item.discount) > 0 && (
                           <LinearGradient
-                            colors={["#FFDC61", "#FAAF20"]}
+                            colors={['#FFDC61', '#FAAF20']}
                             start={{ x: 0, y: 0 }}
                             end={{ x: 1, y: 0 }}
                             style={[
@@ -941,12 +941,12 @@ const BrandProductScreen = ({ navigation, route }: any) => {
                         )}
                         <Image
                           source={{ uri: item.image }}
-                          style={styles.productImage}
+                          style={[styles.productImage, Number(item.current_stock) === 0 && { opacity: 0.5 }]}
                         />
                         <TouchableOpacity
                           onPress={() => toggleWishlist(item)}
                           style={{
-                            position: "absolute",
+                            position: 'absolute',
                             bottom: 10,
                             left: 70,
                             padding: 4,
@@ -955,13 +955,13 @@ const BrandProductScreen = ({ navigation, route }: any) => {
                           <Image
                             source={
                               item.wishlist_status
-                                ? require("../assets/Common/fillheart.png")
-                                : require("../assets/Common/heart.png")
+                                ? require('../assets/Common/fillheart.png')
+                                : require('../assets/Common/heart.png')
                             }
                             style={{
                               height: 18,
                               width: 18,
-                              resizeMode: "contain",
+                              resizeMode: 'contain',
                             }}
                           />
                         </TouchableOpacity>
@@ -971,9 +971,10 @@ const BrandProductScreen = ({ navigation, route }: any) => {
                         style={[
                           styles.details,
                           {
-                            alignItems: "center",
-                            justifyContent: "center",
+                            alignItems: 'center',
+                            justifyContent: 'center',
                           },
+                          Number(item.current_stock) === 0 && { opacity: 0.6 }
                         ]}
                       >
                         <Text style={styles.productTitle}>{item.name}</Text>
@@ -981,7 +982,7 @@ const BrandProductScreen = ({ navigation, route }: any) => {
                           <View
                             style={[
                               styles.variantBox,
-                              { backgroundColor: "#F4F4F4" },
+                              { backgroundColor: '#F4F4F4' },
                             ]}
                           >
                             {item.tiers.map((tier, index) => {
@@ -993,7 +994,7 @@ const BrandProductScreen = ({ navigation, route }: any) => {
                                   style={[
                                     styles.variantRow,
                                     !isLast && {
-                                      borderBottomColor: "#E6E7EE80",
+                                      borderBottomColor: '#E6E7EE80',
                                       borderBottomWidth: 1,
                                       paddingBottom: 5,
                                       marginBottom: 4,
@@ -1025,7 +1026,7 @@ const BrandProductScreen = ({ navigation, route }: any) => {
                           <View
                             style={[
                               styles.priceContainer,
-                              { flexDirection: "row", alignItems: "center" },
+                              { flexDirection: 'row', alignItems: 'center' },
                             ]}
                           >
                             <Text style={styles.price}>
@@ -1051,7 +1052,7 @@ const BrandProductScreen = ({ navigation, route }: any) => {
                                     onPress={() =>
                                       updateQty(
                                         item.id,
-                                        (item.cart?.qty || 0) - 1,
+                                        Number(item.cart?.qty || 0) - 1,
                                       )
                                     }
                                   >
@@ -1061,26 +1062,42 @@ const BrandProductScreen = ({ navigation, route }: any) => {
                                   <TextInput
                                     style={styles.qtyNumber}
                                     keyboardType="numeric"
+                                    maxLength={5}
                                     value={
                                       item.cart?.qty !== undefined &&
                                       item.cart?.qty !== null
                                         ? String(item.cart.qty)
-                                        : ""
+                                        : ''
                                     }
-                                    onChangeText={(text) => {
-                                      const val = text.replace(/[^0-9]/g, "");
-                                      if (val === "") {
-                                        updateQty(item.id, "");
+                                    onChangeText={text => {
+                                      const val = text.replace(/[^0-9]/g, '');
+                                      if (val !== '') {
+                                        let num = Number(val);
+                                        if (num > 10000) {
+                                          num = 10000;
+                                          if (Platform.OS === 'android') {
+                                            ToastAndroid.show(
+                                              'Maximum quantity is 10,000',
+                                              ToastAndroid.SHORT,
+                                            );
+                                          } else {
+                                            Alert.alert(
+                                              'Maximum Limit',
+                                              'Maximum quantity is 10,000',
+                                            );
+                                          }
+                                        }
+                                        updateQty(item.id, num);
                                       } else {
-                                        updateQty(item.id, Number(val));
+                                        updateQty(item.id, '');
                                       }
                                     }}
                                     onBlur={() => {
                                       if (
-                                        String(item.cart?.qty) === "" ||
+                                        String(item.cart?.qty) === '' ||
                                         item.cart?.qty === 0
                                       ) {
-                                        updateQty(item.id, 0);
+                                        updateQty(item.id, 1);
                                       }
                                     }}
                                   />
@@ -1090,7 +1107,7 @@ const BrandProductScreen = ({ navigation, route }: any) => {
                                     onPress={() =>
                                       updateQty(
                                         item.id,
-                                        (item.cart?.qty || 0) + 1,
+                                        Number(item.cart?.qty || 0) + 1,
                                       )
                                     }
                                   >
@@ -1104,14 +1121,14 @@ const BrandProductScreen = ({ navigation, route }: any) => {
                               style={[
                                 styles.addButton,
                                 Number(item.current_stock) === 0 && {
-                                  backgroundColor: "transparent",
+                                  backgroundColor: 'transparent',
                                   borderWidth: 1,
-                                  borderColor: "#EF4444",
+                                  borderColor: '#EF4444',
                                 },
                               ]}
                               onPress={() => {
                                 if (Number(item.current_stock) === 0) {
-                                  navigation.navigate("ProductDetail", {
+                                  navigation.navigate('ProductDetail', {
                                     productId: item.id,
                                   });
                                 } else {
@@ -1132,21 +1149,21 @@ const BrandProductScreen = ({ navigation, route }: any) => {
                                     style={[
                                       styles.addText,
                                       Number(item.current_stock) === 0 && {
-                                        color: "#EF4444",
+                                        color: '#EF4444',
                                       },
                                     ]}
                                   >
                                     {Number(item.current_stock) === 0
-                                      ? "View similar"
-                                      : "Add"}
+                                      ? 'View similar'
+                                      : 'Add'}
                                   </Text>
                                   {Number(item.current_stock) !== 0 && (
                                     <Image
-                                      source={require("../assets/Common/cart.png")}
+                                      source={require('../assets/Common/cart.png')}
                                       style={{
                                         height: 12,
                                         width: 12,
-                                        tintColor: "#fff",
+                                        tintColor: '#fff',
                                       }}
                                       resizeMode="contain"
                                     />
@@ -1170,7 +1187,7 @@ const BrandProductScreen = ({ navigation, route }: any) => {
                       data={packingItems}
                       horizontal
                       showsHorizontalScrollIndicator={false}
-                      keyExtractor={(item) => item.id}
+                      keyExtractor={item => item.id}
                       contentContainerStyle={{
                         paddingHorizontal: 10,
                         marginBottom: 100,
@@ -1184,9 +1201,9 @@ const BrandProductScreen = ({ navigation, route }: any) => {
                           oldPrice={item?.oldPrice}
                           discount={Number(item.discount).toFixed(0)}
                           isOrganic={item?.isOrganic}
-                          current_stock={item.current_stock}
+                          // current_stock={item.current_stock}
                           // bestRate={item?.bestRate || ""}
-                          onAddPress={() => console.log("Added")}
+                          onAddPress={() => console.log('Added')}
                         />
                       )}
                     />
@@ -1284,28 +1301,28 @@ const BrandProductScreen = ({ navigation, route }: any) => {
 
 export default BrandProductScreen;
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
+  container: { flex: 1, backgroundColor: '#fff' },
 
   headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 16,
   },
 
   dealTitle: {
     fontSize: 13,
-    fontWeight: "600",
-    fontFamily: "DMSans-Medium",
+    fontWeight: '600',
+    fontFamily: 'DMSans-Medium',
   },
 
   /* HEADER */
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 15,
     paddingVertical: 12,
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
   },
 
   // headerTitle: {
@@ -1316,8 +1333,8 @@ const styles = StyleSheet.create({
   // },
 
   headerRight: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     // marginTop: 25,
   },
 
@@ -1325,18 +1342,18 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "#F4F4F4",
-    borderColor: "#a5a4a4c7",
+    backgroundColor: '#F4F4F4',
+    borderColor: '#a5a4a4c7',
     borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     marginLeft: 10,
   },
 
   /* SORT ROW */
 
   sortRow: {
-    backgroundColor: "#F5F6F8",
+    backgroundColor: '#F5F6F8',
     paddingVertical: 10,
     maxHeight: 45,
   },
@@ -1348,41 +1365,41 @@ const styles = StyleSheet.create({
 
   sortText: {
     fontSize: 12,
-    fontFamily: "DMSans-Regular",
+    fontFamily: 'DMSans-Regular',
     paddingHorizontal: 5,
   },
   dividerPrice: {
     height: 1,
-    backgroundColor: "#b2b3b880",
+    backgroundColor: '#b2b3b880',
     marginVertical: 6,
   },
 
   sortChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#ffff",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffff',
     paddingHorizontal: 14,
     paddingVertical: 3,
-    borderColor: "#a5a4a4c7",
+    borderColor: '#a5a4a4c7',
     borderWidth: 1,
     borderRadius: 20,
     marginRight: 8,
   },
 
   filterChip: {
-    backgroundColor: "#ffff",
-    borderColor: "#a5a4a4c7",
+    backgroundColor: '#ffff',
+    borderColor: '#a5a4a4c7',
     borderWidth: 1,
     borderRadius: 15,
     marginRight: 8,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   /* SIDEBAR */
-  sidebar: { width: 75, backgroundColor: "#fff" },
-  categoryItem: { alignItems: "center", paddingVertical: 15 },
-  activeCategory: { backgroundColor: "#E8F3E8" },
+  sidebar: { width: 75, backgroundColor: '#fff' },
+  categoryItem: { alignItems: 'center', paddingVertical: 15 },
+  activeCategory: { backgroundColor: '#E8F3E8' },
   categoryImage: {
     width: 45,
     height: 45,
@@ -1391,35 +1408,35 @@ const styles = StyleSheet.create({
   },
   categoryText: {
     fontSize: 10,
-    textAlign: "center",
-    fontFamily: "DMSans-Regular",
+    textAlign: 'center',
+    fontFamily: 'DMSans-Regular',
     paddingHorizontal: 5,
-    color: "#64748B",
+    color: '#64748B',
   },
 
   /* PRODUCTS */
   productSection: { flex: 1, padding: 2 },
 
   card: {
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     borderRadius: 15,
     marginBottom: 15,
     // width: 260,
     margin: 10,
-    overflow: "hidden",
+    overflow: 'hidden',
   },
   productImageBg: {
-    backgroundColor: "#e5e7eb",
+    backgroundColor: '#e5e7eb',
     width: 118,
     height: 184,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   productImage: {
     width: 100,
     height: 95,
     borderRadius: 15,
-    resizeMode: "contain",
+    resizeMode: 'contain',
   },
 
   details: {
@@ -1427,56 +1444,56 @@ const styles = StyleSheet.create({
     // marginLeft: 1,
     padding: 7,
     borderLeftWidth: 1,
-    borderLeftColor: "#F4F4F4",
+    borderLeftColor: '#F4F4F4',
     // width: "100%",
   },
   productTitle: {
     fontSize: 12,
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
     marginBottom: 6,
     paddingBottom: 6,
     borderBottomWidth: 1,
-    borderBottomColor: "#E6E7EE80",
-    width: "100%",
+    borderBottomColor: '#E6E7EE80',
+    width: '100%',
   },
   pack: {
     fontSize: 10,
-    color: "#777",
+    color: '#777',
     marginVertical: 4,
-    fontFamily: "DMSans-Regular",
-    textAlign: "left",
-    width: "100%",
+    fontFamily: 'DMSans-Regular',
+    textAlign: 'left',
+    width: '100%',
   },
   priceRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginTop: 10,
-    width: "100%",
+    width: '100%',
   },
 
   priceContainer: {
-    flexDirection: "column",
+    flexDirection: 'column',
   },
 
   bestRate: {
     fontSize: 9,
-    color: "#487D44",
-    fontFamily: "DMSans-Regular",
+    color: '#487D44',
+    fontFamily: 'DMSans-Regular',
   },
 
-  price: { fontSize: 12, fontFamily: "DMSans-SemiBold" },
+  price: { fontSize: 12, fontFamily: 'DMSans-SemiBold' },
   oldPrice: {
-    textDecorationLine: "line-through",
+    textDecorationLine: 'line-through',
     fontSize: 12,
-    fontFamily: "DMSans-Regular",
-    color: "#FF7878",
+    fontFamily: 'DMSans-Regular',
+    color: '#FF7878',
   },
 
   /* Quantity */
   qtyRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     // backgroundColor: "#E8F3E8",
     borderRadius: 8,
     paddingHorizontal: 5,
@@ -1486,131 +1503,131 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: "#487D44",
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: '#487D44',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   qtyText: {
-    color: "#fff",
+    color: '#fff',
     fontSize: 12,
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
   },
   qtyNumber: {
     marginHorizontal: 6,
-    fontWeight: "600",
+    fontWeight: '600',
     fontSize: 13,
-    fontFamily: "DMSans-Regular",
-    color: "#487D44",
+    fontFamily: 'DMSans-Regular',
+    color: '#487D44',
   },
 
   /* Discount */
   discountBadge: {
-    position: "absolute",
+    position: 'absolute',
     top: 0,
     right: 0,
     paddingHorizontal: 6,
     paddingVertical: 3,
     borderBottomLeftRadius: 6,
     zIndex: 5,
-    maxWidth: "100%",
+    maxWidth: '100%',
   },
-  discountText: { fontSize: 8, fontFamily: "DMSans-Medium" },
+  discountText: { fontSize: 8, fontFamily: 'DMSans-Medium' },
 
   ribbon: {
-    position: "absolute",
+    position: 'absolute',
     top: 10,
     left: -38,
     width: 130,
-    transform: [{ rotate: "-45deg" }],
-    justifyContent: "center",
-    alignItems: "center",
+    transform: [{ rotate: '-45deg' }],
+    justifyContent: 'center',
+    alignItems: 'center',
     zIndex: 10,
   },
   ribbonText: {
-    color: "#fff",
+    color: '#fff',
     fontSize: 8,
-    textAlign: "center",
-    fontFamily: "DMSans-Regular",
+    textAlign: 'center',
+    fontFamily: 'DMSans-Regular',
   },
 
   slabPrice: {
     fontSize: 8,
-    fontFamily: "DMSans-Regular",
+    fontFamily: 'DMSans-Regular',
   },
 
   variantBox: {
-    borderColor: "#b2b3b880",
+    borderColor: '#b2b3b880',
     borderRadius: 8,
     padding: 6,
-    width: "100%",
+    width: '100%',
     gap: 2,
   },
 
   variantRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
 
   addSmall: {
     fontSize: 8,
-    color: "green",
-    fontWeight: "600",
-    fontFamily: "DMSans-Medium",
+    color: 'green',
+    fontWeight: '600',
+    fontFamily: 'DMSans-Medium',
   },
   addButton: {
-    backgroundColor: "#487D44",
-    flexDirection: "row",
-    alignItems: "center",
+    backgroundColor: '#487D44',
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 7,
     paddingVertical: 5,
     borderRadius: 8,
   },
 
   addText: {
-    color: "#fff",
+    color: '#fff',
     marginRight: 4,
-    fontFamily: "DMSans-Regular",
+    fontFamily: 'DMSans-Regular',
     fontSize: 9,
   },
   bottomTab: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
     height: 65,
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     borderTopWidth: 1,
-    borderColor: "#ddd",
+    borderColor: '#ddd',
   },
 
   tabItem: {
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   tabText: {
     fontSize: 11,
     marginTop: 4,
-    color: "#777",
-    fontFamily: "DMSans-Regular",
+    color: '#777',
+    fontFamily: 'DMSans-Regular',
   },
 
   dropdown: {
-    position: "absolute",
+    position: 'absolute',
     top: 60,
     left: 20,
     right: 20,
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     borderRadius: 10,
     elevation: 5,
     maxHeight: 300,
   },
 
   dropdownItem: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 10,
     borderBottomWidth: 0.5,
-    borderColor: "#ddd",
+    borderColor: '#ddd',
   },
 
   dropdownImage: {
@@ -1622,38 +1639,38 @@ const styles = StyleSheet.create({
 
   dropdownText: {
     fontSize: 14,
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
   },
   emptyContainer: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   emptyText: {
     fontSize: 14,
-    color: "#666",
-    fontFamily: "DMSans-Medium",
+    color: '#666',
+    fontFamily: 'DMSans-Medium',
   },
 
   organicRibbon: {
-    position: "absolute",
+    position: 'absolute',
     top: 15,
     left: -35,
     width: 120,
     paddingVertical: 4,
-    transform: [{ rotate: "-45deg" }],
-    justifyContent: "center",
-    alignItems: "center",
+    transform: [{ rotate: '-45deg' }],
+    justifyContent: 'center',
+    alignItems: 'center',
     zIndex: 10,
-    backgroundColor: "transparent",
+    backgroundColor: 'transparent',
   },
   organicRibbonText: {
-    color: "#fff",
+    color: '#fff',
     fontSize: 10,
-    fontWeight: "600",
-    textAlign: "center",
-    fontFamily: "DMSans-Bold",
-    textTransform: "uppercase",
+    fontWeight: '600',
+    textAlign: 'center',
+    fontFamily: 'DMSans-Bold',
+    textTransform: 'uppercase',
   },
 });

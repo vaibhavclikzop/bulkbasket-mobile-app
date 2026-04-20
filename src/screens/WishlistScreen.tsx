@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,18 +10,18 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   getWishlistApi,
   addToWishlistApi,
   updateWishlistQtyApi,
   addToCartApi,
   updateCartQuantityApi,
-} from "../services/api";
-import { useFocusEffect } from "@react-navigation/native";
-import { debounce } from "lodash";
-import ProductCard from "../components/ProductCard";
+} from '../services/api';
+import { useFocusEffect } from '@react-navigation/native';
+import { debounce } from 'lodash';
+import ProductCard from '../components/ProductCard';
 
 export default function WishlistScreen({ navigation }: any) {
   const [wishlistData, setWishlistData] = useState<any[]>([]);
@@ -29,7 +29,7 @@ export default function WishlistScreen({ navigation }: any) {
   const [cartLoadingId, setCartLoadingId] = useState<any | null>(null);
   const [updatingQtyId, setUpdatingQtyId] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [searchText, setSearchText] = useState("");
+  const [searchText, setSearchText] = useState('');
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -37,7 +37,7 @@ export default function WishlistScreen({ navigation }: any) {
     setRefreshing(false);
   }, []);
 
-  const filteredWishlist = wishlistData.filter((item) =>
+  const filteredWishlist = wishlistData.filter(item =>
     item.name?.toLowerCase().includes(searchText.toLowerCase()),
   );
 
@@ -61,7 +61,7 @@ export default function WishlistScreen({ navigation }: any) {
           discount: item.discount || 0,
           tiers: item.tiers || [],
           name: item.name,
-          is_organic: item.product_type?.toLowerCase() === "organic",
+          is_organic: item.product_type?.toLowerCase() === 'organic',
           product_type: item.product_type,
           mrp: item.mrp || 0,
           current_stock: item.current_stock || 0,
@@ -71,7 +71,7 @@ export default function WishlistScreen({ navigation }: any) {
       setWishlistData(transformedData);
       setLoading(false);
     } catch (error) {
-      console.log("Wishlist Fetch Error:", error);
+      console.log('Wishlist Fetch Error:', error);
       setLoading(false);
     }
   };
@@ -81,8 +81,8 @@ export default function WishlistScreen({ navigation }: any) {
       const newStatus = !product.wishlist_status;
 
       // Update UI optimistically
-      setWishlistData((prev) =>
-        prev.map((item) =>
+      setWishlistData(prev =>
+        prev.map(item =>
           item.id === product.id
             ? { ...item, wishlist_status: newStatus }
             : item,
@@ -100,10 +100,10 @@ export default function WishlistScreen({ navigation }: any) {
         fetchWishlist();
       }
     } catch (error) {
-      console.log("Wishlist Toggle Error:", error);
+      console.log('Wishlist Toggle Error:', error);
       // Revert on error
-      setWishlistData((prev) =>
-        prev.map((item) =>
+      setWishlistData(prev =>
+        prev.map(item =>
           item.id === product.id
             ? { ...item, wishlist_status: product.wishlist_status }
             : item,
@@ -119,15 +119,15 @@ export default function WishlistScreen({ navigation }: any) {
         if (newQty <= 0) {
           await updateWishlistQtyApi(productId, 0);
           // Remove from wishlist if quantity becomes 0
-          setWishlistData((prev) =>
-            prev.filter((item) => (item.product_id || item.id) !== productId),
+          setWishlistData(prev =>
+            prev.filter(item => (item.product_id || item.id) !== productId),
           );
         } else {
           await updateWishlistQtyApi(productId, newQty);
           // Alert.alert("Success", "Quantity updated successfully");
         }
       } catch (error) {
-        console.log("Update Wishlist Qty API Error:", error);
+        console.log('Update Wishlist Qty API Error:', error);
       } finally {
         setUpdatingQtyId(null);
       }
@@ -136,14 +136,14 @@ export default function WishlistScreen({ navigation }: any) {
   );
 
   const updateQty = async (productId: number, newQty: number | string) => {
-    const isTextInputEmpty = newQty === "" || Number.isNaN(Number(newQty));
+    const isTextInputEmpty = newQty === '' || Number.isNaN(Number(newQty));
     const finalQty = isTextInputEmpty ? 0 : Number(newQty);
 
     if (finalQty < 0) return;
 
     // Update UI optimistically
-    setWishlistData((prev) =>
-      prev.map((item) =>
+    setWishlistData(prev =>
+      prev.map(item =>
         (item.product_id || item.id) === productId
           ? { ...item, qty: finalQty }
           : item,
@@ -157,26 +157,34 @@ export default function WishlistScreen({ navigation }: any) {
     }
   };
 
-  const handleUpdateCartQty = async (productId: number, newQty: number) => {
+  const handleUpdateCartQty = async (
+    productId: number,
+    newQty: number | string,
+  ) => {
+    const isTextInputEmpty = newQty === '' || Number.isNaN(Number(newQty));
+    const finalQty = isTextInputEmpty ? 0 : Number(newQty);
+
     try {
       setUpdatingQtyId(productId);
-      setWishlistData((prev) =>
-        prev.map((item) =>
+      setWishlistData(prev =>
+        prev.map(item =>
           item.id === productId
             ? {
                 ...item,
-                cartQty: newQty,
-                cart_status: newQty > 0,
-                qty: newQty || item.qty,
+                cartQty: isTextInputEmpty ? ('' as any) : finalQty,
+                cart_status: finalQty > 0 || isTextInputEmpty,
+                qty: finalQty || item.qty,
               }
             : item,
         ),
       );
 
-      const res = await updateCartQuantityApi(productId, newQty);
-      console.log("Update Cart Qty:", res);
+      if (!isTextInputEmpty) {
+        const res = await updateCartQuantityApi(productId, finalQty);
+        console.log('Update Cart Qty:', res);
+      }
     } catch (error) {
-      console.log("Update Cart Qty Error:", error);
+      console.log('Update Cart Qty Error:', error);
       fetchWishlist();
     } finally {
       setUpdatingQtyId(null);
@@ -188,10 +196,10 @@ export default function WishlistScreen({ navigation }: any) {
       const productId = item.product_id || item.id;
       setCartLoadingId(productId);
       const res = await addToCartApi(productId, qty);
-      console.log("Add to Cart:", res);
+      console.log('Add to Cart:', res);
 
-      setWishlistData((prev) =>
-        prev.map((i) =>
+      setWishlistData(prev =>
+        prev.map(i =>
           i.id === productId
             ? { ...i, cartQty: qty, cart_status: true, qty: qty }
             : i,
@@ -199,8 +207,8 @@ export default function WishlistScreen({ navigation }: any) {
       );
       fetchWishlist();
     } catch (error) {
-      console.log("Add to Cart Error:", error);
-      Alert.alert("Error", "Could not add to cart. Please try again.");
+      console.log('Add to Cart Error:', error);
+      Alert.alert('Error', 'Could not add to cart. Please try again.');
     } finally {
       setCartLoadingId(null);
     }
@@ -230,17 +238,17 @@ export default function WishlistScreen({ navigation }: any) {
   }, 0);
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Wishlist ({wishlistData.length})</Text>
         <View style={styles.searchBox}>
           <Image
-            source={require("../assets/Common/search.png")}
+            source={require('../assets/Common/search.png')}
             style={{
               height: 20,
               width: 20,
-              tintColor: "#3A7D44",
+              tintColor: '#3A7D44',
             }}
             resizeMode="contain"
           />
@@ -250,7 +258,7 @@ export default function WishlistScreen({ navigation }: any) {
             placeholderTextColor="#888"
             // onFocus={() => navigation.navigate("Search")}
             value={searchText}
-            onChangeText={(text) => setSearchText(text)}
+            onChangeText={text => setSearchText(text)}
           />
         </View>
       </View>
@@ -261,21 +269,21 @@ export default function WishlistScreen({ navigation }: any) {
           data={filteredWishlist}
           numColumns={2}
           showsVerticalScrollIndicator={false}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={item => item.id.toString()}
           contentContainerStyle={{
             paddingHorizontal: 10,
             paddingBottom: 60,
             flexGrow: 1,
           }}
           columnWrapperStyle={{
-            justifyContent: "space-between",
+            justifyContent: 'space-between',
             marginBottom: 18,
           }}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              colors={["#487D44"]}
+              colors={['#487D44']}
             />
           }
           ListEmptyComponent={() => (
@@ -292,22 +300,22 @@ export default function WishlistScreen({ navigation }: any) {
           renderItem={({ item }) => (
             <ProductCard
               image={
-                typeof item.image === "string"
+                typeof item.image === 'string'
                   ? { uri: item.image }
                   : item.image
               }
               title={item.name}
-              packSize={item.packSize || ""}
+              packSize={item.packSize || ''}
               price={item.price}
               oldPrice={item.oldPrice}
               discount={Number(item.discount).toFixed(0)}
               isOrganic={item.is_organic}
-              product_type={item.product_type}
+              // product_type={item.product_type}
               mrp={item.mrp}
               tiers={item.tiers || []}
               cart_status={item.cart_status}
               cartQty={item.cartQty}
-              onUpdateQty={(newQty) =>
+              onUpdateQty={newQty =>
                 handleUpdateCartQty(item.product_id || item.id, newQty)
               }
               updatingQty={updatingQtyId === (item.product_id || item.id)}
@@ -317,7 +325,7 @@ export default function WishlistScreen({ navigation }: any) {
               current_stock={item.current_stock}
               uom_name={item.uom_name}
               onPress={() =>
-                navigation.navigate("ProductDetail", {
+                navigation.navigate('ProductDetail', {
                   productId: item.product_id || item.id,
                 })
               }
@@ -350,30 +358,30 @@ export default function WishlistScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F8F9FD",
+    backgroundColor: '#F8F9FD',
   },
 
   header: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 10,
   },
 
   headerTitle: {
     fontSize: 18,
-    fontFamily: "DMSans-SemiBold",
+    fontFamily: 'DMSans-SemiBold',
   },
 
   searchBox: {
     flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
     borderWidth: 1,
     marginLeft: 10,
     padding: 8,
-    borderColor: "#d3cdcd",
+    borderColor: '#d3cdcd',
     borderRadius: 20,
   },
 
@@ -381,25 +389,25 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 6,
     fontSize: 14,
-    fontFamily: "DMSans-Regular",
+    fontFamily: 'DMSans-Regular',
     paddingVertical: 0,
   },
 
   productCard: {
-    width: "47%",
+    width: '47%',
     marginHorizontal: 4,
   },
 
   bottomBox: {
-    position: "absolute",
+    position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
     padding: 16,
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     borderTopWidth: 1,
-    borderColor: "#eee",
-    shadowColor: "#000",
+    borderColor: '#eee',
+    shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: -2 },
@@ -407,32 +415,32 @@ const styles = StyleSheet.create({
   },
 
   totalRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
 
   totalText: {
     fontSize: 16,
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
   },
 
   totalPrice: {
     fontSize: 16,
-    fontFamily: "DMSans-Medium",
-    color: "#487D44",
+    fontFamily: 'DMSans-Medium',
+    color: '#487D44',
   },
 
   emptyContainer: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     paddingVertical: 40,
   },
 
   emptyText: {
     fontSize: 14,
-    color: "#777",
+    color: '#777',
     marginTop: 10,
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
   },
 });

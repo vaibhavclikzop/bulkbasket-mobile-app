@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -15,22 +15,213 @@ import {
   Vibration,
   PermissionsAndroid,
   ToastAndroid,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import Header from "../components/Header";
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Header from '../components/Header';
 import {
   getCartApi,
   getCompanyProfileApi,
   removeCartItemApi,
   updateCartQuantityApi,
-} from "../services/api";
-import { useFocusEffect } from "@react-navigation/native";
-import { debounce } from "lodash";
-import { generatePDF as convertToPDF } from "react-native-html-to-pdf";
-import * as XLSX from "xlsx";
-import RNFS from "react-native-fs";
-// import Share from "react-native-share";
-import notifee from "@notifee/react-native";
+} from '../services/api';
+import { useFocusEffect } from '@react-navigation/native';
+import { debounce } from 'lodash';
+import { generatePDF as convertToPDF } from 'react-native-html-to-pdf';
+import * as XLSX from 'xlsx';
+import RNFS from 'react-native-fs';
+import notifee from '@notifee/react-native';
+
+interface CartItemProps {
+  item: any;
+  removeItem: (cart_id: number) => void;
+  updateQty: (
+    product_id: number,
+    type: 'inc' | 'dec' | 'set',
+    directValue?: number | string,
+  ) => void;
+  formatPrice: (price: number) => string;
+  formatPriceClean: (price: number) => string;
+  getCalculatedPrice: (item: any) => number;
+  getActiveTier: (item: any) => any;
+  updatingQtyId: number | null;
+}
+
+const CartItem = React.memo(
+  ({
+    item,
+    removeItem,
+    updateQty,
+    formatPrice,
+    formatPriceClean,
+    getCalculatedPrice,
+    getActiveTier,
+    updatingQtyId,
+  }: CartItemProps) => {
+    return (
+      <View
+        style={[
+          styles.card,
+          Number(item.current_stock) === 0 && { opacity: 0.5 },
+        ]}
+      >
+        <View
+          style={{
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 5,
+            marginRight: 10,
+            borderRadius: 10,
+            backgroundColor: '#e5e7eb',
+          }}
+        >
+          <Image
+            source={
+              item.image
+                ? { uri: item.image }
+                : require('../assets/productimg.jpg')
+            }
+            style={styles.productImage}
+          />
+        </View>
+
+        <View style={{ flex: 1 }}>
+          <View style={styles.topRow}>
+            <View style={{ flex: 1 }}>
+              <Text numberOfLines={1} style={styles.productTitle}>
+                {item.name}
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              style={{ paddingLeft: 10 }}
+              onPress={() => removeItem(item.cart_id)}
+            >
+              <Image
+                source={require('../assets/Common/trash.png')}
+                style={{
+                  height: 16,
+                  width: 16,
+                  tintColor: '#DC2626',
+                }}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.line} />
+
+          {item?.price_tiers && item.price_tiers.length > 0 && (
+            <View style={styles.variantBox}>
+              {item.price_tiers.map((tier: any, index: number) => {
+                const isLast = index === item.price_tiers.length - 1;
+                const isSelected = Number(item?.qty || 0) >= tier.qty;
+
+                return (
+                  <View key={index}>
+                    <View style={styles.variantRow}>
+                      <Text style={styles.slabPrice}>
+                        {tier.qty} Pc ₹{formatPrice(tier.price)}/pc
+                      </Text>
+
+                      <TouchableOpacity
+                        onPress={() => {
+                          Vibration.vibrate(60);
+                          updateQty(item.product_id, 'set', tier.qty);
+                        }}
+                      >
+                        {isSelected ? (
+                          <Image
+                            source={require('../assets/check.png')}
+                            style={{
+                              height: 16,
+                              width: 16,
+                              tintColor: '#487D44',
+                            }}
+                          />
+                        ) : (
+                          <Text style={styles.addSmall}>Add+</Text>
+                        )}
+                      </TouchableOpacity>
+                    </View>
+
+                    {!isLast && <View style={styles.dividerPrice} />}
+                  </View>
+                );
+              })}
+            </View>
+          )}
+
+          <View style={styles.bottomRow}>
+            <View>
+              <View style={styles.priceRow}>
+                <Text style={styles.price}>
+                  ₹{formatPriceClean(getCalculatedPrice(item))}
+                </Text>
+                {Number(item.mrp) > 0 && (
+                  <Text style={styles.oldPrice}>
+                    ₹{formatPriceClean(item.mrp)}
+                  </Text>
+                )}
+              </View>
+            </View>
+
+            <View style={styles.qtyBox}>
+              {updatingQtyId === item.product_id ? (
+                <ActivityIndicator size="small" color="#487D44" />
+              ) : (
+                <>
+                  <TouchableOpacity
+                    style={styles.qtyBtn}
+                    onPress={() => {
+                      Vibration.vibrate(60);
+                      updateQty(item.product_id, 'dec');
+                    }}
+                  >
+                    <Text style={styles.qtyicon}>-</Text>
+                  </TouchableOpacity>
+
+                  <TextInput
+                    style={styles.qtyText}
+                    keyboardType="numeric"
+                    maxLength={5}
+                    value={
+                      item.qty !== undefined && item.qty !== null
+                        ? String(item.qty)
+                        : ''
+                    }
+                    onChangeText={text => {
+                      const val = text.replace(/[^0-9]/g, '');
+                      updateQty(
+                        item.product_id,
+                        'set',
+                        val === '' ? '' : Number(val),
+                      );
+                    }}
+                    onBlur={() => {
+                      if (String(item.qty) === '' || Number(item.qty) === 0) {
+                        updateQty(item.product_id, 'set', 1);
+                      }
+                    }}
+                  />
+
+                  <TouchableOpacity
+                    style={styles.qtyBtn}
+                    onPress={() => {
+                      Vibration.vibrate(60);
+                      updateQty(item.product_id, 'inc');
+                    }}
+                  >
+                    <Text style={styles.qtyicon}>+</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
+          </View>
+        </View>
+      </View>
+    );
+  },
+);
 
 const CartScreen: React.FC = ({ navigation }: any) => {
   const [cartItems, setCartItems] = useState<any[]>([]);
@@ -42,12 +233,14 @@ const CartScreen: React.FC = ({ navigation }: any) => {
   const [exportingPDF, setExportingPDF] = useState(false);
   const [exportingExcel, setExportingExcel] = useState(false);
 
+  const logo = require('../assets/images/logo-white.png');
+
   const onRefresh = useCallback(async () => {
     try {
       setRefreshing(true);
       await Promise.all([fetchCart()]);
     } catch (error) {
-      console.log("Refresh error:", error);
+      console.log('Refresh error:', error);
     } finally {
       setRefreshing(false);
     }
@@ -57,10 +250,10 @@ const CartScreen: React.FC = ({ navigation }: any) => {
     try {
       const response = await getCompanyProfileApi();
       const data = response?.data;
-      console.log("Get Company Api Data :-------->", data);
+      console.log('Get Company Api Data :-------->', data);
       setHasGST(!!data?.gst);
     } catch (error) {
-      console.log("Get Profile Error:", error);
+      console.log('Get Profile Error:', error);
     }
   };
 
@@ -70,14 +263,14 @@ const CartScreen: React.FC = ({ navigation }: any) => {
         setUpdatingQtyId(product_id);
         if (newQty <= 0) {
           await removeCartItemApi(cart_id);
-          console.log("Cart item removed");
+          console.log('Cart item removed');
         } else {
           const res = await updateCartQuantityApi(product_id, newQty);
-          console.log("Update API response:", res);
+          console.log('Update API response:', res);
         }
         fetchCart();
       } catch (error) {
-        console.log("Update quantity API error:", error);
+        console.log('Update quantity API error:', error);
       } finally {
         setUpdatingQtyId(null);
       }
@@ -85,61 +278,77 @@ const CartScreen: React.FC = ({ navigation }: any) => {
     [],
   );
 
-  const updateQty = async (
-    product_id: number,
-    type: "inc" | "dec" | "set",
-    directValue?: number | string,
-  ) => {
-    const item = cartItems.find((i) => i.product_id === product_id);
-    if (!item) return;
+  const updateQty = useCallback(
+    async (
+      product_id: number,
+      type: 'inc' | 'dec' | 'set',
+      directValue?: number | string,
+    ) => {
+      const item = cartItems.find(i => i.product_id === product_id);
+      if (!item) return;
 
-    let currentQty = item.qty === "" ? 0 : Number(item.qty);
-    let newQty: number | string = currentQty;
+      let currentQty = item.qty === '' ? 0 : Number(item.qty);
+      let newQty: number | string = currentQty;
 
-    if (type === "inc") {
-      newQty = currentQty + 1;
-    } else if (type === "dec") {
-      newQty = currentQty - 1;
-    } else if (type === "set" && directValue !== undefined) {
-      newQty = directValue;
-    }
+      if (type === 'inc') {
+        newQty = currentQty + 1;
+      } else if (type === 'dec') {
+        newQty = currentQty - 1;
+      } else if (type === 'set' && directValue !== undefined) {
+        newQty = directValue;
+      }
 
-    if (newQty !== "" && Number(newQty) < 0) return;
-
-    try {
-      if (newQty !== "" && Number(newQty) <= 0) {
-        setCartItems((prev) => prev.filter((i) => i.product_id !== product_id));
-        debouncedUpdateCartQuantityApi(product_id, 0, item.cart_id);
+      // Allow empty string for TextInput logic
+      if (newQty === '') {
+        setCartItems(prev =>
+          prev.map(i => (i.product_id === product_id ? { ...i, qty: '' } : i)),
+        );
         return;
       }
 
-      setCartItems((prev) =>
-        prev.map((i) =>
-          i.product_id === product_id ? { ...i, qty: newQty } : i,
-        ),
-      );
+      let numQty = Number(newQty);
 
-      if (newQty !== "") {
-        debouncedUpdateCartQuantityApi(
-          product_id,
-          Number(newQty),
-          item.cart_id,
-        );
+      // Enforce 1-10000 range
+      if (numQty < 0) return;
+      if (numQty > 10000) {
+        numQty = 10000;
+        if (Platform.OS === 'android') {
+          ToastAndroid.show('Maximum quantity is 10,000', ToastAndroid.SHORT);
+        } else {
+          Alert.alert('Maximum Limit', 'Maximum quantity is 10,000');
+        }
       }
-    } catch (error) {
-      console.log("Update quantity error:", error);
-    }
-  };
 
-  const removeItem = async (cart_id: number) => {
+      try {
+        // If it's transient 0 (while typing), we allow it in local state
+        // but we won't trigger the API remove logic unless it's a dec or explicit set to 0?
+        // Actually, let's keep it simple: 0 is allowed in UI, but API only called if > 0 or if we want to remove.
+
+        setCartItems(prev =>
+          prev.map(i =>
+            i.product_id === product_id ? { ...i, qty: numQty } : i,
+          ),
+        );
+
+        if (numQty > 0) {
+          debouncedUpdateCartQuantityApi(product_id, numQty, item.cart_id);
+        }
+      } catch (error) {
+        console.log('Update quantity error:', error);
+      }
+    },
+    [cartItems, debouncedUpdateCartQuantityApi],
+  );
+
+  const removeItem = useCallback(async (cart_id: number) => {
     try {
       const res = await removeCartItemApi(cart_id);
-      setCartItems((prev) => prev.filter((item) => item.cart_id !== cart_id));
-      Alert.alert("Success", res.message);
+      setCartItems(prev => prev.filter(item => item.cart_id !== cart_id));
+      Alert.alert('Success', res.message);
     } catch (error) {
-      console.log("Remove cart error:", error);
+      console.log('Remove cart error:', error);
     }
-  };
+  }, []);
 
   const fetchCart = async () => {
     try {
@@ -162,12 +371,12 @@ const CartScreen: React.FC = ({ navigation }: any) => {
   );
 
   const formatPrice = (price: number) => {
-    if (price === undefined || price === null) return "0.00";
+    if (price === undefined || price === null) return '0.00';
     return Number(price).toFixed(2);
   };
 
   const formatPriceClean = (price: number) => {
-    if (price === undefined || price === null) return "0";
+    if (price === undefined || price === null) return '0';
 
     const num = Number(price);
 
@@ -178,43 +387,6 @@ const CartScreen: React.FC = ({ navigation }: any) => {
     return num.toFixed(2);
   };
 
-  // const saveToDownloads = async (
-  //   base64Data: string,
-  //   fileName: string,
-  //   fileType: string,
-  // ) => {
-  //   try {
-  //     if (Platform.OS === "android") {
-  //       if (Number(Platform.Version) < 33) {
-  //         const granted = await PermissionsAndroid.request(
-  //           PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-  //         );
-  //         if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-  //           Alert.alert(
-  //             "Permission Required",
-  //             "Storage permission is needed to download files.",
-  //           );
-  //           return false;
-  //         }
-  //       }
-  //       const downloadPath = RNFS.DownloadDirectoryPath + "/" + fileName;
-  //       await RNFS.writeFile(downloadPath, base64Data, "base64");
-  //       await RNFS.scanFile(downloadPath);
-  //       // Alert.alert("Success", `File downloaded successfully to your Downloads folder!\n(${fileName})`);
-  //       return true;
-  //     } else {
-  //       const iosPath = RNFS.DocumentDirectoryPath + "/" + fileName;
-  //       await RNFS.writeFile(iosPath, base64Data, "base64");
-  //       Alert.alert("Success", "File saved to your app's Documents folder.");
-  //       return true;
-  //     }
-  //   } catch (e: any) {
-  //     console.log("Error saving to downloads:", e);
-  //     Alert.alert(`Failed to Download ${fileType}`, e?.message || String(e));
-  //     return false;
-  //   }
-  // };
-
   const displayDownloadNotification = async (
     filePath: string,
     fileName: string,
@@ -223,23 +395,25 @@ const CartScreen: React.FC = ({ navigation }: any) => {
     try {
       await notifee.requestPermission();
       const channelId = await notifee.createChannel({
-        id: "downloads",
-        name: "Downloads",
+        id: 'downloads',
+        name: 'Downloads',
       });
 
       await notifee.displayNotification({
-        title: `${fileType} Download Complete`,
-        body: `Tap to open ${fileName}`,
+        title: `${fileType} Download Successfully`,
+        body: `${fileName}`,
         data: { filePath },
         android: {
           channelId,
+          smallIcon: 'ic_launcher',
+          largeIcon: logo,
           pressAction: {
-            id: "default",
+            id: 'default',
           },
         },
       });
     } catch (error) {
-      console.log("Error displaying notification:", error);
+      console.log('Error displaying notification:', error);
     }
   };
 
@@ -254,11 +428,10 @@ const CartScreen: React.FC = ({ navigation }: any) => {
       await notifee.requestPermission();
 
       const channelId = await notifee.createChannel({
-        id: "downloads",
-        name: "Downloads",
+        id: 'downloads',
+        name: 'Downloads',
       });
 
-      // ✅ 1. Show START notification
       notificationId = await notifee.displayNotification({
         title: `Downloading ${fileType}...`,
         body: fileName,
@@ -267,28 +440,27 @@ const CartScreen: React.FC = ({ navigation }: any) => {
           progress: {
             max: 100,
             current: 0,
-            indeterminate: true, // loader style
+            indeterminate: true,
           },
           ongoing: true,
         },
       });
 
-      let finalPath = "";
+      let finalPath = '';
 
-      if (Platform.OS === "android") {
+      if (Platform.OS === 'android') {
         if (Number(Platform.Version) < 33) {
           const granted = await PermissionsAndroid.request(
             PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
           );
           if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-            Alert.alert("Permission Required");
+            Alert.alert('Permission Required');
             return false;
           }
         }
 
-        const downloadPath = RNFS.DownloadDirectoryPath + "/" + fileName;
+        const downloadPath = RNFS.DownloadDirectoryPath + '/' + fileName;
 
-        // ✅ simulate progress (optional but nice UX)
         for (let i = 10; i <= 90; i += 20) {
           await new Promise((res: any) => setTimeout(res, 100));
           await notifee.displayNotification({
@@ -306,25 +478,25 @@ const CartScreen: React.FC = ({ navigation }: any) => {
           });
         }
 
-        await RNFS.writeFile(downloadPath, base64Data, "base64");
+        await RNFS.writeFile(downloadPath, base64Data, 'base64');
         await RNFS.scanFile(downloadPath);
 
         finalPath = downloadPath;
       } else {
-        const iosPath = RNFS.DocumentDirectoryPath + "/" + fileName;
-        await RNFS.writeFile(iosPath, base64Data, "base64");
+        const iosPath = RNFS.DocumentDirectoryPath + '/' + fileName;
+        await RNFS.writeFile(iosPath, base64Data, 'base64');
         finalPath = iosPath;
       }
 
       await notifee.displayNotification({
         id: notificationId,
-        title: `${fileType} Download Complete`,
-        body: `Tap to open ${fileName}`,
+        title: `${fileType} Download Successfully`,
+        body: `${fileName}`,
         data: { filePath: finalPath },
         android: {
           channelId,
           pressAction: {
-            id: "default",
+            id: 'default',
           },
           progress: undefined,
           ongoing: false,
@@ -334,15 +506,15 @@ const CartScreen: React.FC = ({ navigation }: any) => {
 
       return true;
     } catch (e) {
-      console.log("Download error:", e);
-      Alert.alert("Error", "Download failed");
+      console.log('Download error:', e);
+      Alert.alert('Error', 'Download failed');
       return false;
     }
   };
 
   const generatePDF = async () => {
     if (cartItems.length === 0) {
-      Alert.alert("Empty Cart", "No items to export");
+      Alert.alert('Empty Cart', 'No items to export');
       return;
     }
     try {
@@ -381,7 +553,7 @@ const CartScreen: React.FC = ({ navigation }: any) => {
       <td>
         <div style="display: flex; align-items: center;">
           <img 
-            src="${item.image || "https://via.placeholder.com/50"}" 
+            src="${item.image || 'https://via.placeholder.com/50'}" 
             style="width:40px; height:40px; object-fit:contain; margin-right:8px;"
           />
           <span>${item.name}</span>
@@ -435,46 +607,30 @@ const CartScreen: React.FC = ({ navigation }: any) => {
 
       let options = {
         html: htmlContent,
-        fileName: "OrderSummary_" + Date.now(),
+        fileName: 'OrderSummary_' + Date.now(),
         base64: true,
       };
 
       let file = await convertToPDF(options);
 
       if (!file || !file.base64) {
-        throw new Error("PDF generation returned null or empty");
+        throw new Error('PDF generation returned null or empty');
       }
 
-      const fileName = "OrderSummary_" + Date.now() + ".pdf";
+      const fileName = 'OrderSummary_' + Date.now() + '.pdf';
 
-      // 1. Download to device storage directly
-      await saveToDownloads(file.base64, fileName, "PDF");
+      await saveToDownloads(file.base64, fileName, 'PDF');
 
-      // 2. Safely write to Cache for Share Provider to avoid Null URI scheme error
-      const path = RNFS.CachesDirectoryPath + "/" + fileName;
-      await RNFS.writeFile(path, file.base64, "base64");
+      const path = RNFS.CachesDirectoryPath + '/' + fileName;
+      await RNFS.writeFile(path, file.base64, 'base64');
 
       let filePath = path;
-      if (!filePath.startsWith("file://")) {
-        filePath = "file://" + filePath;
+      if (!filePath.startsWith('file://')) {
+        filePath = 'file://' + filePath;
       }
-
-      // const shareOptions = {
-      //   title: "Share PDF",
-      //   url: filePath,
-      //   type: "application/pdf",
-      // };
-
-      // try {
-      //   await Share.open(shareOptions);
-      // } catch (shareError: any) {
-      //   if (shareError?.message !== "User did not share") {
-      //     throw shareError;
-      //   }
-      // }
     } catch (error: any) {
-      console.log("PDF Generation Error:", error);
-      Alert.alert("Error", error?.message || "Failed to generate PDF");
+      console.log('PDF Generation Error:', error);
+      Alert.alert('Error', error?.message || 'Failed to generate PDF');
     } finally {
       setExportingPDF(false);
     }
@@ -482,7 +638,7 @@ const CartScreen: React.FC = ({ navigation }: any) => {
 
   const generateExcel = async () => {
     if (cartItems.length === 0) {
-      Alert.alert("Empty Cart", "No items to export");
+      Alert.alert('Empty Cart', 'No items to export');
       return;
     }
 
@@ -490,77 +646,60 @@ const CartScreen: React.FC = ({ navigation }: any) => {
       setExportingExcel(true);
 
       // 1. Prepare Data
-      const data: any[] = cartItems.map((item) => ({
-        "Product Name": item.name,
+      const data: any[] = cartItems.map(item => ({
+        'Product Name': item.name,
         Quantity: item.qty || 0,
-        "Price per Unit (₹)": formatPriceClean(getCalculatedPrice(item)),
-        "Total (₹)": (
+        'Price per Unit (₹)': formatPriceClean(getCalculatedPrice(item)),
+        'Total (₹)': (
           Number(formatPriceClean(getCalculatedPrice(item))) *
           Number(item.qty || 0)
         ).toFixed(2),
       }));
 
-      data.push({}); // Empty row
+      data.push({});
       data.push({
-        "Product Name": "Taxable Value",
-        Quantity: "",
-        "Price per Unit (₹)": "",
-        "Total (₹)": orderSummary?.taxable || "0",
+        'Product Name': 'Taxable Value',
+        Quantity: '',
+        'Price per Unit (₹)': '',
+        'Total (₹)': orderSummary?.taxable || '0',
       });
 
       if (orderSummary?.gstBifurcation) {
         orderSummary.gstBifurcation.forEach((gst: any) => {
           data.push({
-            "Product Name": `GST (${gst.percentage}%)`,
-            Quantity: "",
-            "Price per Unit (₹)": "",
-            "Total (₹)": formatPrice(gst.price),
+            'Product Name': `GST (${gst.percentage}%)`,
+            Quantity: '',
+            'Price per Unit (₹)': '',
+            'Total (₹)': formatPrice(gst.price),
           });
         });
       }
 
       data.push({
-        "Product Name": "Total Amount",
-        Quantity: "",
-        "Price per Unit (₹)": "",
-        "Total (₹)": formatPrice(orderSummary?.totalAmount),
+        'Product Name': 'Total Amount',
+        Quantity: '',
+        'Price per Unit (₹)': '',
+        'Total (₹)': formatPrice(orderSummary?.totalAmount),
       });
 
-      // 2. Create Workbook and Worksheet
       const ws = XLSX.utils.json_to_sheet(data);
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Order Summary");
+      XLSX.utils.book_append_sheet(wb, ws, 'Order Summary');
 
-      const wbout = XLSX.write(wb, { type: "base64", bookType: "xlsx" });
-      const fileName = "OrderSummary_" + Date.now() + ".xlsx";
+      const wbout = XLSX.write(wb, { type: 'base64', bookType: 'xlsx' });
+      const fileName = 'OrderSummary_' + Date.now() + '.xlsx';
 
-      // 4. Caches Write for Share Option
-      const path = RNFS.CachesDirectoryPath + "/" + fileName;
-      await RNFS.writeFile(path, wbout, "base64");
-      await saveToDownloads(wbout, fileName, "Excel");
+      const path = RNFS.CachesDirectoryPath + '/' + fileName;
+      await RNFS.writeFile(path, wbout, 'base64');
+      await saveToDownloads(wbout, fileName, 'Excel');
 
       let filePath = path;
-      if (!filePath.startsWith("file://")) {
-        filePath = "file://" + filePath;
+      if (!filePath.startsWith('file://')) {
+        filePath = 'file://' + filePath;
       }
-
-      // 5. Share file via FileProvider-compatible cache path
-      // const shareOptions = {
-      //   title: "Share Excel File",
-      //   url: filePath,
-      //   type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      // };
-
-      // try {
-      //   await Share.open(shareOptions);
-      // } catch (shareError: any) {
-      //   if (shareError?.message !== "User did not share") {
-      //     throw shareError;
-      //   }
-      // }
     } catch (error: any) {
-      console.log("Excel Generation Error:", error);
-      Alert.alert("Error", error?.message || "Failed to generate Excel file");
+      console.log('Excel Generation Error:', error);
+      Alert.alert('Error', error?.message || 'Failed to generate Excel file');
     } finally {
       setExportingExcel(false);
     }
@@ -599,189 +738,15 @@ const CartScreen: React.FC = ({ navigation }: any) => {
     return null;
   };
 
-  const CartItem = ({ item }: { item: any }) => {
-    return (
-      <View
-        style={[
-          styles.card,
-          Number(item.current_stock) === 0 && { opacity: 0.5 },
-        ]}
-      >
-        <View
-          style={{
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 5,
-            marginRight: 10,
-            borderRadius: 10,
-            backgroundColor: "#e5e7eb",
-          }}
-        >
-          <Image
-            source={
-              item.image
-                ? { uri: item.image }
-                : require("../assets/productimg.jpg")
-            }
-            style={styles.productImage}
-          />
-        </View>
-
-        <View style={{ flex: 1 }}>
-          <View style={styles.topRow}>
-            <View style={{ flex: 1 }}>
-              <Text numberOfLines={1} style={styles.productTitle}>
-                {item.name}
-              </Text>
-            </View>
-
-            <TouchableOpacity
-              style={{ paddingLeft: 10 }}
-              onPress={() => removeItem(item.cart_id)}
-            >
-              <Image
-                source={require("../assets/Common/trash.png")}
-                style={{
-                  height: 16,
-                  width: 16,
-                  tintColor: "#DC2626",
-                }}
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.line} />
-
-          {item?.price_tiers && item.price_tiers.length > 0 && (
-            <View style={styles.variantBox}>
-              {item.price_tiers.map((tier: any, index: number) => {
-                const isLast = index === item.price_tiers.length - 1;
-
-                const activeTier = getActiveTier(item);
-                const isSelected = Number(item?.qty || 0) >= tier.qty; // ✅ Tick all satisfied tiers
-
-                return (
-                  <View key={index}>
-                    <View style={styles.variantRow}>
-                      <Text style={styles.slabPrice}>
-                        {tier.qty} Pc ₹{formatPrice(tier.price)}/pc
-                      </Text>
-
-                      <TouchableOpacity
-                        onPress={() => {
-                          Vibration.vibrate(60);
-                          updateQty(item.product_id, "set", tier.qty);
-                        }}
-                      >
-                        {isSelected ? (
-                          <Image
-                            source={require("../assets/check.png")}
-                            style={{
-                              height: 16,
-                              width: 16,
-                              tintColor: "#487D44",
-                            }}
-                          />
-                        ) : (
-                          <Text style={styles.addSmall}>Add+</Text>
-                        )}
-                      </TouchableOpacity>
-                    </View>
-
-                    {!isLast && <View style={styles.dividerPrice} />}
-                  </View>
-                );
-              })}
-            </View>
-          )}
-
-          <View style={styles.bottomRow}>
-            <View>
-              <View style={styles.priceRow}>
-                <Text style={styles.price}>
-                  ₹{formatPriceClean(getCalculatedPrice(item))}
-                </Text>
-                {Number(item.mrp) > 0 && (
-                  <Text style={styles.oldPrice}>
-                    ₹{formatPriceClean(item.mrp)}
-                  </Text>
-                )}
-              </View>
-              {/* Show best rate based on current quantity */}
-              {/* {item.price_tiers && item.price_tiers.length > 0 && (
-                <Text style={styles.bestRate}>
-                  Best rate: ₹{getCalculatedPrice(item)}/pc at {item.qty || 0}{" "}
-                  pcs
-                </Text>
-              )} */}
-            </View>
-
-            <View style={styles.qtyBox}>
-              {updatingQtyId === item.product_id ? (
-                <ActivityIndicator size="small" color="#487D44" />
-              ) : (
-                <>
-                  <TouchableOpacity
-                    style={styles.qtyBtn}
-                    onPress={() => {
-                      Vibration.vibrate(60);
-                      updateQty(item.product_id, "dec");
-                    }}
-                  >
-                    <Text style={styles.qtyicon}>-</Text>
-                  </TouchableOpacity>
-
-                  <TextInput
-                    style={styles.qtyText}
-                    keyboardType="numeric"
-                    value={
-                      item.qty !== undefined && item.qty !== null
-                        ? String(item.qty)
-                        : ""
-                    }
-                    onChangeText={(text) => {
-                      const val = text.replace(/[^0-9]/g, "");
-                      updateQty(
-                        item.product_id,
-                        "set",
-                        val === "" ? "" : Number(val),
-                      );
-                    }}
-                    onBlur={() => {
-                      if (String(item.qty) === "" || item.qty === 0) {
-                        updateQty(item.product_id, "set", 0);
-                      }
-                    }}
-                  />
-
-                  <TouchableOpacity
-                    style={styles.qtyBtn}
-                    onPress={() => {
-                      Vibration.vibrate(60);
-                      updateQty(item.product_id, "inc");
-                    }}
-                  >
-                    <Text style={styles.qtyicon}>+</Text>
-                  </TouchableOpacity>
-                </>
-              )}
-            </View>
-          </View>
-        </View>
-      </View>
-    );
-  };
-
   return (
-    <SafeAreaView edges={["top"]} style={styles.safeArea}>
+    <SafeAreaView edges={['top']} style={styles.safeArea}>
       {/* HEADER */}
       <Header
         title={`Cart (${cartItems.length})`}
         showBack={false}
         containerStyle={{ paddingHorizontal: 8 }}
         rightComponent={
-          <View style={{ flexDirection: "row" }}>
+          <View style={{ flexDirection: 'row' }}>
             <TouchableOpacity
               style={[styles.headerBtn, exportingExcel && { opacity: 0.7 }]}
               onPress={() => {
@@ -801,11 +766,11 @@ const CartScreen: React.FC = ({ navigation }: any) => {
               )}
               {!exportingExcel && (
                 <Image
-                  source={require("../assets/Common/excel.png")}
+                  source={require('../assets/Common/excel.png')}
                   style={{
                     height: 12,
                     width: 12,
-                    tintColor: "#fff",
+                    tintColor: '#fff',
                     marginLeft: 5,
                   }}
                   resizeMode="contain"
@@ -829,11 +794,11 @@ const CartScreen: React.FC = ({ navigation }: any) => {
               )}
               {!exportingPDF && (
                 <Image
-                  source={require("../assets/Common/SavePdf.png")}
+                  source={require('../assets/Common/SavePdf.png')}
                   style={{
                     height: 12,
                     width: 12,
-                    tintColor: "#fff",
+                    tintColor: '#fff',
                     marginLeft: 5,
                   }}
                   resizeMode="contain"
@@ -851,7 +816,7 @@ const CartScreen: React.FC = ({ navigation }: any) => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              colors={["#487D44"]}
+              colors={['#487D44']}
             />
           }
         >
@@ -859,8 +824,8 @@ const CartScreen: React.FC = ({ navigation }: any) => {
             <View
               style={{
                 flex: 1,
-                justifyContent: "center",
-                alignItems: "center",
+                justifyContent: 'center',
+                alignItems: 'center',
                 paddingVertical: 40,
               }}
             >
@@ -871,24 +836,35 @@ const CartScreen: React.FC = ({ navigation }: any) => {
               {/* CART ITEMS */}
               <FlatList
                 data={cartItems}
-                keyExtractor={(item) => item.cart_id.toString()}
-                renderItem={({ item }) => <CartItem item={item} />}
+                keyExtractor={item => item.cart_id.toString()}
+                renderItem={({ item }) => (
+                  <CartItem
+                    item={item}
+                    removeItem={removeItem}
+                    updateQty={updateQty}
+                    formatPrice={formatPrice}
+                    formatPriceClean={formatPriceClean}
+                    getCalculatedPrice={getCalculatedPrice}
+                    getActiveTier={getActiveTier}
+                    updatingQtyId={updatingQtyId}
+                  />
+                )}
                 scrollEnabled={false}
                 showsVerticalScrollIndicator={false}
                 ListEmptyComponent={() => (
                   <View
                     style={{
                       flex: 1,
-                      justifyContent: "center",
-                      alignItems: "center",
+                      justifyContent: 'center',
+                      alignItems: 'center',
                       paddingVertical: 40,
                     }}
                   >
                     <Text
                       style={{
-                        fontFamily: "DMSans-Medium",
+                        fontFamily: 'DMSans-Medium',
                         fontSize: 16,
-                        color: "#666",
+                        color: '#666',
                       }}
                     >
                       Cart is Empty yet
@@ -906,14 +882,14 @@ const CartScreen: React.FC = ({ navigation }: any) => {
 
               <View style={[styles.summaryRow, { marginTop: 10 }]}>
                 <Text style={styles.summaryText}>Taxable Value</Text>
-                <Text style={{ fontSize: 12, fontFamily: "DMSans-Regular" }}>
+                <Text style={{ fontSize: 12, fontFamily: 'DMSans-Regular' }}>
                   ₹{orderSummary?.taxable}
                 </Text>
               </View>
 
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryText}>GST</Text>
-                <Text style={{ fontSize: 12, fontFamily: "DMSans-Regular" }}>
+                <Text style={{ fontSize: 12, fontFamily: 'DMSans-Regular' }}>
                   ₹{formatPrice(orderSummary.gst)}
                 </Text>
               </View>
@@ -930,21 +906,21 @@ const CartScreen: React.FC = ({ navigation }: any) => {
                 onPress={() => {
                   if (!hasGST) {
                     Alert.alert(
-                      "Complete Profile",
-                      "Please complete your account setup (GST required) before purchasing.",
+                      'Complete Profile',
+                      'Please complete your account setup (GST required) before purchasing.',
                       [
                         {
-                          text: "Go to Setup",
+                          text: 'Go to Setup',
                           onPress: () =>
-                            navigation.navigate("Profile", {
-                              screen: "CompanyProfile",
+                            navigation.navigate('Profile', {
+                              screen: 'CompanyProfile',
                             }),
                         },
-                        { text: "Cancel", style: "cancel" },
+                        { text: 'Cancel', style: 'cancel' },
                       ],
                     );
                   } else {
-                    navigation.navigate("CheckoutScreen");
+                    navigation.navigate('CheckoutScreen');
                   }
                 }}
               >
@@ -963,38 +939,38 @@ export default CartScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F3F4F6",
+    backgroundColor: '#F3F4F6',
   },
   safeArea: {
     flex: 1,
-    backgroundColor: "#F3F4F6",
+    backgroundColor: '#F3F4F6',
     paddingHorizontal: 15,
   },
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
 
   headerBtn: {
-    backgroundColor: "#487D44",
+    backgroundColor: '#487D44',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
     marginLeft: 8,
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 
   headerBtnText: {
-    color: "#fff",
+    color: '#fff',
     fontSize: 12,
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
   },
 
   card: {
-    flexDirection: "row",
-    backgroundColor: "#fff",
+    flexDirection: 'row',
+    backgroundColor: '#fff',
     borderRadius: 15,
     padding: 12,
     marginBottom: 15,
@@ -1007,148 +983,148 @@ const styles = StyleSheet.create({
   },
 
   topRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
 
   bottomRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginTop: 8,
   },
 
   productTitle: {
     fontSize: 14,
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
   },
 
   line: {
     height: 1,
-    backgroundColor: "#eee",
+    backgroundColor: '#eee',
     marginVertical: 8,
   },
 
   priceRow: {
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: 5,
-    alignItems: "center",
+    alignItems: 'center',
   },
 
   price: {
     fontSize: 14,
-    fontFamily: "DMSans-SemiBold",
-    color: "#000",
+    fontFamily: 'DMSans-SemiBold',
+    color: '#000',
   },
 
   oldPrice: {
-    textDecorationLine: "line-through",
-    color: "#FF7878",
+    textDecorationLine: 'line-through',
+    color: '#FF7878',
     fontSize: 12,
   },
 
   bestRate: {
     fontSize: 10,
-    color: "#487D44",
+    color: '#487D44',
     marginTop: 2,
-    fontFamily: "DMSans-Regular",
+    fontFamily: 'DMSans-Regular',
   },
 
   qtyBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#E8F3E8",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E8F3E8',
     borderRadius: 8,
     paddingHorizontal: 4,
-    paddingVertical: Platform.OS === "ios" ? 3 : 0,
+    paddingVertical: Platform.OS === 'ios' ? 3 : 0,
   },
 
   qtyBtn: {
     width: 20,
     height: 20,
     borderRadius: 12,
-    backgroundColor: "#487D44",
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: '#487D44',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   qtyText: {
     marginHorizontal: 8,
-    fontFamily: "DMSans-Medium",
-    color: "#487D44",
+    fontFamily: 'DMSans-Medium',
+    color: '#487D44',
     fontSize: 14,
     minWidth: 30,
-    textAlign: "center",
+    textAlign: 'center',
   },
 
   sectionTitle: {
     fontSize: 18,
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
     marginTop: 20,
     marginBottom: 10,
   },
 
   summaryRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginBottom: 9,
   },
 
   summaryText: {
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
     fontSize: 12,
   },
 
   checkoutBtn: {
-    backgroundColor: "#487D44",
+    backgroundColor: '#487D44',
     paddingVertical: 18,
     borderRadius: 15,
-    alignItems: "center",
+    alignItems: 'center',
     marginTop: 20,
     marginBottom: 40,
   },
 
   checkoutText: {
-    color: "#fff",
+    color: '#fff',
     fontSize: 16,
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
   },
 
   variantBox: {
-    backgroundColor: "#F4F4F4",
-    borderColor: "#E6E7EE",
+    backgroundColor: '#F4F4F4',
+    borderColor: '#E6E7EE',
     borderRadius: 8,
     padding: 8,
   },
 
   variantRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
 
   slabPrice: {
     fontSize: 12,
-    fontFamily: "DMSans-Regular",
-    color: "#000000",
+    fontFamily: 'DMSans-Regular',
+    color: '#000000',
   },
 
   addSmall: {
     fontSize: 12,
-    color: "#487D44",
-    fontWeight: "600",
-    fontFamily: "DMSans-Medium",
+    color: '#487D44',
+    fontWeight: '600',
+    fontFamily: 'DMSans-Medium',
   },
 
   dividerPrice: {
     height: 1,
-    backgroundColor: "#E6E7EE",
+    backgroundColor: '#E6E7EE',
     marginVertical: 8,
   },
   qtyicon: {
-    color: "#fff",
+    color: '#fff',
     fontSize: 12,
-    fontFamily: "DMSans-Regular",
+    fontFamily: 'DMSans-Regular',
   },
 });

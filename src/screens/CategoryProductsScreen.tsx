@@ -15,6 +15,7 @@ import {
   RefreshControl,
   Alert,
   Vibration,
+  ToastAndroid,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 // import ProductCard from "../components/ProductCard";
@@ -436,7 +437,11 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
     let base = (categories[selectedIndex]?.products || []).filter(p => {
       // Sub-subcategory filter
       if (selectedSubSubCats.length > 0) {
-        if (!selectedSubSubCats.map(String).includes(String(p.product_sub_sub_category))) {
+        if (
+          !selectedSubSubCats
+            .map(String)
+            .includes(String(p.product_sub_sub_category))
+        ) {
           return false;
         }
       }
@@ -740,7 +745,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                     resizeMode="contain"
                   />
                 </TouchableOpacity>
-
+                <View style={styles.sortDivider} />
                 <TouchableOpacity
                   style={{
                     flexDirection: 'row',
@@ -856,12 +861,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                   </View>
                 )}
                 renderItem={({ item }) => (
-                  <View
-                    style={[
-                      styles.card,
-                      Number(item.current_stock) === 0 && { opacity: 0.5 },
-                    ]}
-                  >
+                  <View style={[styles.card]}>
                     {/* Organic Ribbon - Only show if product is organic */}
                     {/* {item.product_type === "Organic" && ( */}
                     {/* <LinearGradient
@@ -1025,7 +1025,12 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                               ? { uri: item.image }
                               : require('../assets/icons/sicon2.png')
                           }
-                          style={styles.productImage}
+                          style={[
+                            styles.productImage,
+                            Number(item.current_stock) === 0 && {
+                              opacity: 0.5,
+                            },
+                          ]}
                         />
                         <TouchableOpacity
                           onPress={() => toggleWishlist(item)}
@@ -1051,7 +1056,12 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                         </TouchableOpacity>
                       </TouchableOpacity>
 
-                      <View style={[styles.details]}>
+                      <View
+                        style={[
+                          styles.details,
+                          Number(item.current_stock) === 0 && { opacity: 0.6 },
+                        ]}
+                      >
                         <TouchableOpacity
                           onPress={() =>
                             navigation.navigate('ProductDetail', {
@@ -1190,7 +1200,10 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                                 style={styles.qtyBtn}
                                 onPress={() => {
                                   Vibration.vibrate(60);
-                                  updateQty(item.id, (item.cart?.qty || 0) - 1);
+                                  updateQty(
+                                    item.id,
+                                    Number(item.cart?.qty || 0) - 1,
+                                  );
                                 }}
                                 // disabled={updatingQtyId === item.id}
                               >
@@ -1200,6 +1213,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                               <TextInput
                                 style={styles.qtyNumber}
                                 keyboardType="numeric"
+                                maxLength={5}
                                 value={
                                   item.cart?.qty !== undefined &&
                                   item.cart?.qty !== null
@@ -1208,10 +1222,25 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                                 }
                                 onChangeText={text => {
                                   const val = text.replace(/[^0-9]/g, '');
-                                  if (val === '') {
-                                    updateQty(item.id, '');
+                                  if (val !== '') {
+                                    let num = Number(val);
+                                    if (num > 10000) {
+                                      num = 10000;
+                                      if (Platform.OS === 'android') {
+                                        ToastAndroid.show(
+                                          'Maximum quantity is 10,000',
+                                          ToastAndroid.SHORT,
+                                        );
+                                      } else {
+                                        Alert.alert(
+                                          'Maximum Limit',
+                                          'Maximum quantity is 10,000',
+                                        );
+                                      }
+                                    }
+                                    updateQty(item.id, num);
                                   } else {
-                                    updateQty(item.id, Number(val));
+                                    updateQty(item.id, '');
                                   }
                                 }}
                                 onBlur={() => {
@@ -1219,7 +1248,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                                     String(item.cart?.qty) === '' ||
                                     item.cart?.qty === 0
                                   ) {
-                                    updateQty(item.id, 0);
+                                    updateQty(item.id, 1);
                                   }
                                 }}
                                 // editable={updatingQtyId !== item.id}
@@ -1234,7 +1263,10 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                                 ]}
                                 onPress={() => {
                                   Vibration.vibrate(60);
-                                  updateQty(item.id, (item.cart?.qty || 0) + 1);
+                                  updateQty(
+                                    item.id,
+                                    Number(item.cart?.qty || 0) + 1,
+                                  );
                                 }}
                                 disabled={
                                   updatingQtyId === item.id ||
@@ -1542,10 +1574,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                 <Text style={styles.sortClearText}>Clear all</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[
-                  styles.sortApplyBtn,
-                  { backgroundColor: '#487D44' },
-                ]}
+                style={[styles.sortApplyBtn, { backgroundColor: '#487D44' }]}
                 onPress={() => {
                   setShowBrandModal(false);
                 }}
@@ -1743,9 +1772,10 @@ const styles = StyleSheet.create({
   qtyRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E8F3E8',
     borderRadius: 8,
     paddingHorizontal: 4,
+    // paddingVertical: 2,
+    backgroundColor: '#E8F3E8',
   },
   qtyBtn: {
     width: 20,

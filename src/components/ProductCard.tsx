@@ -10,6 +10,8 @@ import {
   ActivityIndicator,
   Platform,
   Vibration,
+  ToastAndroid,
+  Alert,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 
@@ -28,8 +30,8 @@ export interface ProductCardProps {
   tiers?: any[];
   onTierAddPress?: (qty: number) => void;
   cart_status?: boolean | number | string;
-  cartQty?: number;
-  onUpdateQty?: (newQty: number) => void;
+  cartQty?: number | string;
+  onUpdateQty?: (newQty: number | string) => void;
   updatingQty?: boolean;
   wishlist_status?: boolean;
   onWishlistPress?: () => void;
@@ -88,11 +90,7 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(
 
     return (
       <View
-        style={[
-          styles.cardContainer,
-          containerStyle,
-          { opacity: isOutOfStock ? 0.5 : 1 },
-        ]}
+        style={[styles.cardContainer, containerStyle]}
       >
         <View style={styles.cardInner}>
           <TouchableOpacity onPress={onPress} activeOpacity={0.9}>
@@ -193,7 +191,7 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(
           </TouchableOpacity>
 
           {/* Content */}
-          <View style={styles.content}>
+          <View style={[styles.content, isOutOfStock && { opacity: 0.6 }]}>
             <TouchableOpacity onPress={onPress} activeOpacity={0.9}>
               <Text numberOfLines={2} style={styles.title}>
                 {title}
@@ -269,7 +267,7 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(
                         style={styles.qtyBtn}
                         onPress={() => {
                           Vibration.vibrate(60);
-                          onUpdateQty && onUpdateQty((cartQty || 0) - 1);
+                          onUpdateQty && onUpdateQty(Number(cartQty || 0) - 1);
                         }}
                       >
                         <Text style={styles.qtyText}>-</Text>
@@ -278,7 +276,7 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(
                       <TextInput
                         style={styles.qtyNumber}
                         keyboardType="numeric"
-                        maxLength={4}
+                        maxLength={5}
                         value={
                           cartQty !== undefined && cartQty !== null
                             ? String(cartQty)
@@ -286,8 +284,35 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(
                         }
                         onChangeText={text => {
                           const val = text.replace(/[^0-9]/g, '');
-                          if (onUpdateQty) {
-                            onUpdateQty(val === '' ? 0 : Number(val));
+                          if (val !== '') {
+                            let num = Number(val);
+                            if (num > 10000) {
+                              num = 10000;
+                              if (Platform.OS === 'android') {
+                                ToastAndroid.show(
+                                  'Maximum quantity is 10,000',
+                                  ToastAndroid.SHORT,
+                                );
+                              } else {
+                                Alert.alert(
+                                  'Maximum Limit',
+                                  'Maximum quantity is 10,000',
+                                );
+                              }
+                            }
+                            onUpdateQty && onUpdateQty(num);
+                          } else {
+                            onUpdateQty && onUpdateQty('');
+                          }
+                        }}
+                        onBlur={() => {
+                          if (
+                            cartQty === undefined ||
+                            cartQty === null ||
+                            cartQty === '' ||
+                            Number(cartQty) === 0
+                          ) {
+                            onUpdateQty && onUpdateQty(1);
                           }
                         }}
                       />
@@ -299,9 +324,8 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(
                         ]}
                         onPress={() => {
                           Vibration.vibrate(60);
-                          !isOutOfStock &&
                             onUpdateQty &&
-                            onUpdateQty((cartQty || 0) + 1);
+                            onUpdateQty(Number(cartQty || 0) + 1);
                         }}
                         disabled={isOutOfStock}
                       >

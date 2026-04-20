@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,12 +7,11 @@ import {
   TouchableOpacity,
   TextInput,
   Image,
-} from "react-native";
-// import Feather from "react-native-vector-icons/Feather";
-import { SafeAreaView } from "react-native-safe-area-context";
-import Header from "../components/Header";
-import { getWalletLedgerApi } from "../services/api";
-import { useFocusEffect } from "@react-navigation/native";
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Header from '../components/Header';
+import { getWalletLedgerApi } from '../services/api';
+import { useFocusEffect } from '@react-navigation/native';
 
 type Transaction = {
   id: number;
@@ -20,21 +19,22 @@ type Transaction = {
   invoice_no: string;
   particular: string;
   amount: number;
+  order_id: string;
 };
 
 export default function TransactionHistory({ navigation }: any) {
-  const [activeFilter, setActiveFilter] = useState("All");
+  const [activeFilter, setActiveFilter] = useState('All');
   const [history, setHistory] = useState([]);
-  const [searchText, setSearchText] = useState("");
+  const [searchText, setSearchText] = useState('');
 
-  const filters = ["All", "Credits", "Debits"];
+  const filters = ['All', 'Credits', 'Debits'];
 
   const getWalletData = async () => {
     try {
       const res = await getWalletLedgerApi();
       setHistory(res?.data || []);
     } catch (error) {
-      console.log("Wallet Error:", error);
+      console.log('Wallet Error:', error);
     }
   };
 
@@ -47,9 +47,9 @@ export default function TransactionHistory({ navigation }: any) {
   // ✅ FILTER + SEARCH LOGIC
   const filteredData = history.filter((item: any) => {
     const matchesFilter =
-      activeFilter === "All" ||
-      (activeFilter === "Credits" && item.type === "credit") ||
-      (activeFilter === "Debits" && item.type === "debit");
+      activeFilter === 'All' ||
+      (activeFilter === 'Credits' && item.type === 'credit') ||
+      (activeFilter === 'Debits' && item.type === 'debit');
 
     const matchesSearch = item.invoice_no
       ?.toString()
@@ -60,7 +60,7 @@ export default function TransactionHistory({ navigation }: any) {
   });
 
   const renderItem = ({ item }: any) => {
-    const isCredit = item.type === "credit";
+    const isCredit = item.type === 'credit';
 
     return (
       <View
@@ -69,18 +69,18 @@ export default function TransactionHistory({ navigation }: any) {
           isCredit ? styles.blueCard : styles.redCard,
         ]}
       >
-        <View style={{ flexDirection: "row", flex: 1 }}>
+        <View style={{ flexDirection: 'row', flex: 1 }}>
           <View style={styles.iconBox}>
             <Image
               source={
-                item.type === "debit"
-                  ? require("../assets/Common/debit.png")
-                  : require("../assets/Common/credit.png")
+                item.type === 'debit'
+                  ? require('../assets/Common/debit.png')
+                  : require('../assets/Common/credit.png')
               }
               style={{
                 height: 16,
                 width: 16,
-                tintColor: item.type === "debit" ? "#F53333" : "#0C8CE9",
+                tintColor: item.type === 'debit' ? '#F53333' : '#0C8CE9',
               }}
             />
           </View>
@@ -90,28 +90,28 @@ export default function TransactionHistory({ navigation }: any) {
               {item.particular}
             </Text>
             <Text numberOfLines={1} style={styles.transactionSub}>
-              {item.invoice_no}
+              {item.order_id?.trim() ? item.order_id : item.invoice_no}
             </Text>
 
             <Text
               numberOfLines={1}
-              style={[styles.transactionSub, { color: "#000" }]}
+              style={[styles.transactionSub, { color: '#000' }]}
             >
-              {item.pay_date?.split(" ")[0]}
+              {item.pay_date?.split(' ')[0]}
             </Text>
           </View>
         </View>
 
         <View
           style={{
-            alignItems: "flex-end",
+            alignItems: 'flex-end',
             marginLeft: 10,
             flexShrink: 0,
             minWidth: 70,
           }}
         >
           <Text style={styles.amount} numberOfLines={1}>
-            {isCredit ? "+" : "-"}₹{item.amount}
+            {isCredit ? '+' : '-'}₹{item.amount}
           </Text>
 
           <View
@@ -135,7 +135,7 @@ export default function TransactionHistory({ navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView edges={['top']} style={styles.safeArea}>
       {/* Header */}
       <Header title="BBI Wallet" containerStyle={styles.header} />
 
@@ -143,11 +143,11 @@ export default function TransactionHistory({ navigation }: any) {
       <View style={styles.searchRow}>
         <View style={styles.searchBox}>
           <Image
-            source={require("../assets/Common/search.png")}
+            source={require('../assets/Common/search.png')}
             style={{
               height: 16,
               width: 16,
-              resizeMode: "contain",
+              resizeMode: 'contain',
             }}
           />
           <TextInput
@@ -158,10 +158,6 @@ export default function TransactionHistory({ navigation }: any) {
             onChangeText={setSearchText}
           />
         </View>
-
-        {/* <View style={styles.filterIcon}>
-          <Feather name="sliders" size={18} color="#487D44" />
-        </View> */}
       </View>
 
       {/* Filters */}
@@ -170,8 +166,8 @@ export default function TransactionHistory({ navigation }: any) {
           data={filters}
           horizontal
           showsHorizontalScrollIndicator={false}
-          keyExtractor={(item) => item}
-          contentContainerStyle={{ flexDirection: "row" }}
+          keyExtractor={item => item}
+          contentContainerStyle={{ flexDirection: 'row' }}
           renderItem={({ item }) => (
             <TouchableOpacity
               onPress={() => setActiveFilter(item)}
@@ -197,16 +193,16 @@ export default function TransactionHistory({ navigation }: any) {
       <View style={styles.container}>
         <FlatList
           data={filteredData}
-          keyExtractor={(item: any) => item.id.toString()}
+          keyExtractor={(item: any, index: number) => `${item.id}-${index}`}
           renderItem={renderItem}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 40 }}
+          contentContainerStyle={{ paddingBottom: 10 }}
           ListEmptyComponent={
             <Text
               style={{
-                textAlign: "center",
+                textAlign: 'center',
                 marginTop: 20,
-                fontFamily: "DMSans-Medium",
+                fontFamily: 'DMSans-Medium',
               }}
             >
               No transactions found
@@ -221,7 +217,7 @@ export default function TransactionHistory({ navigation }: any) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F8F9FD",
+    backgroundColor: '#F8F9FD',
   },
 
   container: {
@@ -230,8 +226,8 @@ const styles = StyleSheet.create({
   },
 
   header: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     marginVertical: 15,
     marginBottom: 12,
     padding: 15,
@@ -240,32 +236,32 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     marginLeft: 10,
-    fontFamily: "DMSans-SemiBold",
+    fontFamily: 'DMSans-SemiBold',
   },
 
   searchRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 15,
     paddingHorizontal: 15,
   },
 
   searchBox: {
     flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
     borderRadius: 18,
     paddingHorizontal: 12,
     height: 40,
     borderWidth: 1,
-    borderColor: "#D2D6DB",
+    borderColor: '#D2D6DB',
   },
 
   searchInput: {
     marginLeft: 8,
     flex: 1,
-    fontFamily: "DMSans-Regular",
+    fontFamily: 'DMSans-Regular',
   },
 
   filterIcon: {
@@ -273,15 +269,15 @@ const styles = StyleSheet.create({
     height: 40,
     marginLeft: 10,
     borderRadius: 18,
-    backgroundColor: "#fff",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
     borderWidth: 1,
-    borderColor: "#D2D6DB",
+    borderColor: '#D2D6DB',
   },
 
   filterRow: {
-    flexDirection: "row",
+    flexDirection: 'row',
     marginBottom: 15,
     paddingHorizontal: 15,
   },
@@ -290,78 +286,78 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 14,
     borderRadius: 12,
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     marginRight: 8,
     borderWidth: 1,
-    borderColor: "#D2D6DB",
+    borderColor: '#D2D6DB',
   },
 
   activeFilter: {
-    backgroundColor: "#487D44",
+    backgroundColor: '#487D44',
   },
 
   filterText: {
     fontSize: 14,
-    color: "#000",
-    fontFamily: "DMSans-Medium",
+    color: '#000',
+    fontFamily: 'DMSans-Medium',
   },
 
   activeFilterText: {
-    color: "#fff",
+    color: '#fff',
   },
 
   transactionCard: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     borderRadius: 12,
     padding: 14,
     marginBottom: 12,
-    alignItems: "center",
+    alignItems: 'center',
   },
 
   blueCard: {
-    backgroundColor: "#ECF7FF",
+    backgroundColor: '#ECF7FF',
   },
 
   orangeCard: {
-    backgroundColor: "#FFF4EA",
+    backgroundColor: '#FFF4EA',
   },
 
   redCard: {
-    backgroundColor: "#FFEEEE",
+    backgroundColor: '#FFEEEE',
   },
 
   transactionLeft: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     flex: 1,
   },
 
   iconBox: {
     width: 36,
     height: 36,
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     borderRadius: 8,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 10,
   },
 
   transactionTitle: {
     fontSize: 14,
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
   },
 
   transactionSub: {
     fontSize: 10,
-    color: "#64748B",
-    fontFamily: "DMSans-Regular",
+    color: '#64748B',
+    fontFamily: 'DMSans-Regular',
     marginTop: 4,
   },
 
   amount: {
     fontSize: 14,
-    fontFamily: "DMSans-SemiBold",
+    fontFamily: 'DMSans-SemiBold',
     flexShrink: 0,
   },
 
@@ -374,30 +370,30 @@ const styles = StyleSheet.create({
 
   statusText: {
     fontSize: 10,
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
   },
 
   statusCompleted: {
-    backgroundColor: "#66BFFF1A",
+    backgroundColor: '#66BFFF1A',
   },
 
   statusCompletedText: {
-    color: "#0C8CE9",
+    color: '#0C8CE9',
   },
 
   statusProcessing: {
-    backgroundColor: "#FFA9531A",
+    backgroundColor: '#FFA9531A',
   },
 
   statusProcessingText: {
-    color: "#FF9933",
+    color: '#FF9933',
   },
 
   statusFailed: {
-    backgroundColor: "#FF72721F",
+    backgroundColor: '#FF72721F',
   },
 
   statusFailedText: {
-    color: "#F53333",
+    color: '#F53333',
   },
 });

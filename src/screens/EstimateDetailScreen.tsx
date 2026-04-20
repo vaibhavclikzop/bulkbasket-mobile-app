@@ -6,12 +6,12 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Image,
-} from "react-native";
-import React, { useEffect, useState } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { getEstimateDetailsApi } from "../services/api";
-import Styles from "../components/Styles";
-import Header from "../components/Header";
+} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { getEstimateDetailsApi } from '../services/api';
+import Styles from '../components/Styles';
+import Header from '../components/Header';
 
 /* ================= TYPES ================= */
 
@@ -24,7 +24,7 @@ type EstimateItem = {
 };
 
 type EstimateData = {
-  invoice_no: string;
+  order_id: string;
   total_amount: number;
   name: string;
   city: string;
@@ -53,15 +53,15 @@ const EstimateItemCard = ({ item }: { item: EstimateItem }) => {
 
   return (
     <View style={styles.itemCard}>
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <View
-          style={{ backgroundColor: "#F4F4F4", padding: 10, borderRadius: 10 }}
+          style={{ backgroundColor: '#F4F4F4', padding: 10, borderRadius: 10 }}
         >
           <Image
             source={
               imageUri && !imgError
                 ? { uri: imageUri }
-                : require("../assets/Common/Order.png")
+                : require('../assets/Common/Order.png')
             }
             resizeMode="contain"
             style={styles.productImg}
@@ -69,7 +69,7 @@ const EstimateItemCard = ({ item }: { item: EstimateItem }) => {
           />
         </View>
         <View style={{ flex: 1, marginLeft: 10 }}>
-          <Text style={styles.itemName}>{item.product_name || "Product"}</Text>
+          <Text style={styles.itemName}>{item.product_name || 'Product'}</Text>
 
           <Text style={styles.itemText}>Qty: {item.qty}</Text>
           <Text style={[styles.itemText, { marginTop: 4 }]}>₹{item.price}</Text>
@@ -91,8 +91,8 @@ const EstimateDetailScreen = ({ route, navigation }: Props) => {
 
   const getStatusStyle = (status?: string) => {
     const s = status?.toLowerCase();
-    if (s === "complete") return { bg: "#DCFCE7", color: "#16A34A" };
-    return { bg: "#FFF4EA", color: "#FF9933" };
+    if (s === 'complete') return { bg: '#DCFCE7', color: '#16A34A' };
+    return { bg: '#FFF4EA', color: '#FF9933' };
   };
   const statusStyle = getStatusStyle(data?.order_status);
   const getDetails = async () => {
@@ -107,7 +107,7 @@ const EstimateDetailScreen = ({ route, navigation }: Props) => {
         setItems(details.items || []);
       }
     } catch (err) {
-      console.log("Error:", err);
+      console.log('Error:', err);
     } finally {
       setLoading(false);
     }
@@ -130,7 +130,7 @@ const EstimateDetailScreen = ({ route, navigation }: Props) => {
   /* ================= UI ================= */
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top"]}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       {/* HEADER */}
       <Header title="Estimate Details" />
       {data && (
@@ -138,7 +138,7 @@ const EstimateDetailScreen = ({ route, navigation }: Props) => {
           {/* TOP CARD */}
           <View style={styles.card}>
             <View style={styles.rowBetween}>
-              <Text style={styles.invoice}>{data.invoice_no}</Text>
+              <Text style={styles.invoice}>{data.order_id}</Text>
               <Text style={styles.amount}>₹{data.total_amount}</Text>
             </View>
 
@@ -189,71 +189,71 @@ export default EstimateDetailScreen;
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F8FAFC",
+    backgroundColor: '#F8FAFC',
   },
 
   header: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 16,
   },
 
   headerTitle: {
     fontSize: 18,
     marginLeft: 10,
-    fontFamily: "DMSans-SemiBold",
+    fontFamily: 'DMSans-SemiBold',
   },
 
   card: {
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     borderRadius: 14,
     padding: 14,
     marginHorizontal: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: '#E5E7EB',
   },
 
   rowBetween: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
 
   invoice: {
     fontSize: 13,
-    color: "#64748B",
-    fontFamily: "DMSans-Regular",
+    color: '#64748B',
+    fontFamily: 'DMSans-Regular',
   },
 
   amount: {
     fontSize: 15,
-    fontFamily: "DMSans-SemiBold",
-    color: "#000",
+    fontFamily: 'DMSans-SemiBold',
+    color: '#000',
   },
 
   name: {
     fontSize: 15,
     marginTop: 6,
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
   },
 
   address: {
     fontSize: 12,
-    color: "#64748B",
+    color: '#64748B',
     marginTop: 4,
-    fontFamily: "DMSans-Regular",
+    fontFamily: 'DMSans-Regular',
   },
 
   date: {
     fontSize: 12,
-    color: "#64748B",
+    color: '#64748B',
     marginTop: 8,
-    fontFamily: "DMSans-Regular",
+    fontFamily: 'DMSans-Regular',
   },
 
   statusBox: {
-    backgroundColor: "#FFF4EA",
+    backgroundColor: '#FFF4EA',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
@@ -261,25 +261,25 @@ const styles = StyleSheet.create({
 
   statusText: {
     fontSize: 11,
-    color: "#FF9933",
-    fontFamily: "DMSans-Medium",
+    color: '#FF9933',
+    fontFamily: 'DMSans-Medium',
   },
 
   sectionTitle: {
     fontSize: 16,
     marginHorizontal: 16,
     marginBottom: 8,
-    fontFamily: "DMSans-SemiBold",
+    fontFamily: 'DMSans-SemiBold',
   },
 
   itemCard: {
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     borderRadius: 12,
     padding: 12,
     marginHorizontal: 16,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: '#E5E7EB',
   },
 
   productImg: {
@@ -289,14 +289,14 @@ const styles = StyleSheet.create({
 
   itemName: {
     fontSize: 14,
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
     marginBottom: 4,
   },
 
   itemText: {
     fontSize: 12,
-    color: "#64748B",
-    fontFamily: "DMSans-Regular",
+    color: '#64748B',
+    fontFamily: 'DMSans-Regular',
   },
 
   // itemTotal: {
@@ -308,22 +308,22 @@ const styles = StyleSheet.create({
   totalBox: {
     margin: 16,
     padding: 14,
-    backgroundColor: "#E6F4EA",
+    backgroundColor: '#E6F4EA',
     borderRadius: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
 
   totalText: {
     fontSize: 16,
-    color: "#2E7D32",
-    fontFamily: "DMSans-SemiBold",
+    color: '#2E7D32',
+    fontFamily: 'DMSans-SemiBold',
   },
 
   loader: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
