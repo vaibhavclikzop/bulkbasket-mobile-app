@@ -1,4 +1,10 @@
-import React, { useState, useCallback } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from 'react';
 import {
   View,
   Text,
@@ -7,7 +13,6 @@ import {
   TouchableOpacity,
   ScrollView,
   FlatList,
-  Alert,
   ActivityIndicator,
   TextInput,
   RefreshControl,
@@ -16,6 +21,7 @@ import {
   PermissionsAndroid,
   ToastAndroid,
 } from 'react-native';
+import { Alert } from '../utils/CustomAlert';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '../components/Header';
 import {
@@ -114,7 +120,12 @@ const CartItem = React.memo(
             <View style={styles.variantBox}>
               {item.price_tiers.map((tier: any, index: number) => {
                 const isLast = index === item.price_tiers.length - 1;
-                const isSelected = Number(item?.qty || 0) >= tier.qty;
+                const currentQty = Number(item?.qty || 0);
+                const nextTierQty = !isLast
+                  ? item.price_tiers[index + 1].qty
+                  : Infinity;
+                const isSelected =
+                  currentQty >= tier.qty && currentQty < nextTierQty;
 
                 return (
                   <View key={index}>
@@ -136,6 +147,7 @@ const CartItem = React.memo(
                               height: 16,
                               width: 16,
                               tintColor: '#487D44',
+                              resizeMode: 'contain',
                             }}
                           />
                         ) : (
@@ -234,6 +246,18 @@ const CartScreen: React.FC = ({ navigation }: any) => {
   const [exportingExcel, setExportingExcel] = useState(false);
 
   const logo = require('../assets/images/logo-white.png');
+
+  const formatPriceSmart = (price: number) => {
+    if (price === undefined || price === null) return '0';
+
+    const num = Number(price);
+
+    if (num % 1 === 0) {
+      return num.toString();
+    }
+
+    return num.toFixed(2);
+  };
 
   const onRefresh = useCallback(async () => {
     try {
@@ -344,6 +368,7 @@ const CartScreen: React.FC = ({ navigation }: any) => {
     try {
       const res = await removeCartItemApi(cart_id);
       setCartItems(prev => prev.filter(item => item.cart_id !== cart_id));
+      fetchCart();
       Alert.alert('Success', res.message);
     } catch (error) {
       console.log('Remove cart error:', error);
@@ -405,8 +430,8 @@ const CartScreen: React.FC = ({ navigation }: any) => {
         data: { filePath },
         android: {
           channelId,
-          smallIcon: 'ic_launcher',
-          largeIcon: logo,
+          color: '#487D44',
+          // largeIcon: logo,
           pressAction: {
             id: 'default',
           },
@@ -437,6 +462,8 @@ const CartScreen: React.FC = ({ navigation }: any) => {
         body: fileName,
         android: {
           channelId,
+          color: '#487D44',
+          largeIcon: logo,
           progress: {
             max: 100,
             current: 0,
@@ -469,6 +496,7 @@ const CartScreen: React.FC = ({ navigation }: any) => {
             body: fileName,
             android: {
               channelId,
+              color: '#487D44',
               progress: {
                 max: 100,
                 current: i,
@@ -495,6 +523,8 @@ const CartScreen: React.FC = ({ navigation }: any) => {
         data: { filePath: finalPath },
         android: {
           channelId,
+          color: '#487D44',
+          // largeIcon: logo,
           pressAction: {
             id: 'default',
           },
@@ -503,6 +533,8 @@ const CartScreen: React.FC = ({ navigation }: any) => {
           autoCancel: true,
         },
       });
+
+      Alert.alert('Success', `${fileType} downloaded successfully!`);
 
       return true;
     } catch (e) {
@@ -514,7 +546,7 @@ const CartScreen: React.FC = ({ navigation }: any) => {
 
   const generatePDF = async () => {
     if (cartItems.length === 0) {
-      Alert.alert('Empty Cart', 'No items to export');
+      Alert.alert('Empty Cart', 'No items in cart to export');
       return;
     }
     try {
@@ -638,7 +670,7 @@ const CartScreen: React.FC = ({ navigation }: any) => {
 
   const generateExcel = async () => {
     if (cartItems.length === 0) {
-      Alert.alert('Empty Cart', 'No items to export');
+      Alert.alert('Empty Cart', 'No items in cart to export');
       return;
     }
 
@@ -890,14 +922,14 @@ const CartScreen: React.FC = ({ navigation }: any) => {
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryText}>GST</Text>
                 <Text style={{ fontSize: 12, fontFamily: 'DMSans-Regular' }}>
-                  ₹{formatPrice(orderSummary.gst)}
+                  ₹{formatPriceSmart(orderSummary.gst)}
                 </Text>
               </View>
 
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryText}>Total</Text>
                 <Text style={styles.summaryText}>
-                  ₹{formatPrice(orderSummary?.totalAmount)}
+                  ₹{formatPriceSmart(orderSummary?.totalAmount)}
                 </Text>
               </View>
 

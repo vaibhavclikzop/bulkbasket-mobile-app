@@ -22,8 +22,8 @@ import {
 import { debounce } from 'lodash';
 import ProductCard from './ProductCard';
 
-const suggestions = ['Sugar', 'Brown Sugar', 'Sugar Powder', 'Sugar Cosmetics'];
-const recent = ['Spices', 'Haldi', 'Garam Masala', 'Seeds', 'Chilli Powder'];
+// const suggestions = ['Sugar', 'Brown Sugar', 'Sugar Powder', 'Sugar Cosmetics'];
+// const recent = ['Spices', 'Haldi', 'Garam Masala', 'Seeds', 'Chilli Powder'];
 
 const SearchScreen = ({ navigation }: any) => {
   const { width } = useWindowDimensions();
@@ -151,13 +151,15 @@ const SearchScreen = ({ navigation }: any) => {
     debouncedUpdateCartApi(productId, finalQty);
   };
 
-
   return (
     <>
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.searchHeader}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
+          <TouchableOpacity
+            style={{ padding: 2 }}
+            onPress={() => navigation.goBack()}
+          >
             <Image
               source={require('../assets/Common/Back.png')}
               style={{ height: 14, width: 14 }}
@@ -247,12 +249,14 @@ const SearchScreen = ({ navigation }: any) => {
                     }
                     bestRate={item.bestRate || ''}
                     tiers={item.tiers}
-                    // product_type={item.product_type}
+                    product_type={item.product_type}
                     current_stock={item.current_stock}
                     cart_status={item.cart_status}
                     cartQty={item.cart?.qty}
                     onUpdateQty={newQty => updateQty(item.id, newQty)}
-                    updatingQty={updatingQtyId === item.id || addingToCartId === item.id}
+                    updatingQty={
+                      updatingQtyId === item.id || addingToCartId === item.id
+                    }
                     wishlist_status={item.wishlist_status}
                     onWishlistPress={() => toggleWishlist(item)}
                     onTierAddPress={(tierQty: number) => {

@@ -1,222 +1,181 @@
-import React from "react";
 import {
-  View,
-  Text,
   StyleSheet,
-  ScrollView,
-  TouchableOpacity,
+  Text,
+  View,
+  FlatList,
+  ActivityIndicator,
   Image,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { getEstimateDetailsApi } from '../services/api';
+import Header from '../components/Header';
 
-const OrderSummery = ({ navigation }: any) => {
-  const ItemCard = ({ title, subtitle, price, image }: any) => (
+/* ================= TYPES ================= */
+
+type EstimateItem = {
+  product_name?: string;
+  qty: number;
+  price: number;
+  total: number;
+  image?: string;
+};
+
+type EstimateData = {
+  order_id: string;
+  total_amount: number;
+  name: string;
+  city: string;
+  state: string;
+  pincode: string;
+  delivery_date: string;
+  order_status: string;
+  items: EstimateItem[];
+};
+
+type Props = {
+  route: {
+    params: {
+      id: number | string;
+    };
+  };
+  navigation: any;
+};
+
+/* ================= ITEM COMPONENT ================= */
+
+const EstimateItemCard = ({ item }: { item: EstimateItem }) => {
+  const [imgError, setImgError] = useState(false);
+
+  const imageUri = item?.image;
+
+  return (
     <View style={styles.itemCard}>
-      <Image source={image} style={styles.productImg} />
-
-      <View style={{ flex: 1 }}>
-        <Text style={styles.itemTitle}>{title}</Text>
-        <Text style={styles.itemSub}>{subtitle}</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <View
-          style={{ height: 1, backgroundColor: "#E5E7EB", marginVertical: 10 }}
-        />
-        <View style={styles.priceRow}>
-          <Text style={styles.price}>{price}</Text>
-          <Text style={styles.oldPrice}>₹660</Text>
+          style={{ backgroundColor: '#F4F4F4', padding: 10, borderRadius: 10 }}
+        >
+          <Image
+            source={
+              imageUri && !imgError
+                ? { uri: imageUri }
+                : require('../assets/Common/Order.png')
+            }
+            resizeMode="contain"
+            style={styles.productImg}
+            onError={() => setImgError(true)}
+          />
         </View>
+        <View style={{ flex: 1, marginLeft: 10 }}>
+          <Text style={styles.itemName}>{item.product_name || 'Product'}</Text>
 
-        <Text style={styles.bestRate}>₹81/pack Best rate</Text>
+          <Text style={styles.itemText}>Qty: {item.qty}</Text>
+          <Text style={[styles.itemText, { marginTop: 4 }]}>₹{item.price}</Text>
+          {/* <Text style={styles.itemTotal}>Total: ₹{item.total}</Text> */}
+        </View>
       </View>
     </View>
   );
+};
+
+/* ================= MAIN COMPONENT ================= */
+
+const OrderSummery = ({ route, navigation }: Props) => {
+  const { id } = route.params;
+
+  const [data, setData] = useState<EstimateData | null>(null);
+  const [items, setItems] = useState<EstimateItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const getStatusStyle = (status?: string) => {
+    const s = status?.toLowerCase();
+    if (s === 'complete') return { bg: '#DCFCE7', color: '#16A34A' };
+    return { bg: '#FFF4EA', color: '#FF9933' };
+  };
+  const statusStyle = getStatusStyle(data?.order_status);
+  const getDetails = async () => {
+    try {
+      setLoading(true);
+
+      const res = await getEstimateDetailsApi(id);
+      const details: EstimateData | undefined = res?.data?.[0];
+
+      if (details) {
+        setData(details);
+        setItems(details.items || []);
+      }
+    } catch (err) {
+      console.log('Error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (id) getDetails();
+  }, [id]);
+
+  /* ================= LOADER ================= */
+
+  if (loading) {
+    return (
+      <View style={styles.loader}>
+        <ActivityIndicator size="large" color="#487D44" />
+      </View>
+    );
+  }
+
+  /* ================= UI ================= */
 
   return (
-    <SafeAreaView edges={["top"]} style={styles.safeArea}>
-      <View style={styles.container}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Image
-            source={require("../assets/Common/Back.png")}
-            style={{ height: 18, width: 18 }}
-            resizeMode="contain"
-          />
-        </TouchableOpacity>
-        <Text style={styles.title}>sary</Text>
-
-        <Text style={styles.eta}>ETA : 15 Jan, (11:00 AM - 11:00 PM)</Text>
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 40 }}
-        >
-          {/* Confirmed Items */}
-          <View style={styles.rowBetween}>
-            <Text style={styles.section}>Confirmed Items (2 items)</Text>
-
-            <View style={styles.shipBadge}>
-              <Text style={styles.shipText}>Ready to Ship</Text>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      {/* HEADER */}
+      <Header title="Challan Detail" />
+      {data && (
+        <>
+          {/* TOP CARD */}
+          <View style={styles.card}>
+            <View style={styles.rowBetween}>
+              <Text style={styles.invoice}>{data.order_id}</Text>
+              <Text style={styles.amount}>₹{data.total_amount}</Text>
             </View>
-          </View>
 
-          <Text style={styles.subSection}>Packaging Material</Text>
+            <Text style={styles.name}>{data.name}</Text>
 
-          <ItemCard
-            title="MDH - Deggi Mirch, 100 gm"
-            subtitle="12 pc"
-            price="₹640"
-            image={require("../assets/images/product-image.png")}
-          />
-
-          <ItemCard
-            title="Disposables & Packaging Material"
-            subtitle="12 pc"
-            price="₹640"
-            image={require("../assets/images/product-image.png")}
-          />
-
-          {/* Out of stock */}
-
-          <Text style={styles.outStock}>Unavailable/Out of Stock (1 item)</Text>
-
-          <Text style={styles.subSection}>Milk Product</Text>
-
-          <ItemCard
-            title="Organic whole milk"
-            subtitle="12 pc"
-            price="₹640"
-            image={require("../assets/images/product-image.png")}
-          />
-
-          {/* Price Detail */}
-
-          <Text style={styles.section}>Price Detail</Text>
-
-          <View style={styles.summaryRow}>
-            <Text style={styles.PriceLable}>Taxable Value</Text>
-            <Text style={styles.PriceLable}>$218</Text>
-          </View>
-
-          <View style={styles.summaryRow}>
-            <Text style={styles.PriceLable}>
-              Deduction (Out of stock items)
+            <Text style={styles.address}>
+              {data.city}, {data.state} - {data.pincode}
             </Text>
-            <Text style={styles.PriceLable}>- $19</Text>
-          </View>
 
-          <View style={styles.summaryRow}>
-            <Text style={styles.PriceLable}>GST</Text>
-            <Text style={styles.PriceLable}>5%</Text>
-          </View>
+            <View style={styles.rowBetween}>
+              <Text style={styles.date}>{data.delivery_date}</Text>
 
-          <View style={styles.summaryRow}>
-            <Text style={styles.PriceLable}>Promo</Text>
-            <Text style={styles.PriceLable}>- $19</Text>
-          </View>
-
-          <View style={styles.summaryRow}>
-            <Text style={styles.PriceLable}>Freight Charges</Text>
-            <Text style={styles.PriceLable}>- $19</Text>
-          </View>
-
-          <View style={styles.summaryRow}>
-            <Text style={styles.PriceLable}>Unloading Charges</Text>
-            <Text style={styles.PriceLable}>$5</Text>
-          </View>
-
-          <View style={styles.summaryRow}>
-            <Text style={styles.bold}>Revised total (2 items)</Text>
-            <Text style={styles.bold}>$192</Text>
-          </View>
-
-          {/* Order Detail */}
-
-          <Text style={styles.section}>Order Detail</Text>
-
-          <View style={styles.summaryRow}>
-            <Text style={styles.PriceLable}>Order id</Text>
-            <Text style={styles.PriceLable}>ORD8803287499</Text>
-          </View>
-
-          <View style={styles.summaryRow}>
-            <Text style={styles.PriceLable}>Payment Method</Text>
-            <Text style={styles.PriceLable}>Pay Later</Text>
-          </View>
-
-          <View style={styles.summaryRow}>
-            <Text style={styles.PriceLable}>Deliver to</Text>
-            <Text
-              style={{
-                width: 200,
-                textAlign: "right",
-                fontFamily: "DMSans-Regular",
-                fontSize: 12,
-              }}
-            >
-              4, Shree Ganesh Apt, Shradhanand Road, Vile Parle
-            </Text>
-          </View>
-
-          <View style={styles.summaryRow}>
-            <Text style={styles.PriceLable}>Order date</Text>
-            <Text style={styles.PriceLable}>Fri, 16 Jan 25, 4:29 PM</Text>
-          </View>
-
-          {/* Download */}
-
-          <Text style={styles.section}>Download Challan</Text>
-
-          <TouchableOpacity style={styles.exportBtn}>
-            <Text style={styles.exportText}>Export Excel</Text>
-            <Image
-              source={require("../assets/Common/Export.png")}
-              style={{ height: 18, width: 18 }}
-            />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.pdfBtn}>
-            <Text style={styles.pdfText}>Save PDF</Text>
-            <Image
-              source={require("../assets/Common/SavePdf.png")}
-              style={{ height: 18, width: 18, tintColor: "#fff" }}
-              resizeMode="center"
-            />
-          </TouchableOpacity>
-
-          {/* Help */}
-
-          <Text style={styles.section}>Need help with your order?</Text>
-
-          <TouchableOpacity style={styles.chatBox}>
-            <View
-              style={{
-                backgroundColor: "#F8F9FD",
-                padding: 10,
-                borderRadius: 10,
-              }}
-            >
-              <Image
-                source={require("../assets/Common/chat.png")}
-                style={{ height: 20, width: 20 }}
-                resizeMode="contain"
-              />
+              <View
+                style={[styles.statusBox, { backgroundColor: statusStyle.bg }]}
+              >
+                <Text style={[styles.statusText, { color: statusStyle.color }]}>
+                  {data?.order_status}
+                </Text>
+              </View>
             </View>
-            <View style={{ marginLeft: 10 }}>
-              <Text style={styles.chatTitle}>Chat with us</Text>
-              <Text style={styles.chatSub}>
-                About any issue related to your order
-              </Text>
-            </View>
+          </View>
 
-            <Image
-              source={require("../assets/Common/ArrowRight.png")}
-              style={{
-                height: 9,
-                width: 9,
-                marginLeft: "auto",
-              }}
-              resizeMode="contain"
-            />
-          </TouchableOpacity>
-        </ScrollView>
-      </View>
+          {/* ITEMS */}
+          <Text style={styles.sectionTitle}>Items ({items.length})</Text>
+
+          <FlatList
+            data={items}
+            keyExtractor={(_, index) => index.toString()}
+            showsVerticalScrollIndicator={false}
+            renderItem={({ item }) => <EstimateItemCard item={item} />}
+          />
+
+          {/* TOTAL */}
+          <View style={styles.totalBox}>
+            <Text style={styles.totalText}>Total Amount:</Text>
+            <Text style={styles.totalText}>₹{data.total_amount}</Text>
+          </View>
+        </>
+      )}
     </SafeAreaView>
   );
 };
@@ -224,180 +183,137 @@ const OrderSummery = ({ navigation }: any) => {
 export default OrderSummery;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F5F6F8",
-    // padding: 16,
-    paddingHorizontal: 16,
-    // paddingTop: 50,
-  },
   safeArea: {
     flex: 1,
-    backgroundColor: "#F5F6F8",
-  },
-  title: {
-    fontSize: 18,
-    fontFamily: "DMSans-Medium",
-    marginTop: 10,
+    backgroundColor: '#F8FAFC',
   },
 
-  eta: {
-    color: "#487D44",
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+  },
+
+  headerTitle: {
+    fontSize: 18,
+    marginLeft: 10,
+    fontFamily: 'DMSans-SemiBold',
+  },
+
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 14,
+    marginHorizontal: 16,
     marginBottom: 12,
-    fontFamily: "DMSans-Regular",
-  },
-
-  section: {
-    fontSize: 18,
-    fontFamily: "DMSans-SemiBold",
-    marginTop: 20,
-    marginBottom: 10,
-  },
-
-  subSection: {
-    color: "#000000",
-    marginBottom: 10,
-    fontFamily: "DMSans-Medium",
-    fontSize: 14,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
 
   rowBetween: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
 
-  shipBadge: {
-    backgroundColor: "#E7F3E7",
+  invoice: {
+    fontSize: 13,
+    color: '#64748B',
+    fontFamily: 'DMSans-Regular',
+  },
+
+  amount: {
+    fontSize: 15,
+    fontFamily: 'DMSans-SemiBold',
+    color: '#000',
+  },
+
+  name: {
+    fontSize: 15,
+    marginTop: 6,
+    fontFamily: 'DMSans-Medium',
+  },
+
+  address: {
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 4,
+    fontFamily: 'DMSans-Regular',
+  },
+
+  date: {
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 8,
+    fontFamily: 'DMSans-Regular',
+  },
+
+  statusBox: {
+    backgroundColor: '#FFF4EA',
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 20,
+    borderRadius: 8,
   },
 
-  shipText: {
-    color: "#487D44",
+  statusText: {
     fontSize: 11,
-    fontFamily: "DMSans-Medium",
+    color: '#FF9933',
+    fontFamily: 'DMSans-Medium',
+  },
+
+  sectionTitle: {
+    fontSize: 16,
+    marginHorizontal: 16,
+    marginBottom: 8,
+    fontFamily: 'DMSans-SemiBold',
   },
 
   itemCard: {
-    flexDirection: "row",
-    backgroundColor: "#fff",
-    padding: 12,
+    backgroundColor: '#fff',
     borderRadius: 12,
+    padding: 12,
+    marginHorizontal: 16,
     marginBottom: 10,
-    alignItems: "center",
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
 
   productImg: {
-    width: 70,
-    height: 70,
-    borderRadius: 8,
-    marginRight: 10,
+    width: 60,
+    height: 60,
   },
 
-  itemTitle: {
-    fontFamily: "DMSans-SemiBold",
+  itemName: {
     fontSize: 14,
+    fontFamily: 'DMSans-Medium',
+    marginBottom: 4,
   },
 
-  itemSub: {
+  itemText: {
     fontSize: 12,
-    color: "#777",
-    fontFamily: "DMSans-Regular",
+    color: '#64748B',
+    fontFamily: 'DMSans-Regular',
   },
 
-  priceRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    // marginTop: 4,
-  },
-
-  price: {
-    fontFamily: "DMSans-SemiBold",
-    marginRight: 6,
-  },
-
-  oldPrice: {
-    color: "red",
-    textDecorationLine: "line-through",
-    fontSize: 12,
-  },
-
-  bestRate: {
-    fontSize: 11,
-    color: "#487D44",
-  },
-
-  outStock: {
-    color: "red",
-    marginVertical: 8,
-    fontFamily: "DMSans-SemiBold",
-  },
-
-  summaryRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
-
-  bold: {
-    fontFamily: "DMSans-SemiBold",
-    fontSize: 12,
-  },
-  PriceLable: {
-    fontFamily: "DMSans-Regular",
-    fontSize: 12,
-  },
-  exportBtn: {
-    borderWidth: 1,
-    borderColor: "#ccc",
+  totalBox: {
+    margin: 16,
     padding: 14,
-    borderRadius: 10,
-    alignItems: "center",
-    marginBottom: 10,
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 10,
+    backgroundColor: '#E6F4EA',
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
 
-  exportText: {
-    color: "#487D44",
-    fontFamily: "DMSans-Medium",
+  totalText: {
     fontSize: 16,
+    color: '#2E7D32',
+    fontFamily: 'DMSans-SemiBold',
   },
 
-  pdfBtn: {
-    backgroundColor: "#487D44",
-    padding: 14,
-    borderRadius: 10,
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 10,
-  },
-
-  pdfText: {
-    color: "#fff",
-    fontFamily: "DMSans-Medium",
-    fontSize: 16,
-  },
-
-  chatBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    padding: 14,
-    borderRadius: 10,
-    marginTop: 10,
-  },
-
-  chatTitle: {
-    fontFamily: "DMSans-SemiBold",
-  },
-
-  chatSub: {
-    fontSize: 12,
-    color: "#777",
+  loader: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

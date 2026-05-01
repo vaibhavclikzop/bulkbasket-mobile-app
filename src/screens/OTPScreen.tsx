@@ -1,15 +1,6 @@
-import React, { useRef, useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  Alert,
-  StatusBar,
-  TouchableOpacity,
-  Image,
-  ActivityIndicator,
-} from "react-native";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { View, Text, StyleSheet, TextInput, StatusBar, TouchableOpacity, Image, ActivityIndicator,  } from 'react-native';
+import { Alert } from '../utils/CustomAlert';
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -254,23 +245,19 @@ const OTPScreen: React.FC<Props> = ({ navigation, route }) => {
         <View style={{ flexDirection: "row", marginBottom: 30 }}>
           <Text style={styles.resend}>Didn’t receive OTP ? </Text>
 
-          {resendLoading ? (
-            <ActivityIndicator size="small" color="#487D44" />
-          ) : (
-            <TouchableOpacity
-              onPress={handleResendOtp}
-              disabled={seconds > 0 || resendLoading}
+          <TouchableOpacity
+            onPress={handleResendOtp}
+            disabled={seconds > 0 || resendLoading}
+          >
+            <Text
+              style={{
+                color: (seconds > 0 || resendLoading) ? "#A0A0A0" : "#487D44",
+                fontFamily: "DMSans-SemiBold",
+              }}
             >
-              <Text
-                style={{
-                  color: seconds > 0 ? "#A0A0A0" : "#487D44",
-                  fontFamily: "DMSans-SemiBold",
-                }}
-              >
-                Resend now
-              </Text>
-            </TouchableOpacity>
-          )}
+              Resend now
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* Verify Button */}

@@ -18,6 +18,7 @@ export default function WalletScreen({ navigation }: any) {
   const [history, setHistory] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [holdAmount, setHoldAmount] = useState('');
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -34,12 +35,25 @@ export default function WalletScreen({ navigation }: any) {
 
       const walletAmount = Number(res?.company?.wallet) || 0;
       const usedWallet = Number(res?.company?.used_wallet) || 0;
-      setAmount(String(Number(walletAmount) - Number(usedWallet)));
+      setAmount(
+        String(
+          Number(walletAmount) -
+            Number(usedWallet) -
+            Number(res?.company?.hold_amount),
+        ),
+      );
+      // setAmount(
+      //   String(Number(walletAmount) - Number(res?.company?.hold_amount)),
+      // );
+      // setHoldAmount(
+      //   String(Number(res?.company?.hold_amount) - Number(usedWallet)),
+      // );
+      setHoldAmount(String(Number(res?.company?.hold_amount)));
       setHistory(res?.data || []);
     } catch (error) {
       console.log('Wallet Error:', error);
     } finally {
-      setLoading(false); // Stop loader
+      setLoading(false);
     }
   };
 
@@ -80,20 +94,29 @@ export default function WalletScreen({ navigation }: any) {
               {item.particular}
             </Text>
             <Text numberOfLines={1} style={styles.transactionSub}>
-              {item.order_id?.trim() ? item.order_id : item.invoice_no}
+              {item.order_id?.trim()
+                ? `Order #${item.order_id}`
+                : item.invoice_no}{' '}
             </Text>
             <Text
               numberOfLines={1}
               style={[styles.transactionSub, { color: '#000' }]}
             >
-              {item.pay_date?.split(' ')[0]}
+              {new Date(item.pay_date).toLocaleDateString('en-US', {
+                month: 'short',
+                day: '2-digit',
+                year: 'numeric',
+              })}
             </Text>
           </View>
         </View>
 
         <View style={{ alignItems: 'flex-end', minWidth: 70 }}>
           <Text style={styles.amount}>
-            {isCredit ? '+' : '-'}₹{item.amount}
+            ₹{' '}
+            {Number(item.amount) % 1 === 0
+              ? Number(item.amount)
+              : Number(item.amount).toFixed(2)}
           </Text>
 
           <View
@@ -121,9 +144,48 @@ export default function WalletScreen({ navigation }: any) {
       {/* Balance Card */}
       <View style={{ marginTop: 10 }}>
         <View style={styles.balanceCard}>
-          <Text style={styles.balanceLabel}>Available Balance</Text>
-          <Text style={styles.balanceAmount}>₹{Number(amount).toFixed(2)}</Text>
-
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Text style={styles.balanceLabel}>Available Balance :</Text>
+            <Text style={styles.balanceAmount}>
+              ₹{' '}
+              {Number(amount) % 1 === 0
+                ? Number(amount)
+                : Number(amount).toFixed(2)}
+            </Text>
+          </View>
+          <View
+            style={{
+              backgroundColor: '#E5E7EB',
+              height: 1,
+            }}
+          />
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Text style={styles.balanceLabel}>Hold Amount :</Text>
+            <Text style={styles.balanceAmount}>
+              ₹{' '}
+              {Number(holdAmount) % 1 === 0
+                ? Number(holdAmount)
+                : Number(holdAmount).toFixed(2)}
+            </Text>
+          </View>
+          <View
+            style={{
+              backgroundColor: '#E5E7EB',
+              height: 1,
+            }}
+          />
           <View style={styles.buttonRow}>
             {/* <TouchableOpacity
               style={styles.withdrawBtn}
@@ -261,19 +323,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 16,
     padding: 20,
-    alignItems: 'center',
-    marginBottom: 10,
+    // alignItems: 'center',
+    // marginBottom: 10,
   },
 
   balanceLabel: {
     color: '#64748B',
-    fontSize: 13,
+    fontSize: 14,
     fontFamily: 'DMSans-Regular',
+    // textDecorationLine: 'underline',
   },
 
   balanceAmount: {
-    fontSize: 32,
-    fontFamily: 'DMSans-Bold',
+    fontSize: 24,
+    fontFamily: 'DMSans-Medium',
     marginVertical: 6,
   },
 

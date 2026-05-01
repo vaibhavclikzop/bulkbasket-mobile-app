@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import {
   View,
   Text,
@@ -6,12 +6,12 @@ import {
   Image,
   TouchableOpacity,
   ScrollView,
-} from "react-native";
-import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../navigation/AppNavigator";
-import { SafeAreaView } from "react-native-safe-area-context";
-import Styles from "../components/Styles";
-type Props = NativeStackScreenProps<RootStackParamList, "AccountStatus">;
+} from 'react-native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../navigation/AppNavigator';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Styles from '../components/Styles';
+type Props = NativeStackScreenProps<RootStackParamList, 'AccountStatus'>;
 
 const AccountStatusScreen: React.FC<Props> = ({ navigation }) => {
   return (
@@ -20,7 +20,7 @@ const AccountStatusScreen: React.FC<Props> = ({ navigation }) => {
       <View style={Styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Image
-            source={require("../assets/Common/Back.png")}
+            source={require('../assets/Common/Back.png')}
             style={[Styles.headerImage, {}]}
           />
         </TouchableOpacity>
@@ -36,7 +36,7 @@ const AccountStatusScreen: React.FC<Props> = ({ navigation }) => {
                     <View style={styles.ringMiddle}>
                         <View style={styles.ringInner}> */}
           <Image
-            source={require("../assets/Verification.png")}
+            source={require('../assets/Verification.png')}
             style={styles.shield}
             resizeMode="contain"
           />
@@ -48,7 +48,7 @@ const AccountStatusScreen: React.FC<Props> = ({ navigation }) => {
         {/* Title */}
         <Text style={styles.mainTitle}>Verification in Progress</Text>
         <Text style={styles.subtitle}>
-          We are reviewing your business credentials to ensure you{"\n"}
+          We are reviewing your business credentials to ensure you{'\n'}
           get access to wholesale pricing and credit features.
         </Text>
 
@@ -58,7 +58,7 @@ const AccountStatusScreen: React.FC<Props> = ({ navigation }) => {
           <View style={styles.stepRow}>
             <View style={styles.stepLeft}>
               <Image
-                source={require("../assets/icons/righticon.png")}
+                source={require('../assets/icons/righticon.png')}
                 style={styles.rightIcon}
               />
               <View style={styles.verticalLineActive} />
@@ -75,7 +75,7 @@ const AccountStatusScreen: React.FC<Props> = ({ navigation }) => {
           <View style={styles.stepRow}>
             <View style={styles.stepLeft}>
               <Image
-                source={require("../assets/icons/righticon.png")}
+                source={require('../assets/icons/righticon.png')}
                 style={styles.rightIcon}
               />
               <View style={styles.verticalLineActive} />
@@ -93,7 +93,7 @@ const AccountStatusScreen: React.FC<Props> = ({ navigation }) => {
                     </View> */}
             <View style={styles.stepLeft}>
               <Image
-                source={require("../assets/icons/righticon.png")}
+                source={require('../assets/icons/righticon.png')}
                 style={styles.rightIcon}
               />
               {/* <View style={styles.verticalLineActive} /> */}
@@ -121,7 +121,7 @@ const AccountStatusScreen: React.FC<Props> = ({ navigation }) => {
               <TouchableOpacity style={styles.chatBtn}>
                 <Text style={styles.chatText}>Chat Now </Text>
                 <Image
-                  source={require("../assets/icons/messages.png")}
+                  source={require('../assets/icons/messages.png')}
                   style={styles.chatIcon}
                 />
               </TouchableOpacity>
@@ -129,14 +129,14 @@ const AccountStatusScreen: React.FC<Props> = ({ navigation }) => {
           </View>
         </View>
         <Text style={styles.bottomTitle}>
-          We’ll notify you at your registered email address {"\n"}as soon as
+          We’ll notify you at your registered email address {'\n'}as soon as
           your account is ready.
         </Text>
         {/* Continue Button */}
         <View style={styles.bottomWrapper}>
           <TouchableOpacity
             style={styles.button}
-            onPress={() => navigation.navigate("Home")}
+            onPress={() => navigation.navigate('Home')}
           >
             <Text style={Styles.buttonText}>Continue to Homepage</Text>
           </TouchableOpacity>
@@ -151,18 +151,17 @@ export default AccountStatusScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F4F4F4",
-    // padding: 20,
+    backgroundColor: '#F4F4F4',
     paddingHorizontal: 15,
   },
   header: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 20,
   },
 
   iconWrapper: {
-    alignItems: "center",
+    alignItems: 'center',
   },
 
   shield: {
@@ -172,44 +171,44 @@ const styles = StyleSheet.create({
   },
   icon: {
     fontSize: 40,
-    color: "#487D44",
+    color: '#487D44',
   },
   mainTitle: {
     marginTop: 8,
-    textAlign: "center",
+    textAlign: 'center',
     fontSize: 18,
-    fontFamily: "DMSans-Medium",
-    fontWeight: "600",
+    fontFamily: 'DMSans-Medium',
+    fontWeight: '600',
   },
   subtitle: {
-    textAlign: "center",
+    textAlign: 'center',
     fontSize: 14,
-    color: "#666",
+    color: '#666',
     marginVertical: 10,
-    fontFamily: "DMSans-Regular",
+    fontFamily: 'DMSans-Regular',
   },
   bottomTitle: {
-    textAlign: "center",
+    textAlign: 'center',
     fontSize: 14,
-    color: "#666",
-    fontFamily: "DMSans-Regular",
+    color: '#666',
+    fontFamily: 'DMSans-Regular',
   },
   statusCard: {
-    backgroundColor: "#F8F9FD",
+    backgroundColor: '#F8F9FD',
     padding: 15,
     borderRadius: 16,
-    borderColor: "#D1D5DB",
+    borderColor: '#D1D5DB',
     borderWidth: 1,
     marginVertical: 7,
   },
 
   stepRow: {
-    flexDirection: "row",
+    flexDirection: 'row',
     marginBottom: 14,
   },
 
   stepLeft: {
-    alignItems: "center",
+    alignItems: 'center',
     marginRight: 15,
     width: 24,
   },
@@ -218,23 +217,23 @@ const styles = StyleSheet.create({
     width: 26,
     height: 26,
     borderRadius: 13,
-    backgroundColor: "#487D44",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: '#487D44',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   activeCircleSmall: {
     width: 14,
     height: 14,
     borderRadius: 7,
-    backgroundColor: "#487D44",
+    backgroundColor: '#487D44',
   },
 
   inactiveCircle: {
     width: 25,
     height: 25,
     borderRadius: 12,
-    backgroundColor: "#D1D5DB",
+    backgroundColor: '#D1D5DB',
   },
 
   // verticalLineActive: {
@@ -247,18 +246,18 @@ const styles = StyleSheet.create({
   verticalLineActive: {
     width: 2,
     height: 30,
-    backgroundColor: "#D2D6DB",
+    backgroundColor: '#D2D6DB',
     marginTop: 6,
   },
   chatIcon: {
     width: 12,
     height: 12,
-    resizeMode: "contain",
+    resizeMode: 'contain',
   },
   verticalLineInactive: {
     width: 2,
     flex: 1,
-    backgroundColor: "#E5E7EB",
+    backgroundColor: '#E5E7EB',
     marginTop: 2,
   },
 
@@ -267,28 +266,28 @@ const styles = StyleSheet.create({
   },
 
   statusTitle: {
-    fontWeight: "500",
+    fontWeight: '500',
     fontSize: 16,
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
   },
 
   inactiveTitle: {
-    fontWeight: "600",
+    fontWeight: '600',
     fontSize: 13,
-    color: "#9CA3AF",
+    color: '#9CA3AF',
   },
 
   statusSub: {
     fontSize: 14,
-    color: "#6B7280",
+    color: '#6B7280',
     // marginTop: 4,
-    fontFamily: "DMSans-Regular",
+    fontFamily: 'DMSans-Regular',
   },
 
   check: {
-    color: "#fff",
+    color: '#fff',
     fontSize: 14,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
   logo: {
     marginTop: 10,
@@ -300,29 +299,29 @@ const styles = StyleSheet.create({
     height: 20,
   },
   helpCard: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 12,
     marginBottom: 22,
     elevation: 3,
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOpacity: 0.05,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
   },
 
   helpRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 
   helpIconWrapper: {
-    width: "auto",
+    width: 'auto',
     height: 40,
     borderRadius: 20,
-    backgroundColor: "rgba(72,125,68,0.1)",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: 'rgba(72,125,68,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 6,
   },
 
@@ -338,33 +337,33 @@ const styles = StyleSheet.create({
     fontSize: 16,
     // fontWeight: '700',
     marginBottom: 4,
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
   },
 
   helpSub: {
     fontSize: 14,
-    color: "#6B7280",
+    color: '#6B7280',
     lineHeight: 18,
     marginBottom: 12,
-    fontFamily: "DMSans-Regular",
+    fontFamily: 'DMSans-Regular',
   },
 
   chatBtn: {
-    backgroundColor: "#487D44",
+    backgroundColor: '#487D44',
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 8,
     // alignSelf: 'center',
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 5,
   },
 
   chatText: {
-    color: "#fff",
-    fontWeight: "600",
+    color: '#fff',
+    fontWeight: '600',
     fontSize: 16,
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
   },
 
   bottomWrapper: {
@@ -372,11 +371,11 @@ const styles = StyleSheet.create({
   },
 
   button: {
-    backgroundColor: "#487D44",
+    backgroundColor: '#487D44',
     paddingVertical: 16,
     borderRadius: 12,
-    alignItems: "center",
-    shadowColor: "#487D44",
+    alignItems: 'center',
+    shadowColor: '#487D44',
     shadowOpacity: 0.3,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
@@ -384,8 +383,8 @@ const styles = StyleSheet.create({
   },
 
   buttonText: {
-    color: "#fff",
+    color: '#fff',
     fontSize: 12,
-    fontFamily: "DMSans-SemiBold",
+    fontFamily: 'DMSans-SemiBold',
   },
 });

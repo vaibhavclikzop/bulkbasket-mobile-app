@@ -1,16 +1,6 @@
-import React, { useState, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  FlatList,
-  Image,
-  TextInput,
-  ActivityIndicator,
-  Alert,
-  RefreshControl,
-} from 'react-native';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image, TextInput, ActivityIndicator, RefreshControl,  } from 'react-native';
+import { Alert } from '../utils/CustomAlert';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   getWishlistApi,
@@ -309,8 +299,7 @@ export default function WishlistScreen({ navigation }: any) {
               price={item.price}
               oldPrice={item.oldPrice}
               discount={Number(item.discount).toFixed(0)}
-              isOrganic={item.is_organic}
-              // product_type={item.product_type}
+              product_type={item.product_type}
               mrp={item.mrp}
               tiers={item.tiers || []}
               cart_status={item.cart_status}

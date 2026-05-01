@@ -1,16 +1,6 @@
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  FlatList,
-  TextInput,
-  ScrollView,
-  Image,
-  ActivityIndicator,
-  Alert,
-} from "react-native";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, ScrollView, Image, ActivityIndicator,  } from 'react-native';
+import { Alert } from '../utils/CustomAlert';
 
 import { SafeAreaView } from "react-native-safe-area-context";
 import Styles from "../components/Styles";

@@ -1,5 +1,10 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { debounce } from 'lodash';
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from 'react';
 import {
   View,
   Text,
@@ -13,10 +18,10 @@ import {
   PermissionsAndroid,
   Platform,
   Modal,
-  Alert,
   ImageBackground,
   Pressable,
 } from 'react-native';
+import { Alert } from '../utils/CustomAlert';
 // import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import Carousel from 'react-native-reanimated-carousel';
 import ProductCard from '../components/ProductCard';
@@ -36,9 +41,11 @@ import {
   updateWishlistQtyApi,
   getDealProductsApi,
   getCartApi,
+  getWishlistApi,
   getCompanyProfileApi,
 } from '../services/api';
 import { useFocusEffect } from '@react-navigation/native';
+import { debounce } from 'lodash';
 
 const HomeScreen: React.FC<any> = ({ navigation }) => {
   const { width } = useWindowDimensions();
@@ -71,6 +78,7 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [dealOfDayProduct, setDealOfDayProduct] = React.useState<any[]>([]);
   const [cartItems, setCartItems] = useState<any[]>([]);
+  const [wishlistItems, setWishlistItems] = useState<any[]>([]);
   const [cartLoading, setCartLoading] = useState(true);
   const isFirstLoad = React.useRef(true);
 
@@ -128,9 +136,18 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
     }
   };
 
+  const fetchWishlist = async () => {
+    try {
+      const data = await getWishlistApi();
+      setWishlistItems(data.data || []);
+    } catch (error) {
+      console.log('Wishlist fetch error:', error);
+    }
+  };
+
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([getProfile(true), getHomePage(true)]);
+    await Promise.all([getProfile(true), getHomePage(true), fetchWishlist()]);
     setRefreshing(false);
   }, []);
 
@@ -221,7 +238,6 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
         if (granted === PermissionsAndroid.RESULTS.GRANTED) {
           await getCurrentLocation();
         } else {
-          // console.log("Permission denied");
           setCurrentLocation('Permission denied');
           Alert.alert(
             'Permission Required',
@@ -328,7 +344,9 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
         getHomePage(!isFirstLoad.current);
         fetchDeals(!isFirstLoad.current);
         fetchCart();
+        fetchWishlist();
         getCompanyProfile();
+        fetchDeals();
 
         if (isFirstLoad.current) {
           isFirstLoad.current = false;
@@ -379,6 +397,8 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
               : p,
           ),
         );
+
+        fetchCart();
       } catch (error) {
         console.log(error);
       } finally {
@@ -394,6 +414,7 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
         setUpdatingQtyId(productId);
         const res = await updateCartQuantityApi(productId, newQty);
         console.log('Update Qty Response', res.data);
+        fetchCart();
       } catch (error) {
         console.log('Update Qty Error:', error);
       } finally {
@@ -469,10 +490,12 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
         await addToWishlistApi(product.id);
         // Alert.alert("Success", "Successfully added to wishlist");
         console.log('Success', 'Successfully added to wishlist');
+        fetchWishlist();
       } else {
         await updateWishlistQtyApi(product.id, 0);
         // Alert.alert("Success", "Item removed from wishlist");
         console.log('Success', 'Item removed from wishlist');
+        fetchWishlist();
       }
     } catch (error) {
       console.log('Wishlist Toggle Error:', error);
@@ -905,6 +928,7 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
                   showsHorizontalScrollIndicator={false}
                   style={{ paddingBottom: 5 }}
                   keyExtractor={item => item.id.toString()}
+                  extraData={{ cartItems, wishlistItems }}
                   initialNumToRender={4}
                   maxToRenderPerBatch={4}
                   windowSize={5}
@@ -914,44 +938,59 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
                     offset: 195 * index,
                     index,
                   })}
-                  renderItem={({ item }) => (
-                    <ProductCard
-                      image={
-                        typeof item.image === 'string'
-                          ? { uri: item.image }
-                          : item.image
-                      }
-                      title={item.name}
-                      packSize={''}
-                      price={item.base_price}
-                      mrp={item.mrp}
-                      discount={Number(item.discount).toFixed(0)}
-                      isOrganic={item.is_organic || false}
-                      onAddPress={() => handleAddToCart(item.id, 1)}
-                      onPress={() =>
-                        navigation.navigate('ProductDetail', {
-                          productId: item.id,
-                        })
-                      }
-                      bestRate={item.bestRate || ''}
-                      tiers={item.tiers}
-                      cart_status={item.cart_status}
-                      cartQty={item.cart?.qty}
-                      current_stock={item.current_stock} // ✅ ADD THIS
-                      uom_name={item.uom_name}
-                      onUpdateQty={newQty => updateQty(item.id, newQty)}
-                      updatingQty={updatingQtyId === item.id}
-                      wishlist_status={item.wishlist_status}
-                      onWishlistPress={() => toggleWishlist(item)}
-                      onTierAddPress={(tierQty: number) => {
-                        if (item.cart_status) {
-                          updateQty(item.id, tierQty);
-                        } else {
-                          handleAddToCart(item.id, tierQty);
+                  renderItem={({ item }) => {
+                    const globalCartItem = cartItems.find(
+                      (ci: any) => ci.product_id === item.id,
+                    );
+                    const globalWishlistItem = wishlistItems.find(
+                      (wi: any) => (wi.product_id || wi.id) === item.id,
+                    );
+                    const resolvedCartQty =
+                      item.cart?.qty ?? (item.cart_qty || globalCartItem?.qty);
+                    const resolvedCartStatus =
+                      item.cart_status || !!globalCartItem;
+                    const resolvedWishlistStatus =
+                      item.wishlist_status || !!globalWishlistItem;
+
+                    return (
+                      <ProductCard
+                        image={
+                          typeof item.image === 'string'
+                            ? { uri: item.image }
+                            : item.image
                         }
-                      }}
-                    />
-                  )}
+                        title={item.name}
+                        packSize={''}
+                        price={item.base_price || item.price}
+                        mrp={item.mrp}
+                        discount={Number(item.discount).toFixed(0)}
+                        product_type={item.product_type}
+                        onAddPress={() => handleAddToCart(item.id, 1)}
+                        onPress={() =>
+                          navigation.navigate('ProductDetail', {
+                            productId: item.id,
+                          })
+                        }
+                        bestRate={item.bestRate || ''}
+                        tiers={item.tiers}
+                        cart_status={resolvedCartStatus}
+                        cartQty={resolvedCartQty}
+                        current_stock={item.current_stock} // ✅ ADD THIS
+                        uom_name={item.uom_name}
+                        onUpdateQty={newQty => updateQty(item.id, newQty)}
+                        updatingQty={updatingQtyId === item.id}
+                        wishlist_status={resolvedWishlistStatus}
+                        onWishlistPress={() => toggleWishlist(item)}
+                        onTierAddPress={(tierQty: number) => {
+                          if (resolvedCartStatus) {
+                            updateQty(item.id, tierQty);
+                          } else {
+                            handleAddToCart(item.id, tierQty);
+                          }
+                        }}
+                      />
+                    );
+                  }}
                 />
               )}
             </>
@@ -970,6 +1009,7 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
                 showsHorizontalScrollIndicator={false}
                 style={{ paddingBottom: 10 }}
                 keyExtractor={item => item.id.toString()}
+                extraData={{ cartItems, wishlistItems }}
                 initialNumToRender={4}
                 maxToRenderPerBatch={4}
                 windowSize={5}
@@ -979,45 +1019,59 @@ const HomeScreen: React.FC<any> = ({ navigation }) => {
                   offset: 195 * index,
                   index,
                 })}
-                renderItem={({ item }) => (
-                  <ProductCard
-                    image={
-                      typeof item.image === 'string'
-                        ? { uri: item.image }
-                        : item.image
-                    }
-                    title={item.name}
-                    packSize={''}
-                    price={item.price}
-                    mrp={item.mrp}
-                    current_stock={item.current_stock}
-                    uom_name={item.uom_name}
-                    discount={Number(item.discount).toFixed(0)}
-                    isOrganic={item.product_type === 'Organic'}
-                    // product_type={item.product_type}
-                    onAddPress={() => handleAddToCart(item.id, 1)}
-                    onPress={() =>
-                      navigation.navigate('ProductDetail', {
-                        productId: item.id,
-                      })
-                    }
-                    bestRate={item.bestRate || ''}
-                    tiers={item.tiers}
-                    cart_status={item.cart_status}
-                    cartQty={item.cart?.qty}
-                    onUpdateQty={newQty => updateQty(item.id, newQty)}
-                    updatingQty={updatingQtyId === item.id}
-                    wishlist_status={item.wishlist_status}
-                    onWishlistPress={() => toggleWishlist(item)}
-                    onTierAddPress={(tierQty: number) => {
-                      if (item.cart_status) {
-                        updateQty(item.id, tierQty);
-                      } else {
-                        handleAddToCart(item.id, tierQty);
+                renderItem={({ item }) => {
+                  const globalCartItem = cartItems.find(
+                    (ci: any) => ci.product_id === item.id,
+                  );
+                  const globalWishlistItem = wishlistItems.find(
+                    (wi: any) => (wi.product_id || wi.id) === item.id,
+                  );
+                  const resolvedCartQty =
+                    item.cart?.qty ?? (item.cart_qty || globalCartItem?.qty);
+                  const resolvedCartStatus =
+                    item.cart_status || !!globalCartItem;
+                  const resolvedWishlistStatus =
+                    item.wishlist_status || !!globalWishlistItem;
+
+                  return (
+                    <ProductCard
+                      image={
+                        typeof item.image === 'string'
+                          ? { uri: item.image }
+                          : item.image
                       }
-                    }}
-                  />
-                )}
+                      title={item.name}
+                      packSize={''}
+                      price={item.price}
+                      mrp={item.mrp}
+                      current_stock={item.current_stock}
+                      uom_name={item.uom_name}
+                      discount={Number(item.discount).toFixed(0)}
+                      product_type={item.product_type}
+                      onAddPress={() => handleAddToCart(item.id, 1)}
+                      onPress={() =>
+                        navigation.navigate('ProductDetail', {
+                          productId: item.id,
+                        })
+                      }
+                      bestRate={item.bestRate || ''}
+                      tiers={item.tiers}
+                      cart_status={resolvedCartStatus}
+                      cartQty={resolvedCartQty}
+                      onUpdateQty={newQty => updateQty(item.id, newQty)}
+                      updatingQty={updatingQtyId === item.id}
+                      wishlist_status={resolvedWishlistStatus}
+                      onWishlistPress={() => toggleWishlist(item)}
+                      onTierAddPress={(tierQty: number) => {
+                        if (resolvedCartStatus) {
+                          updateQty(item.id, tierQty);
+                        } else {
+                          handleAddToCart(item.id, tierQty);
+                        }
+                      }}
+                    />
+                  );
+                }}
               />
             </View>
           )}

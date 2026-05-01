@@ -1,5 +1,10 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { debounce } from 'lodash';
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from 'react';
 import {
   View,
   Text,
@@ -10,13 +15,13 @@ import {
   StatusBar,
   ActivityIndicator,
   Modal,
-  Alert,
   TextInput,
   RefreshControl,
   Vibration,
   Platform,
   ToastAndroid,
 } from 'react-native';
+import { Alert } from '../utils/CustomAlert';
 import LinearGradient from 'react-native-linear-gradient';
 import ProductCard from '../components/ProductCard';
 import Styles from '../components/Styles';
@@ -30,6 +35,7 @@ import {
   updateCartQuantityApi,
   updateWishlistQtyApi,
 } from '../services/api';
+import { debounce } from 'lodash';
 
 const packingItems = [
   {
@@ -869,11 +875,7 @@ const BrandProductScreen = ({ navigation, route }: any) => {
                 //   </View>
                 // )}
                 renderItem={({ item }) => (
-                  <View
-                    style={[
-                      styles.card,
-                    ]}
-                  >
+                  <View style={[styles.card]}>
                     <TouchableOpacity
                       onPress={() =>
                         navigation.navigate('ProductDetail', {
@@ -941,7 +943,12 @@ const BrandProductScreen = ({ navigation, route }: any) => {
                         )}
                         <Image
                           source={{ uri: item.image }}
-                          style={[styles.productImage, Number(item.current_stock) === 0 && { opacity: 0.5 }]}
+                          style={[
+                            styles.productImage,
+                            Number(item.current_stock) === 0 && {
+                              opacity: 0.5,
+                            },
+                          ]}
                         />
                         <TouchableOpacity
                           onPress={() => toggleWishlist(item)}
@@ -974,7 +981,7 @@ const BrandProductScreen = ({ navigation, route }: any) => {
                             alignItems: 'center',
                             justifyContent: 'center',
                           },
-                          Number(item.current_stock) === 0 && { opacity: 0.6 }
+                          Number(item.current_stock) === 0 && { opacity: 0.6 },
                         ]}
                       >
                         <Text style={styles.productTitle}>{item.name}</Text>

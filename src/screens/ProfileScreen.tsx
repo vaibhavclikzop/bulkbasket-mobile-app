@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -35,7 +35,7 @@ const menuItems: MenuItem[] = [
 
   {
     id: 3,
-    title: 'Estimate',
+    title: 'Orders Challan',
     image: require('../assets/Common/calculator.png'),
   },
   {
@@ -168,7 +168,10 @@ export default function ProfileScreen({ navigation }: any) {
 
   const handleLogOut = async () => {
     try {
-      await AsyncStorage.removeItem('userToken');
+      //await AsyncStorage.removeItem('userToken');
+      //await AsyncStorage.removeItem('userId');
+
+      await AsyncStorage.clear();
 
       navigation.reset({
         index: 0,
@@ -237,14 +240,13 @@ export default function ProfileScreen({ navigation }: any) {
                     navigation.navigate('ContactSupportScreen');
                   } else if (item.title === 'Profile') {
                     navigation.navigate('UpdateProfile');
-                    // }
-                    // else if (item.title === "Payment Options") {
-                    //   navigation.navigate("PaymentOptionsScreen");
+                    // } else if (item.title === 'Payment Options') {
+                    //   navigation.navigate('PaymentOptionsScreen');
                   } else if (item.title === 'Saved Address') {
                     navigation.navigate('Addresses');
                   } else if (item.title === 'Your Orders') {
                     navigation.navigate('OrdersScreen');
-                  } else if (item.title === 'Estimate') {
+                  } else if (item.title === 'Orders Challan') {
                     navigation.navigate('EstimateScreen');
                   } else if (item.title === 'Company Profile') {
                     navigation.navigate('CompanyProfile');
@@ -259,12 +261,6 @@ export default function ProfileScreen({ navigation }: any) {
                   />
                   <Text style={styles.menuText}>{item.title}</Text>
                 </View>
-
-                <Image
-                  source={require('../assets/Common/ArrowRight.png')}
-                  style={{ height: 11, width: 11 }}
-                  resizeMode="contain"
-                />
               </TouchableOpacity>
             ))}
           </View>

@@ -4,13 +4,11 @@ import {
   View,
   FlatList,
   ActivityIndicator,
-  TouchableOpacity,
   Image,
 } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getEstimateDetailsApi } from '../services/api';
-import Styles from '../components/Styles';
 import Header from '../components/Header';
 
 /* ================= TYPES ================= */
@@ -132,7 +130,7 @@ const EstimateDetailScreen = ({ route, navigation }: Props) => {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       {/* HEADER */}
-      <Header title="Estimate Details" />
+      <Header title="Challan Details" />
       {data && (
         <>
           {/* TOP CARD */}
@@ -162,7 +160,7 @@ const EstimateDetailScreen = ({ route, navigation }: Props) => {
           </View>
 
           {/* ITEMS */}
-          <Text style={styles.sectionTitle}>Items</Text>
+          <Text style={styles.sectionTitle}>Items ({items.length})</Text>
 
           <FlatList
             data={items}
@@ -183,8 +181,6 @@ const EstimateDetailScreen = ({ route, navigation }: Props) => {
 };
 
 export default EstimateDetailScreen;
-
-/* ================= STYLES ================= */
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -298,12 +294,6 @@ const styles = StyleSheet.create({
     color: '#64748B',
     fontFamily: 'DMSans-Regular',
   },
-
-  // itemTotal: {
-  //   fontSize: 13,
-  //   marginTop: 4,
-  //   fontFamily: "DMSans-SemiBold",
-  // },
 
   totalBox: {
     margin: 16,

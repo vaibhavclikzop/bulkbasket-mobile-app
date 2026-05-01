@@ -14,8 +14,8 @@ import {
   Platform,
   Vibration,
   ToastAndroid,
-  Alert,
 } from 'react-native';
+import { Alert } from '../utils/CustomAlert';
 import { debounce } from 'lodash';
 import Carousel from 'react-native-reanimated-carousel';
 import { useWindowDimensions } from 'react-native';
@@ -83,13 +83,19 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
 
   const stock = Number(productDetail?.product?.current_stock || 0);
 
-  const imagesData =
-    Array.isArray(productDetail?.product_images) &&
-    productDetail.product_images.length > 0
-      ? productDetail.product_images
-      : productDetail?.product?.image
-      ? [{ image: productDetail.product.image }]
-      : [];
+  const imagesData = (() => {
+    let combined: any[] = [];
+    if (productDetail?.product?.image) {
+      combined.push({ image: productDetail.product.image });
+    }
+    if (
+      Array.isArray(productDetail?.product_images) &&
+      productDetail.product_images.length > 0
+    ) {
+      combined = [...combined, ...productDetail.product_images];
+    }
+    return combined;
+  })();
 
   const hasMultipleImages = imagesData.length > 1;
 
@@ -408,7 +414,10 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
                           ? { uri: item.image }
                           : require('../assets/icons/sicon2.png')
                       }
-                      style={[styles.productImage, stock === 0 && { opacity: 0.5 }]}
+                      style={[
+                        styles.productImage,
+                        stock === 0 && { opacity: 0.5 },
+                      ]}
                       resizeMode="contain"
                     />
                   </TouchableOpacity>
@@ -704,10 +713,12 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
                   price={item.base_price || item.price}
                   mrp={item.mrp}
                   discount={Number(item.discount || 0).toFixed(0)}
-                  isOrganic={item.product_type === 'Organic'}
+                  // isOrganic={item.product_type === 'Organic'}
                   tiers={item.tiers}
+                  uom_name={item.uom_name}
                   cart_status={item.cart_status}
                   cartQty={item.cart?.qty}
+                  product_type={item.product_type}
                   updatingQty={
                     updatingSuggestedQtyId === item.id ||
                     addingSuggestedCartId === item.id
@@ -758,10 +769,12 @@ const ProductDetailScreen = ({ navigation, route }: any) => {
                   price={item.base_price || item.price}
                   mrp={item.mrp}
                   discount={Number(item.discount || 0).toFixed(0)}
-                  isOrganic={item.product_type === 'Organic'}
+                  // isOrganic={item.product_type === 'Organic'}
                   tiers={item.tiers}
                   cart_status={item.cart_status}
                   cartQty={item.cart?.qty}
+                  uom_name={item.uom_name}
+                  product_type={item.product_type}
                   updatingQty={
                     updatingSuggestedQtyId === item.id ||
                     addingSuggestedCartId === item.id
@@ -886,6 +899,7 @@ const styles = StyleSheet.create({
     padding: 8,
     borderColor: '#d3cdcd',
     borderRadius: 20,
+    width: '100%',
   },
   iconCircle: {
     marginLeft: 8,
@@ -927,7 +941,6 @@ const styles = StyleSheet.create({
     marginLeft: 6,
     fontSize: 14,
     fontFamily: 'DMSans-Regular',
-    paddingVertical: 0,
   },
   wishlistIcon: {
     position: 'absolute',

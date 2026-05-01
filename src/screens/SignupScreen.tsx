@@ -1,56 +1,43 @@
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  ImageBackground,
-  TouchableOpacity,
-  Image,
-  Alert,
-  Platform,
-  KeyboardAvoidingView,
-  useWindowDimensions,
-  ActivityIndicator,
-} from "react-native";
-import COLORS from "../components/Styles";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../navigation/AppNavigator";
-import axios from "axios";
-import { BASE_URL } from "../services/api";
-// import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { View, Text, TextInput, StyleSheet, ImageBackground, TouchableOpacity, Image, Platform, KeyboardAvoidingView, useWindowDimensions, ActivityIndicator,  } from 'react-native';
+import { Alert } from '../utils/CustomAlert';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../navigation/AppNavigator';
+import axios from 'axios';
+import { BASE_URL } from '../services/api';
 
-type Props = NativeStackScreenProps<RootStackParamList, "Signup">;
+type Props = NativeStackScreenProps<RootStackParamList, 'Signup'>;
 
 const SignupScreen: React.FC<Props> = ({ navigation }) => {
-  const [mobile, setMobile] = useState("");
+  const [mobile, setMobile] = useState('');
   const [loading, setLoading] = useState(false);
-  const { width, height } = useWindowDimensions();
+  // const { width, height } = useWindowDimensions();
+
   const handleContinue = async () => {
     if (mobile.trim().length !== 10) {
-      Alert.alert("Error", "Please enter a valid 10-digit mobile number");
+      Alert.alert('Error', 'Please enter a valid 10-digit mobile number');
       return;
     }
 
     try {
       setLoading(true);
       const formData = new FormData();
-      formData.append("number", mobile);
+      formData.append('number', mobile);
       const response = await axios.post(`${BASE_URL}/send-otp`, formData, {
         headers: {
-          "Content-Type": "multipart/form-data",
+          'Content-Type': 'multipart/form-data',
         },
       });
-      console.log("response", response.data);
+      console.log('response', response.data);
 
       if (response.data.error === false) {
-        Alert.alert("Success", response.data.message);
-        navigation.navigate("OTP", { mobile });
+        Alert.alert('Success', response.data.message);
+        navigation.navigate('OTP', { mobile });
       }
     } catch (error: any) {
-      console.log("OTP Error:", error);
-      Alert.alert("Error", "Failed to send OTP");
+      console.log('OTP Error:', error);
+      Alert.alert('Error', 'Failed to send OTP');
     } finally {
       setLoading(false);
     }
@@ -58,20 +45,20 @@ const SignupScreen: React.FC<Props> = ({ navigation }) => {
 
   return (
     <ImageBackground
-      source={require("../assets/images/1login-bg.png")}
+      source={require('../assets/images/1login-bg.png')}
       style={styles.background}
       resizeMode="stretch"
     >
       <View style={styles.overlay} />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "padding"}
-        keyboardVerticalOffset={Platform.OS === "android" ? 2 : 0}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+        keyboardVerticalOffset={Platform.OS === 'android' ? 2 : 0}
       >
-        <SafeAreaView edges={["top"]} style={[styles.container, { flex: 1 }]}>
+        <SafeAreaView edges={['top']} style={[styles.container, { flex: 1 }]}>
           <View style={styles.logoContainer}>
             <Image
-              source={require("../assets/images/full-logo-white.png")}
+              source={require('../assets/images/full-logo-white.png')}
               style={styles.logo}
               resizeMode="cover"
             />
@@ -82,7 +69,7 @@ const SignupScreen: React.FC<Props> = ({ navigation }) => {
           {/* Bottom Card */}
           <View style={[styles.card, { marginBottom: 0 }]}>
             <Text style={styles.heading}>
-              End-to-end wholesale supply{"\n"}
+              End-to-end wholesale supply{'\n'}
               for HoReCa businesses
             </Text>
             {/* Mobile Input */}
@@ -93,7 +80,7 @@ const SignupScreen: React.FC<Props> = ({ navigation }) => {
                 value={mobile}
                 maxLength={10}
                 keyboardType="number-pad"
-                onChangeText={(val) => setMobile(val.replace(/[^0-9]/g, ""))}
+                onChangeText={val => setMobile(val.replace(/[^0-9]/g, ''))}
                 style={styles.input}
               />
             </View>
@@ -130,16 +117,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.55)",
+    // ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
   },
   container: {
     flex: 1,
-    justifyContent: "space-between",
+    justifyContent: 'space-between',
   },
   logoContainer: {
     marginTop: 80,
-    alignItems: "center",
+    alignItems: 'center',
   },
   logo: {
     width: 300,
@@ -147,41 +134,41 @@ const styles = StyleSheet.create({
     aspectRatio: 4,
   },
   tagline: {
-    color: "#fff",
+    color: '#fff',
     marginLeft: 25,
-    fontFamily: "DMSans-Regular",
+    fontFamily: 'DMSans-Regular',
     fontSize: 13,
     includeFontPadding: false,
-    textAlignVertical: "center",
+    textAlignVertical: 'center',
     marginTop: -4,
   },
   taglineBottom: {
-    color: "#000",
+    color: '#000',
     fontSize: 12,
-    textAlign: "center",
-    fontFamily: "DMSans-Regular",
+    textAlign: 'center',
+    fontFamily: 'DMSans-Regular',
   },
   card: {
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     borderTopLeftRadius: 25,
     borderTopRightRadius: 25,
     paddingHorizontal: 30,
     paddingTop: 30,
-    paddingBottom: Platform.OS === "ios" ? 35 : 35,
+    paddingBottom: Platform.OS === 'ios' ? 35 : 35,
   },
   heading: {
-    textAlign: "center",
+    textAlign: 'center',
     fontSize: 20,
     marginBottom: 20,
-    fontWeight: "500", // ✅ FIXED
-    fontFamily: "DMSans-Medium",
-    color: COLORS.headerText,
+    fontWeight: '500',
+    fontFamily: 'DMSans-Medium',
+    color: '#000',
   },
   inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: '#ddd',
     borderRadius: 10,
     paddingHorizontal: 10,
     marginBottom: 15,
@@ -189,37 +176,37 @@ const styles = StyleSheet.create({
   countryCode: {
     marginRight: 8,
     fontSize: 14,
-    fontFamily: "DMSans-Regular",
+    fontFamily: 'DMSans-Regular',
   },
   input: {
     flex: 1,
     height: 45,
-    fontFamily: "DMSans-Regular",
+    fontFamily: 'DMSans-Regular',
   },
   signup: {
-    textAlign: "right",
+    textAlign: 'right',
     fontSize: 12,
-    color: "#487D44",
+    color: '#487D44',
     marginTop: 10,
-    alignItems: "center",
+    alignItems: 'center',
     marginBottom: 10,
   },
   button: {
-    backgroundColor: "#487D44",
+    backgroundColor: '#487D44',
     padding: 15,
     borderRadius: 10,
     marginBottom: 12,
-    alignItems: "center",
+    alignItems: 'center',
   },
   buttonText: {
-    color: "#fff",
+    color: '#fff',
     fontSize: 16,
-    fontFamily: "DMSans-Medium",
+    fontFamily: 'DMSans-Medium',
   },
   loginText: {
-    color: "#487D44",
-    textDecorationLine: "underline",
-    fontFamily: "DMSans-Regular",
+    color: '#487D44',
+    textDecorationLine: 'underline',
+    fontFamily: 'DMSans-Regular',
     fontSize: 12,
   },
 });

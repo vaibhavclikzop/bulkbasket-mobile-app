@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
-  Alert,
+  Modal,
   ActivityIndicator,
   TextInput,
 } from 'react-native';
@@ -39,22 +39,27 @@ const PaymentScreen = ({ navigation, route }: any) => {
   const [orderSummary, setOrderSummary] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [amount, setAmount] = useState('');
-
+  const [holdAmount, setHoldAmount] = useState('');
   // Promo State
   const [promoExpanded, setPromoExpanded] = useState(false);
   const [promoCode, setPromoCode] = useState('');
+  // Modal State
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalTitle, setModalTitle] = useState('');
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalType, setModalType] = useState('success');
+  const [successOrderData, setSuccessOrderData] = useState<any>(null);
 
   const formatPrice = (price: number) => {
-    if (price === undefined || price === null) return '0.00';
-    return Number(price).toFixed(2);
+    if (price === undefined || price === null) return '0';
+    const num = Number(price);
+    return num % 1 === 0 ? String(num) : num.toFixed(2);
   };
 
   const fetchCart = async () => {
     try {
       setLoading(true);
-
       const data = await getCartApi();
-
       setOrderSummary(data?.orderSummary || {});
       console.log('Order Summary:123', data.orderSummary);
     } catch (error) {
@@ -63,21 +68,31 @@ const PaymentScreen = ({ navigation, route }: any) => {
       setLoading(false);
     }
   };
+
   const getWalletData = async () => {
     try {
       setLoading(true);
       const res = await getWalletLedgerApi();
-
       console.log('Wallet Data:', res);
+      const holdAmountValue = Number(res?.company?.hold_amount) || 0;
 
       const walletAmount = Number(res?.company?.wallet) || 0;
       const usedWallet = Number(res?.company?.used_wallet) || 0;
-      setAmount(String(Number(walletAmount) - Number(usedWallet)));
+      // setHoldAmount(res?.company?.hold_amount);
+      // setAmount(String(Number(walletAmount) - Number(usedWallet)));
+      setAmount(
+        String(
+          Number(walletAmount) -
+            Number(usedWallet) -
+            Number(res?.company?.hold_amount),
+        ),
+      );
+      setHoldAmount(String(Number(res?.company?.hold_amount)));
       // setHistory(res?.data || []);
     } catch (error) {
       console.log('Wallet Error:', error);
     } finally {
-      setLoading(false); // Stop loader
+      setLoading(false);
     }
   };
 
@@ -95,18 +110,25 @@ const PaymentScreen = ({ navigation, route }: any) => {
         district,
         city,
         pincode,
-        // pay_mode: "wallet",
         pay_mode: selected === 'upi' ? 'online' : 'wallet',
         remarks: delivery_instruction,
       };
-      console.log('🚀 ~ handleOrder ~ payload:', payload);
+      // console.log('🚀 ~ handleOrder ~ payload:', payload);
       const res = await saveOrderApi(payload);
       console.log('Order Success:', res);
-      Alert.alert('Success', 'Order placed successfully');
-      navigation.navigate('OrderConfirmScreen');
+
+      setSuccessOrderData(res);
+      setModalTitle('Success');
+      setModalMessage('Order placed successfully');
+      setModalType('success');
+      setModalVisible(true);
     } catch (error: any) {
       console.log('Order Failed:', error);
-      Alert.alert('Error', error.message);
+
+      setModalTitle('Error');
+      setModalMessage(error.message || 'Something went wrong');
+      setModalType('error');
+      setModalVisible(true);
     }
   };
 
@@ -190,9 +212,9 @@ const PaymentScreen = ({ navigation, route }: any) => {
               ₹{formatPrice(orderSummary?.totalAmount) || 0}
             </Text>
 
-            <View style={styles.challan}>
+            {/* <View style={styles.challan}>
               <Text style={styles.challanText}>CHALLAN ID : #B2B-889653</Text>
-            </View>
+            </View> */}
           </View>
 
           {/* Order Summary */}
@@ -201,7 +223,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
 
           <View style={[styles.summaryRow, { marginTop: 10 }]}>
             <Text style={styles.summaryText}>Taxable Value</Text>
-            <Text style={{ fontSize: 12, fontFamily: 'DMSans-Regular' }}>
+            <Text style={{ fontSize: 13, fontFamily: 'DMSans-Regular' }}>
               ₹{orderSummary?.taxable}
             </Text>
           </View>
@@ -209,7 +231,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
           {orderSummary?.gstBifurcation?.map((gst: any, index: number) => (
             <View key={index} style={styles.summaryRow}>
               <Text style={styles.summaryText}>GST ({gst.percentage}%)</Text>
-              <Text style={{ fontSize: 12, fontFamily: 'DMSans-Regular' }}>
+              <Text style={{ fontSize: 13, fontFamily: 'DMSans-Regular' }}>
                 ₹{formatPrice(gst.price)}
               </Text>
             </View>
@@ -220,8 +242,6 @@ const PaymentScreen = ({ navigation, route }: any) => {
               ₹{formatPrice(orderSummary?.totalAmount)}
             </Text>
           </View>
-
-          {/* Promo */}
 
           <View style={styles.promoContainer}>
             <TouchableOpacity
@@ -261,10 +281,16 @@ const PaymentScreen = ({ navigation, route }: any) => {
                   style={styles.applyBtn}
                   onPress={() => {
                     if (!promoCode) {
-                      Alert.alert('Error', 'Please enter a promo code');
+                      setModalTitle('Error');
+                      setModalMessage('Please enter a promo code');
+                      setModalType('error');
+                      setModalVisible(true);
                       return;
                     }
-                    Alert.alert('Promo applied', `Code ${promoCode} applied!`);
+                    setModalTitle('Promo applied');
+                    setModalMessage(`Code ${promoCode} applied!`);
+                    setModalType('success');
+                    setModalVisible(true);
                   }}
                 >
                   <Text style={styles.applyText}>Apply</Text>
@@ -279,7 +305,7 @@ const PaymentScreen = ({ navigation, route }: any) => {
           <PaymentOption
             id="wallet"
             title="Pay Later / Credit Line"
-            subtitle={`Available limit: ₹${amount} `}
+            subtitle={`Available limit: ₹${formatPrice(Number(amount))}`}
             icon={require('../assets/icons/wallet.png')}
           />
 
@@ -292,7 +318,6 @@ const PaymentScreen = ({ navigation, route }: any) => {
             title="Online Payment"
             subtitle="GPay, PhonePe, Paytm & Others"
             icon={require('../assets/icons/upi.png')}
-            // disabled={true}
           />
           {/* <PaymentOption
             id="card"
@@ -300,15 +325,6 @@ const PaymentScreen = ({ navigation, route }: any) => {
             subtitle="Visa, Mastercard, Amex"
             icon={require("../assets/icons/card.png")}
           /> */}
-
-          {/* <PaymentOption
-            id="bank"
-            title="Net Banking"
-            subtitle="All Major Indian Banks"
-            icon={require("../assets/icons/bank.png")}
-          /> */}
-
-          {/* <View style={{ height: 100 }} /> */}
         </ScrollView>
 
         {/* Sticky Bottom Bar */}
@@ -333,6 +349,69 @@ const PaymentScreen = ({ navigation, route }: any) => {
 
         {/* Bottom Button */}
       </View>
+
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>{modalTitle}</Text>
+            <Text style={styles.modalMessage}>{modalMessage}</Text>
+
+            <View style={styles.modalFooter}>
+              {modalType === 'inactive' ? (
+                <>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.cancelBtn]}
+                    onPress={() => setModalVisible(false)}
+                  >
+                    <Text style={styles.cancelBtnText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.setupBtn]}
+                    onPress={() => {
+                      setModalVisible(false);
+                      navigation.navigate('Profile', {
+                        screen: 'CompanyProfile',
+                      });
+                    }}
+                  >
+                    <Text style={styles.setupBtnText}>Go to Setup</Text>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <TouchableOpacity
+                  style={[
+                    styles.modalButton,
+                    {
+                      backgroundColor:
+                        modalType === 'success' ? '#487D44' : '#EF4444',
+                      width: '100%',
+                    },
+                  ]}
+                  onPress={() => {
+                    setModalVisible(false);
+
+                    if (modalType === 'success' && successOrderData) {
+                      navigation.navigate('OrderConfirmScreen', {
+                        orderData: successOrderData,
+                      });
+                      setTimeout(() => setSuccessOrderData(null), 500);
+                    }
+                  }}
+                >
+                  <Text style={styles.modalButtonText}>
+                    {modalType === 'success' ? 'Great!' : 'Close'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -393,6 +472,7 @@ const styles = StyleSheet.create({
   summaryText: {
     fontSize: 13,
     fontFamily: 'DMSans-Regular',
+    // letterSpacing: 0.4,
   },
 
   challanText: {
@@ -405,7 +485,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: 'DMSans-SemiBold',
     marginBottom: 10,
-    // marginTop: 10
   },
 
   summaryRow: {
@@ -516,10 +595,10 @@ const styles = StyleSheet.create({
   },
 
   bottomBox: {
-    padding: 16,
-    // backgroundColor: "#fff",
-    // borderTopWidth: 1,
+    paddingHorizontal: 16,
+    backgroundColor: '#fff',
     borderColor: '#E5E7EB',
+    paddingVertical: 10,
   },
 
   amountRow: {
@@ -535,7 +614,6 @@ const styles = StyleSheet.create({
   },
 
   amountValue: {
-    // fontWeight: '700',s
     fontSize: 16,
     fontFamily: 'DMSans-Bold',
   },
@@ -595,5 +673,68 @@ const styles = StyleSheet.create({
 
   disabledIcon: {
     tintColor: '#9CA3AF',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContainer: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 24,
+    width: '100%',
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontFamily: 'DMSans-Bold',
+    color: '#1E293B',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  modalMessage: {
+    fontSize: 14,
+    fontFamily: 'DMSans-Regular',
+    color: '#64748B',
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  modalFooter: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  modalButton: {
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelBtn: {
+    flex: 1,
+    backgroundColor: '#F1F5F9',
+  },
+  cancelBtnText: {
+    color: '#64748B',
+    fontSize: 14,
+    fontFamily: 'DMSans-Medium',
+  },
+  setupBtn: {
+    flex: 1,
+    backgroundColor: '#487D44',
+  },
+  setupBtnText: {
+    color: 'white',
+    fontSize: 14,
+    fontFamily: 'DMSans-Medium',
+  },
+  modalButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontFamily: 'DMSans-Medium',
   },
 });

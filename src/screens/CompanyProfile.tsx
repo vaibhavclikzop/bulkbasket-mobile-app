@@ -1,17 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  Alert,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform,  } from 'react-native';
+import { Alert } from '../utils/CustomAlert';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Styles from '../components/Styles';
 import AsyncStorage from '@react-native-async-storage/async-storage';

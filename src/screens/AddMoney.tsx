@@ -7,7 +7,6 @@ import {
   TextInput,
   ScrollView,
   Image,
-  Alert,
   Modal,
   ActivityIndicator,
 } from 'react-native';
@@ -15,14 +14,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Styles from '../components/Styles';
 import { addWalletAmountApi } from '../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
 
 const AddMoney = ({ navigation }: any) => {
   const [amount, setAmount] = useState('20000');
   const [selectedMethod, setSelectedMethod] = useState('card');
   const [loading, setLoading] = useState(false);
 
-  // Modal State
   const [modalVisible, setModalVisible] = useState(false);
   const [modalType, setModalType] = useState<'success' | 'error' | 'inactive'>(
     'success',
@@ -44,6 +41,12 @@ const AddMoney = ({ navigation }: any) => {
   };
 
   const handleAddMoney = async () => {
+    const numericAmount = Number(amount);
+
+    if (!amount || numericAmount <= 1) {
+      showModal('error', 'Error', 'Amount must be greater than 1');
+      return;
+    }
     try {
       const userId = await AsyncStorage.getItem('userId');
       console.log('🚀 ~ handleAddMoney ~ userId:', userId);
@@ -95,50 +98,6 @@ const AddMoney = ({ navigation }: any) => {
       setLoading(false);
     }
   };
-
-  // const handleAddMoney = async () => {
-  //   try {
-  //     const userId = await AsyncStorage.getItem("userId");
-  //     console.log("🚀 ~ handleAddMoney ~ userId:", userId);
-
-  //     if (!userId) {
-  //       Alert.alert("Error", "User not found");
-  //       return;
-  //     }
-
-  //     if (!amount) {
-  //       Alert.alert("Error", "Please enter amount");
-  //       return;
-  //     }
-
-  //     // Prepare form data
-  //     const formData = new FormData();
-  //     formData.append("customer_id", userId);
-  //     formData.append("amount", String(amount));
-
-  //     // Send POST request
-  //     const response = await axios.post(
-  //       "https://store.bulkbasketindia.com/api/add-walllet-amount",
-  //       formData,
-  //       {
-  //         headers: {
-  //           "Content-Type": "multipart/form-data",
-  //         },
-  //       },
-  //     );
-
-  //     console.log("Wallet updated:", response.data);
-
-  //     if (response.data.error === false || response.data.success) {
-  //       Alert.alert("Success", "Money added successfully");
-  //     } else {
-  //       Alert.alert("Error", response.data.message || "Failed to add money");
-  //     }
-  //   } catch (error: any) {
-  //     console.log("Error:", error.response?.data || error.message);
-  //     Alert.alert("Error", "Failed to add money");
-  //   }
-  // };
 
   const PaymentMethod = ({ id, image, title, desc }: any) => {
     const active = selectedMethod === id;
@@ -200,7 +159,7 @@ const AddMoney = ({ navigation }: any) => {
             <TextInput
               value={`₹ ${amount}`}
               keyboardType="numeric"
-              onChangeText={text => setAmount(text.replace(/[^0-9]/g, ''))}
+              onChangeText={text => setAmount(text.replace(/[^0-9.]/g, ''))}
               style={styles.amountInput}
             />
 

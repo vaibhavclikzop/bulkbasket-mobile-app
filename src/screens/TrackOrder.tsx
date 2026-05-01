@@ -51,18 +51,19 @@ const TrackOrder = ({ navigation }: any) => {
           {/* Shipping Card */}
           <View style={styles.shipCard}>
             <View style={styles.shipHeader}>
-              <View style={styles.shipIcon}>
-                <Image
-                  source={require('../assets/Common/truckShipping.png')}
-                  style={{ height: 22, width: 22 }}
-                />
-              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={styles.shipIcon}>
+                  <Image
+                    source={require('../assets/Common/truckShipping.png')}
+                    style={{ height: 22, width: 22 }}
+                  />
+                </View>
 
-              <View>
-                <Text style={styles.shipTitle}>Shipping ID</Text>
-                <Text style={styles.shipId}>#ORD8803287499</Text>
+                <View>
+                  <Text style={styles.shipTitle}>Shipping ID</Text>
+                  <Text style={styles.shipId}>#ORD8803287499</Text>
+                </View>
               </View>
-
               <Image
                 source={
                   isOpen
@@ -218,6 +219,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
+    justifyContent: 'space-between',
   },
 
   shipIcon: {

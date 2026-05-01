@@ -1,19 +1,6 @@
-import React, { useState, useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  Alert,
-  Image,
-  ScrollView,
-  PermissionsAndroid,
-  Platform,
-  Modal,
-  FlatList,
-  KeyboardAvoidingView,
-} from 'react-native';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image, ScrollView, PermissionsAndroid, Platform, Modal, FlatList, KeyboardAvoidingView,  } from 'react-native';
+import { Alert } from '../utils/CustomAlert';
 import MapView, { Marker } from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
 import { SafeAreaView } from 'react-native-safe-area-context';

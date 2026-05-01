@@ -174,7 +174,7 @@ const OrdersScreen = ({ navigation }: any) => {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: 30 }}
             ListEmptyComponent={
-              <Text style={styles.emptyText}>No orders found</Text>
+              <Text style={styles.emptyText}>No orders Yet!</Text>
             }
           />
         )}

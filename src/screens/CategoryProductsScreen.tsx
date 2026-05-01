@@ -1,5 +1,10 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { debounce } from 'lodash';
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from 'react';
 import {
   View,
   Text,
@@ -13,10 +18,10 @@ import {
   TextInput,
   Platform,
   RefreshControl,
-  Alert,
   Vibration,
   ToastAndroid,
 } from 'react-native';
+import { Alert } from '../utils/CustomAlert';
 import LinearGradient from 'react-native-linear-gradient';
 // import ProductCard from "../components/ProductCard";
 import Styles from '../components/Styles';
@@ -31,6 +36,7 @@ import {
   updateCartQuantityApi,
   updateWishlistQtyApi,
 } from '../services/api';
+import { debounce } from 'lodash';
 
 const packingItems = [
   {
@@ -174,8 +180,13 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
     }
   };
 
+  // const formatPrice = (price: number) => {
+  //   return Number(price) % 1 === 0 ? Number(price) : Number(price).toFixed(2);
+  // };
   const formatPrice = (price: number) => {
-    return Number(price) % 1 === 0 ? Number(price) : Number(price).toFixed(2);
+    const num = Number(price);
+    if (isNaN(num)) return '0';
+    return parseFloat(num.toFixed(2)).toString();
   };
 
   const getCalculatedPrice = (item: Product) => {
@@ -252,7 +263,6 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
           };
           setCategories([allCategory, ...data.data]);
 
-          // If no products exist across all subcategories, alert and go back
           if (allProducts.length === 0) {
             Alert.alert(
               'No Products',
@@ -424,18 +434,9 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
     }
   };
 
-  // const filteredProducts = (categories[selectedIndex]?.products || []).filter(
-  //   (p) => {
-  //     if (selectedSubSubCats.length === 0) return true;
-  //     return selectedSubSubCats
-  //       .map(String)
-  //       .includes(String(p.product_sub_sub_category));
-  //   },
-  // );
-
-  const filteredProducts = (() => {
+  const filteredProducts = React.useMemo(() => {
     let base = (categories[selectedIndex]?.products || []).filter(p => {
-      // Sub-subcategory filter
+      // Filter by sub-sub-category
       if (selectedSubSubCats.length > 0) {
         if (
           !selectedSubSubCats
@@ -445,9 +446,15 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
           return false;
         }
       }
-      // Brand filter
+
+      // Filter by Brand
       if (selectedBrandIds.length > 0) {
-        if (!selectedBrandIds.map(String).includes(String(p.brand_id))) {
+        // Ensure comparison is done as strings to handle both numeric and string IDs
+        const pBrandId =
+          p.brand_id !== null && p.brand_id !== undefined
+            ? String(p.brand_id)
+            : '';
+        if (!selectedBrandIds.includes(pBrandId)) {
           return false;
         }
       }
@@ -466,7 +473,13 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
       default:
         return base;
     }
-  })();
+  }, [
+    categories,
+    selectedIndex,
+    selectedSubSubCats,
+    selectedBrandIds,
+    appliedSort,
+  ]);
 
   const currentBrands = React.useMemo(() => {
     const brandsMap = new Map();
@@ -753,7 +766,6 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                     paddingHorizontal: 12,
                     paddingVertical: 4,
                     gap: 4,
-                    borderRadius: 1,
                   }}
                   onPress={() => {
                     setShowBrandModal(true);
@@ -894,12 +906,32 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                         }
                         style={[
                           styles.productImageBg,
-                          { width: '38%', backgroundColor: '' },
+                          { width: '38%', backgroundColor: '#e5e7eb' },
                         ]}
                         activeOpacity={0.9}
                       >
                         {item.product_type ? (
-                          <View
+                          // <View
+                          //   style={{
+                          //     position: 'absolute',
+                          //     top: 0,
+                          //     width: '100%',
+                          //     height: 18,
+                          //     overflow: 'hidden',
+                          //     alignSelf: 'center',
+                          //     borderBottomLeftRadius: 10,
+                          //     borderBottomRightRadius: 10,
+                          //     backgroundColor: '#6B7280',
+                          //     justifyContent: 'center',
+                          //     alignItems: 'center',
+                          //     zIndex: 11,
+                          //     minWidth: '50%',
+                          //   }}
+                          // >
+                          <LinearGradient
+                            colors={['#6B7280', '#6B7280']}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 0 }}
                             style={{
                               position: 'absolute',
                               top: 0,
@@ -926,7 +958,8 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                             >
                               {item.product_type}
                             </Text>
-                          </View>
+                            {/* </View> */}
+                          </LinearGradient>
                         ) : null}
                         {/* {Platform.OS === "ios" ? (
                           Number(item.discount) > 0 ? (
@@ -1011,11 +1044,13 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                                   left: 0,
                                   borderBottomLeftRadius: 0,
                                   borderTopRightRadius: 8,
+                                  backgroundColor: '#FAAF20',
                                 },
                               ]}
                             >
                               <Text style={styles.discountText}>
-                                {Number(item.discount).toFixed(1)}% OFF
+                                {/* {Number(item.discount).toFixed(1)}% OFF */}
+                                {parseFloat(item.discount)}% OFF
                               </Text>
                             </View>
                           ))}
@@ -1080,13 +1115,14 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                                 marginBottom: 6,
                                 paddingBottom: 6,
                                 borderBottomWidth: 1,
-                                borderBottomColor: '#E6E7EE80',
+                                // borderBottomColor: '#E6E7EE80',
+                                borderBottomColor: '#e5e7eb',
                                 color: '#64748B',
                                 fontSize: 10,
                               },
                             ]}
                           >
-                            {item.uom_name}
+                            Pack of {item.uom_name}
                           </Text>
                         </TouchableOpacity>
                         {item.tiers && item.tiers.length > 0 && (
@@ -1102,6 +1138,12 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                               const currentQty = Number(item.cart?.qty || 0);
                               const isLast =
                                 index === (item.tiers?.length ?? 0) - 1;
+                              const nextTierQty = !isLast
+                                ? item.tiers![index + 1].qty
+                                : Infinity;
+                              const isSelected =
+                                currentQty >= tier.qty &&
+                                currentQty < nextTierQty;
 
                               return (
                                 <View
@@ -1131,7 +1173,7 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
                                     }}
                                     disabled={Number(item.current_stock) === 0}
                                   >
-                                    {currentQty >= tier.qty ? (
+                                    {isSelected ? (
                                       <Image
                                         source={require('../assets/check.png')}
                                         style={{
@@ -1591,7 +1633,10 @@ const CategoryProductsScreen = ({ navigation, route }: any) => {
 
 export default CategoryProductsScreen;
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
 
   headerRow: {
     flexDirection: 'row',
@@ -1670,7 +1715,6 @@ const styles = StyleSheet.create({
   },
 
   filterChip: {
-    // backgroundColor: "#ffff",
     borderColor: '#a5a4a4c7',
     borderWidth: 1,
     borderRadius: 15,
@@ -1970,7 +2014,6 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     gap: 4,
     borderRadius: 1,
-    // backgroundColor: "red",
   },
 
   sortButtonText: {
@@ -1983,7 +2026,7 @@ const styles = StyleSheet.create({
     width: 1,
     height: 20,
     backgroundColor: '#ccc',
-    marginRight: 6,
+    // marginRight: 6,
   },
 
   /* ── SORT BY MODAL ── */
@@ -2053,14 +2096,14 @@ const styles = StyleSheet.create({
   },
 
   sortRadioActive: {
-    borderColor: '#E53935',
+    borderColor: '#487D44',
   },
 
   sortRadioDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#E53935',
+    backgroundColor: '#487D44',
   },
 
   sortModalFooter: {

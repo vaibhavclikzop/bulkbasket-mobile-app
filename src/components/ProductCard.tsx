@@ -1,4 +1,10 @@
-import React from 'react';
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from 'react';
 import {
   View,
   Text,
@@ -11,8 +17,8 @@ import {
   Platform,
   Vibration,
   ToastAndroid,
-  Alert,
 } from 'react-native';
+import { Alert } from '../utils/CustomAlert';
 import LinearGradient from 'react-native-linear-gradient';
 
 export interface ProductCardProps {
@@ -25,6 +31,7 @@ export interface ProductCardProps {
   mrp?: string | number;
   discount?: string;
   isOrganic?: boolean;
+  product_type?: string;
   onAddPress?: () => void;
   onPress?: () => void;
   tiers?: any[];
@@ -51,6 +58,7 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(
     mrp,
     discount,
     isOrganic,
+    product_type,
     onAddPress,
     onPress,
     tiers,
@@ -89,24 +97,41 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(
     }, []);
 
     return (
-      <View
-        style={[styles.cardContainer, containerStyle]}
-      >
+      <View style={[styles.cardContainer, containerStyle]}>
         <View style={styles.cardInner}>
           <TouchableOpacity onPress={onPress} activeOpacity={0.9}>
-            {/* Organic Ribbon */}
-            {isOrganic && (
-              <View style={styles.ribbonWrapper}>
-                <LinearGradient
-                  colors={['#487D44', '#12FF00']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.ribbonGradient}
+            {/* Product Type Ribbon */}
+            {product_type ? (
+              <View
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  right: 0,
+                  width: '60%',
+                  height: 16,
+                  overflow: 'hidden',
+                  alignSelf: 'center',
+                  borderBottomLeftRadius: 10,
+                  borderBottomRightRadius: 10,
+                  backgroundColor: '#6B7280',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  zIndex: 11,
+                  minWidth: '50%',
+                }}
+              >
+                <Text
+                  style={{
+                    color: '#FFFFFF',
+                    fontSize: 7,
+                    fontFamily: 'DMSans-SemiBold',
+                    textAlign: 'center',
+                  }}
                 >
-                  <Text style={styles.ribbonText}>Organic</Text>
-                </LinearGradient>
+                  {product_type}
+                </Text>
               </View>
-            )}
+            ) : null}
 
             {Number(discount) > 0 &&
               (Platform.OS === 'ios' ? (
@@ -207,6 +232,11 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(
               <View style={styles.variantBox}>
                 {tiers.map((tier: any, index: number) => {
                   const isLast = index === tiers.length - 1;
+                  const currentQty = Number(cartQty || 0);
+                  const nextTierQty = !isLast ? tiers[index + 1].qty : Infinity;
+                  const isSelected =
+                    currentQty >= tier.qty && currentQty < nextTierQty;
+
                   return (
                     <View key={index}>
                       <View style={styles.variantRow}>
@@ -222,14 +252,26 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(
                           }}
                           disabled={isOutOfStock}
                         >
-                          <Text
-                            style={[
-                              styles.addSmall,
-                              isOutOfStock && { color: '#A0A0A0' },
-                            ]}
-                          >
-                            Add+
-                          </Text>
+                          {isSelected ? (
+                            <Image
+                              source={require('../assets/check.png')}
+                              style={{
+                                height: 16,
+                                width: 16,
+                                tintColor: '#487D44',
+                                resizeMode: 'contain',
+                              }}
+                            />
+                          ) : (
+                            <Text
+                              style={[
+                                styles.addSmall,
+                                isOutOfStock && { color: '#A0A0A0' },
+                              ]}
+                            >
+                              Add+
+                            </Text>
+                          )}
                         </TouchableOpacity>
                       </View>
                       {!isLast && <View style={styles.dividerPrice} />}
@@ -257,7 +299,8 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(
 
               {cart_status === true ||
               cart_status === 1 ||
-              cart_status === '1' ? (
+              cart_status === '1' ||
+              Number(cartQty) > 0 ? (
                 <View style={styles.qtyRow}>
                   {updatingQty ? (
                     <ActivityIndicator size="small" color="#487D44" />
@@ -324,8 +367,7 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(
                         ]}
                         onPress={() => {
                           Vibration.vibrate(60);
-                            onUpdateQty &&
-                            onUpdateQty(Number(cartQty || 0) + 1);
+                          onUpdateQty && onUpdateQty(Number(cartQty || 0) + 1);
                         }}
                         disabled={isOutOfStock}
                       >
@@ -408,7 +450,7 @@ const styles = StyleSheet.create({
   },
 
   image: {
-    marginTop: 7,
+    marginTop: 10,
     width: 80,
     height: 80,
     resizeMode: 'contain',
@@ -548,11 +590,11 @@ const styles = StyleSheet.create({
 
   discountBadge: {
     position: 'absolute',
-    top: 0,
-    right: 0,
+    bottom: 0,
+    left: 0,
     paddingLeft: 10,
     paddingRight: Platform.OS === 'ios' ? 22 : 12,
-    height: 24,
+    height: 16,
     justifyContent: 'center',
     alignItems: 'center',
     borderTopRightRadius: 20,

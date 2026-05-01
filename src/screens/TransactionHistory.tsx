@@ -97,7 +97,11 @@ export default function TransactionHistory({ navigation }: any) {
               numberOfLines={1}
               style={[styles.transactionSub, { color: '#000' }]}
             >
-              {item.pay_date?.split(' ')[0]}
+              {new Date(item.pay_date).toLocaleDateString('en-US', {
+                month: 'short',
+                day: '2-digit',
+                year: 'numeric',
+              })}
             </Text>
           </View>
         </View>
@@ -111,7 +115,10 @@ export default function TransactionHistory({ navigation }: any) {
           }}
         >
           <Text style={styles.amount} numberOfLines={1}>
-            {isCredit ? '+' : '-'}₹{item.amount}
+            ₹{' '}
+            {Number(item.amount) % 1 === 0
+              ? Number(item.amount)
+              : Number(item.amount).toFixed(2)}
           </Text>
 
           <View
